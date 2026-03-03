@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+@theme {
+  /* --- Brand Colors (NetHub Blue & Modern Accents) --- */
+  --color-brand-primary: #0056b3;
+  --color-brand-secondary: #00a8ff;
+  --color-accent: #10b981; /* Emeral Green for CTAs/M-Pesa vibes */
+
+  /* --- Semantic Colors --- */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-border: var(--border);
+
+  /* --- Typography --- */
+  --font-sans: "Inter", "Geist Sans", ui-sans-serif, system-ui;
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular;
+
+  /* --- Smooth Shadows for Modern UI --- */
+  --shadow-soft: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+}
+
+:root {
+  /* Light Mode - Crisp & Professional */
+  --background: #ffffff;
+  --foreground: #0f172a; /* Slate 900 for better readability */
+  --card: #f8fafc;
+  --border: #e2e8f0;
+
+  --font-geist-sans: "Inter", sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Dark Mode - Deep Tech Slate */
+    --background: #020617; /* Slate 950 */
+    --foreground: #f1f5f9;
+    --card: #0f172a;
+    --border: #1e293b;
+  }
+}
+
+/* Base Styles */
+@layer base {
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    transition:
+      background-color 0.3s ease,
+      color 0.3s ease;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-bold tracking-tight text-balance;
+  }
+}

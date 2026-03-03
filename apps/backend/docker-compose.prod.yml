@@ -1,0 +1,19 @@
+# docker-compose.prod.yml
+services:
+  keycloak:
+    environment:
+      KC_HOSTNAME_STRICT: "true"
+      KC_PROXY_HEADERS: xforwarded # Required for Traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.keycloak.rule=Host(`sso.yourdomain.com`)"
+      - "traefik.http.routers.keycloak.entrypoints=websecure"
+      - "traefik.http.routers.keycloak.tls.certresolver=myresolver"
+
+  fastapi:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G

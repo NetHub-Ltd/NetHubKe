@@ -20,6 +20,7 @@ NetHubKe/
 ```
 
 ### **Backend (`apps/backend`)**
+
 - `main.py`: FastAPI app entrypoint. Mounts routers, handles middleware.
 - `api/v1/`: Versioned API endpoints.
   - `users.py`: User-related endpoints.
@@ -33,6 +34,7 @@ NetHubKe/
 - `tests/`: Backend unit and integration tests.
 
 ### **Frontend (`apps/frontend`)**
+
 - `pages/`: Next.js pages
   - `index.tsx`: Public landing page.
   - `login.tsx`: Login redirect / callback.
@@ -42,6 +44,7 @@ NetHubKe/
 - `styles/`: Tailwind CSS and other styles.
 
 ### **Shared Packages (`packages`)**
+
 - `types/index.ts`: TypeScript interfaces shared between frontend and backend.
 
 ---
@@ -59,7 +62,7 @@ NetHubKe/
 
 ## 🚀 Getting Started (Development)
 
-1. **Copy environment variables**  
+1. **Copy environment variables**
 
 ```bash
 cp .env.example .env
@@ -91,16 +94,16 @@ docker-compose up -d
 
 This will spin up:
 
-* Keycloak
-* PostgreSQL
-* FastAPI backend
-* Next.js frontend
+- Keycloak
+- PostgreSQL
+- FastAPI backend
+- Next.js frontend
 
 4. **Access services**
 
-* Frontend: `http://localhost:3000`
-* FastAPI docs: `http://localhost:8000/docs`
-* Keycloak admin: `http://localhost:8080`
+- Frontend: `http://localhost:3000`
+- FastAPI docs: `http://localhost:8000/docs`
+- Keycloak admin: `http://localhost:8080`
 
 ---
 
@@ -116,19 +119,19 @@ This will spin up:
 
 ## 📝 Notes
 
-* This scaffold is production-ready but requires configuration of:
+- This scaffold is production-ready but requires configuration of:
+  - Keycloak realms, clients, and roles
+  - Backend environment variables
+  - Frontend OIDC redirect URIs
 
-  * Keycloak realms, clients, and roles
-  * Backend environment variables
-  * Frontend OIDC redirect URIs
-* Microservices should trust backend authorization for secure access control.
-* The monorepo supports additional microservices in `apps/services/` with shared types in `packages/types`.
+- Microservices should trust backend authorization for secure access control.
+- The monorepo supports additional microservices in `apps/services/` with shared types in `packages/types`.
 
 ---
 
 ## 📖 References
 
-* [FastAPI](https://fastapi.tiangolo.com/)
-* [Next.js](https://nextjs.org/)
-* [Keycloak](https://www.keycloak.org/)
-* [Tailwind CSS](https://tailwindcss.com/)
+- [FastAPI](https://fastapi.tiangolo.com/)
+- [Next.js](https://nextjs.org/)
+- [Keycloak](https://www.keycloak.org/)
+- [Tailwind CSS](https://tailwindcss.com/)
