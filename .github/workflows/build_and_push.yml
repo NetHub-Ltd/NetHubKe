@@ -33,7 +33,7 @@ jobs:
           # Source: point to your production-specific file
           source: "./apps/backend/docker-compose.prod.yml"
           target: "/home/davie/docker_stack/nethubke"
-          strip_components: 0
+          strip_components: 2
 
       # Since Docker looks for 'docker-compose.yml' by default,
       # we rename it on the VPS after uploading.
