@@ -1,25 +1,44 @@
 name: Build, Push & Deploy Nethub Backend
+
 on:
   push:
     tags:
       - "v*"
+
 jobs:
-  # --- JOB 1: Build the Image ---
+  # --- JOB 1: Build the Image (Inlined) ---
   build-api:
-    uses: daviekaranja/workflows/.github/workflows/docker-build-push.yml@master
-    with:
-      image_name: "nethubke"
-      build_context: "./apps/backend"
-      dockerfile_path: "./apps/backend/Dockerfile"
-    secrets:
-      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          # context is the folder containing your code
+          context: ./apps/backend
+          # file is relative to the repo root
+          file: ./apps/backend/Dockerfile
+          push: true
+          # Tags the image with your Git Tag (e.g., v0.0.3)
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/nethubke:${{ github.ref_name }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   # --- JOB 2: Sync Prod Config to VPS ---
   sync-configs:
     needs: build-api
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/v')
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -30,13 +49,11 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          # Source: point to your production-specific file
           source: "./apps/backend/docker-compose.prod.yml"
           target: "/home/davie/docker_stack/nethubke"
+          # strip_components: 2 removes 'apps/' and 'backend/' from the path
           strip_components: 2
 
-      # Since Docker looks for 'docker-compose.yml' by default,
-      # we rename it on the VPS after uploading.
       - name: Rename file to docker-compose.yml
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -45,7 +62,8 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             cd /home/davie/docker_stack/nethubke
-            mv docker-compose.prod.yml docker-compose.yml
+            # Force move to overwrite existing compose files
+            mv -f docker-compose.prod.yml docker-compose.yml
 
   # --- JOB 3: Deploy to VPS ---
   deploy-api:
