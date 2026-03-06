@@ -1,10 +1,8 @@
 name: Build, Push & Deploy Nethub Backend
-
 on:
   push:
     tags:
       - "v*"
-
 jobs:
   # --- JOB 1: Build the Image ---
   build-api:
