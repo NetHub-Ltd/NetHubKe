@@ -9,8 +9,8 @@ jobs:
     uses: daviekaranja/workflows/.github/workflows/docker-build-push.yml@master
     with:
       image_name: "nethubke"
-      build_context: "./apps/backend"
-      dockerfile_path: "./apps/backend/Dockerfile"
+      build_context: "apps/backend"
+      dockerfile_path: "apps/backend/Dockerfile"
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
