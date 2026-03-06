@@ -1,11 +1,10 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-import Navbar from "./lib/components/Navbar";
-import Footer from "./lib/components/Footer";
-import CookieBanner from "./lib/components/cookieBanner";
+import Navbar from "@/lib/components/Navbar";
+import Footer from "@/lib/components/Footer";
+import CookieBanner from "@/lib/components/cookieBanner";
 
-// Inter is more professional for Agency/SaaS sites than Geist
 const inter = Inter({
   variable: "--font-sans",
   subsets: ["latin"],
@@ -18,6 +17,16 @@ const mono = JetBrains_Mono({
   display: "swap",
 });
 
+// Viewport is handled separately in Next.js 14/15
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#020617" },
+  ],
+  width: "device-width",
+  initialScale: 1,
+};
+
 export const metadata: Metadata = {
   metadataBase: new URL("https://nethub.co.ke"),
   title: {
@@ -25,17 +34,19 @@ export const metadata: Metadata = {
     template: "%s | NetHub Kenya",
   },
   description:
-    "NetHub empowers Kenyan businesses with custom app development, seamless M-Pesa API integrations, SEO optimization, and professional web design. Build your digital future today.",
+    "NetHub empowers Kenyan businesses with custom app development, seamless M-Pesa API integrations, SEO optimization, and professional web design.",
   keywords: [
-    "M-Pesa Integration Kenya",
-    "App Development Nairobi",
-    "Software Engineering Kenya",
-    "Lipa Na M-Pesa API setup",
-    "Web Design Kenya",
-    "NetHub Digital Solutions",
-    "SEO Services Nairobi",
+    "M-Pesa API integration services Kenya", // Long-tail (High conversion)
+    "Custom software development Nairobi", // Location-based
+    "Lipa Na M-Pesa STK Push setup", // Technical/Specific
+    "Affordable web design packages Kenya", // Pricing intent
+    "Hire mobile app developers Nairobi", // Recruitment/Agency intent
+    "NetHub software solutions", // Branded
+    "Fintech developers in Kenya", // Niche authority
   ],
-  authors: [{ name: "NetHub Team" }],
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
     type: "website",
     locale: "en_KE",
@@ -43,7 +54,7 @@ export const metadata: Metadata = {
     siteName: "NetHub Kenya",
     images: [
       {
-        url: "/og-image.jpg", // Make sure to create a high-quality preview image
+        url: "/og-image.png",
         width: 1200,
         height: 630,
         alt: "NetHub - Digital Solutions & M-Pesa Integrations",
@@ -52,13 +63,18 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "NetHub | Custom Software & Fintech Solutions Kenya",
-    description:
-      "Scale your business with Kenya's experts in M-Pesa integration and mobile app development.",
+    creator: "@nethub_ke", // Add your handle if you have one
   },
   robots: {
     index: true,
     follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
 };
 
@@ -67,14 +83,44 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Local SEO: M-Pesa Integration is a high-value keyword in Kenya
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ProfessionalService",
+    name: "NetHub Kenya",
+    image: "https://nethub.co.ke/og-image.png",
+    description:
+      "Specialists in M-Pesa API Integration and Software Development in Nairobi, Kenya.",
+    address: {
+      "@type": "PostalAddress",
+      addressLocality: "Nairobi",
+      addressCountry: "KE",
+    },
+    geo: {
+      "@type": "GeoCoordinates",
+      latitude: -1.286389,
+      longitude: 36.817223,
+    },
+    url: "https://nethub.co.ke",
+  };
+
   return (
-    <html lang="en" className="scroll-smooth">
-      <body
-        className={`${inter.variable} ${mono.variable} font-sans antialiased bg-background text-foreground`}
-      >
-        {/* You can add a global Navbar/Footer here later */}
+    <html
+      lang="en"
+      className={`scroll-smooth ${inter.variable} ${mono.variable}`}
+      suppressHydrationWarning
+    >
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
+      <body className="font-sans antialiased min-h-screen flex flex-col">
         <Navbar />
-        <main>{children}</main>
+        <main id="main-content" className="grow">
+          {children}
+        </main>
         <Footer />
         <CookieBanner />
       </body>

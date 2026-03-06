@@ -1,58 +1,139 @@
 @import "tailwindcss";
 
-@theme {
-  /* --- Brand Colors (NetHub Blue & Modern Accents) --- */
-  --color-brand-primary: #0056b3;
-  --color-brand-secondary: #00a8ff;
-  --color-accent: #10b981; /* Emeral Green for CTAs/M-Pesa vibes */
-
-  /* --- Semantic Colors --- */
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-border: var(--border);
-
-  /* --- Typography --- */
-  --font-sans: "Inter", "Geist Sans", ui-sans-serif, system-ui;
-  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular;
-
-  /* --- Smooth Shadows for Modern UI --- */
-  --shadow-soft: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
-}
-
+/* =========================================================
+   1. Design Tokens & Variables
+========================================================= */
 :root {
-  /* Light Mode - Crisp & Professional */
-  --background: #ffffff;
-  --foreground: #0f172a; /* Slate 900 for better readability */
+  /* Light Mode - Neutral Gray Surface with "Lifting" Background cards */
+  --background: #ffffff; /* Use this for cards/sections to pop */
+  --foreground: #141136;
   --card: #f8fafc;
+  --surface: #f1f5f9; /* The deep base layer */
   --border: #e2e8f0;
+  --muted: #64748b;
 
-  --font-geist-sans: "Inter", sans-serif;
+  /* Brand Colors */
+  --brand-primary: #4f46e5;
+  --brand-secondary: #3b82f6;
+  --brand-accent: #10b981;
+
+  /* Fluid Typography Scale */
+  --text-h1: clamp(2.5rem, 8vw, 5rem);
+  --text-h2: clamp(2rem, 5vw, 3.5rem);
+  --text-h3: clamp(1.5rem, 3vw, 2.25rem);
+  --text-base: clamp(1rem, 0.5vw + 0.8rem, 1.125rem);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    /* Dark Mode - Deep Tech Slate */
-    --background: #020617; /* Slate 950 */
+    --background: #0f172a;
     --foreground: #f1f5f9;
-    --card: #0f172a;
+    --card: #1e293b;
+    --surface: #020617;
     --border: #1e293b;
+    --muted: #94a3b8;
+
+    --brand-primary: #818cf8;
+    --brand-secondary: #60a5fa;
   }
 }
 
-/* Base Styles */
+/* =========================================================
+   2. Tailwind v4 Theme Mapping
+========================================================= */
+@theme {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-surface: var(--surface);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
+
+  --color-brand-primary: var(--brand-primary);
+  --color-brand-secondary: var(--brand-secondary);
+  --color-brand-accent: var(--brand-accent);
+
+  --shadow-glow: 0 0 25px rgba(79, 70, 229, 0.15);
+  --shadow-lift: 0 10px 30px -10px rgba(0, 0, 0, 0.1);
+}
+
+/* =========================================================
+   3. Base Layer (Element Defaults Only)
+========================================================= */
 @layer base {
   body {
-    @apply bg-background text-foreground font-sans antialiased;
-    transition:
-      background-color 0.3s ease,
-      color 0.3s ease;
+    background-color: var(--surface);
+    color: var(--foreground);
+    font-family: "Inter", sans-serif;
+    font-size: var(--text-base);
+    @apply antialiased selection:bg-brand-primary/20;
+  }
+}
+
+/* =========================================================
+   4. Components Layer (Reusable Design Classes)
+========================================================= */
+@layer components {
+  /* Responsive Heading Classes */
+  .text-h1 {
+    font-size: var(--text-h1);
+    @apply font-black tracking-tighter leading-[1.1] text-foreground;
   }
 
-  h1,
-  h2,
-  h3,
-  h4 {
-    @apply font-bold tracking-tight text-balance;
+  .text-h2 {
+    font-size: var(--text-h2);
+    @apply font-bold tracking-tight leading-tight text-foreground;
   }
+
+  .text-h3 {
+    font-size: var(--text-h3);
+    @apply font-bold tracking-tight text-foreground;
+  }
+
+  /* The "Lifting" Card Component */
+  .card-layered {
+    @apply bg-background border border-border/40 rounded-[2.5rem] transition-all duration-500;
+    background-image: linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.05) 0%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    box-shadow: var(--shadow-lift);
+  }
+
+  .card-layered:hover {
+    @apply -translate-y-2 border-brand-primary/30 shadow-glow;
+  }
+
+  .section-padding {
+    @apply py-20 md:py-32 px-6;
+  }
+}
+
+/* =========================================================
+   5. Utilities Layer (Atomic Helpers)
+========================================================= */
+@layer utilities {
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-linear-to-r from-brand-primary via-brand-secondary to-brand-primary bg-[length:200%_auto];
+  }
+}
+
+/* =========================================================
+   6. Custom Animations
+========================================================= */
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-gradient {
+  animation: gradient 5s ease infinite;
 }
