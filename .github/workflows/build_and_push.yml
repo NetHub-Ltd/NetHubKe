@@ -11,7 +11,9 @@ jobs:
       image_name: "nethubke"
       build_context: "."
       dockerfile_path: "./apps/backend/Dockerfile"
-    secrets: inherit
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 
   # --- JOB 2: Sync Prod Config to VPS ---
   sync-configs:
