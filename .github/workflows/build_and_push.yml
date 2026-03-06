@@ -1,0 +1,60 @@
+name: Build, Push & Deploy Nethub Backend
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  # --- JOB 1: Build the Image ---
+  build-api:
+    uses: daviekaranja/workflows/.github/workflows/docker-build-push.yml@master
+    with:
+      image_name: "nethubke"
+      build_context: "."
+      dockerfile_path: "./apps/backend/Dockerfile"
+    secrets: inherit
+
+  # --- JOB 2: Sync Prod Config to VPS ---
+  sync-configs:
+    needs: build-api
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Copy Production Compose to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          # Source: point to your production-specific file
+          source: "./apps/backend/docker-compose.prod.yml"
+          target: "/home/davie/docker_stack/nethubke"
+          strip_components: 0
+
+      # Since Docker looks for 'docker-compose.yml' by default,
+      # we rename it on the VPS after uploading.
+      - name: Rename file to docker-compose.yml
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd /home/davie/docker_stack/nethubke
+            mv docker-compose.prod.yml docker-compose.yml
+
+  # --- JOB 3: Deploy to VPS ---
+  deploy-api:
+    needs: sync-configs
+    uses: daviekaranja/workflows/.github/workflows/reusable-deploy.yml@master
+    with:
+      target_directory: "/home/davie/docker_stack/nethubke"
+      image_tag: ${{ github.ref_name }}
+    secrets:
+      VPS_HOST: ${{ secrets.VPS_HOST }}
+      VPS_USERNAME: ${{ secrets.VPS_USERNAME }}
+      VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
