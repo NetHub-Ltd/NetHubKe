@@ -49,12 +49,13 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          source: "./apps/backend/docker-compose.prod.yml"
+          # REMOVE the "./" prefix to make the component count predictable
+          source: "apps/backend/docker-compose.prod.yml"
           target: "/home/davie/docker_stack/nethubke"
-          # strip_components: 2 removes 'apps/' and 'backend/' from the path
+          # strip_components: 2 removes "apps" and "backend"
           strip_components: 2
 
-      - name: Rename file to docker-compose.yml
+      - name: Rename and Cleanup
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -62,8 +63,20 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             cd /home/davie/docker_stack/nethubke
-            # Force move to overwrite existing compose files
-            mv -f docker-compose.prod.yml docker-compose.yml
+
+            # 1. Find the file in any subfolder and move it here as docker-compose.yml
+            find . -name "docker-compose.prod.yml" -exec mv -f {} ./docker-compose.yml \;
+
+            # 2. Clean up the empty 'apps/backend' folders left behind
+            rm -rf apps/
+
+            # 3. Verify it worked
+            if [ -f "docker-compose.yml" ]; then
+              echo "✅ Successfully moved and renamed docker-compose.yml"
+            else
+              echo "❌ Error: Could not find docker-compose.prod.yml"
+              exit 1
+            fi
 
   # --- JOB 3: Deploy to VPS ---
   deploy-api:
