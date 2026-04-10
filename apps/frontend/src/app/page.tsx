@@ -8,65 +8,78 @@ import {
   Code2,
   TrendingUp,
   ShieldCheck,
+  Zap,
 } from "lucide-react";
 
 export default function Homepage() {
   return (
-    <div className="min-h-screen ">
+    <div className="min-h-screen">
+      {/* 1. HERO: The Strategic Value Proposition */}
       <section
         id="hero-section"
-        className="p-6 md:px-12 bg-background my-2  transition-all duration-300 ease-in-out "
+        className="p-6 md:px-12 bg-background my-2 transition-all duration-300 ease-in-out"
       >
         <div className="max-w-7xl mx-auto py-12 md:py-24">
-          <div className="">
-            <h1 className="text-gradient text-h1 mb-6">
-              We offer the solutions your business needs
+          <div className="flex flex-col items-start">
+            {/* Partnership Badge */}
+            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-brand-primary/5 border border-brand-primary/10 mb-6">
+              <Zap size={14} className="text-brand-primary" />
+              <span className="text-[10px] font-bold uppercase tracking-widest text-brand-primary">
+                Your Strategic Engineering Partner
+              </span>
+            </div>
+
+            <h1 className="text-gradient text-h1 mb-6 max-w-4xl">
+              We build the systems that power Kenya&apos;s
+              fastest-growing brands.
             </h1>
 
-            <p className="text-xl md:text-2xl mb-4 md:mb-8 transition-all duration-300 ease-in-out leading-relaxed max-w-2xl text-pretty">
-              We don&apos;t just write code. We build workflows, systems,
-              integrations, high-speed mobile apps and websites that turn users
-              into loyal customers.
+            <p className="text-xl md:text-2xl mb-8 transition-all duration-300 ease-in-out leading-relaxed max-w-2xl text-pretty opacity-80">
+              Beyond code—we build revenue-generating infrastructure. From
+              M-Pesa integrations to high-performance mobile ecosystems, we
+              align engineering with your business bottom line.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-5">
+            <div className="flex flex-col sm:flex-row gap-5 w-full sm:w-auto">
               <Link
                 href="/services"
                 className="bg-brand-secondary text-white px-10 py-5 rounded-2xl font-bold hover:shadow-glow transition-all flex items-center justify-center gap-2 group"
               >
-                Start Your Project
+                Scale Your Business
                 <ArrowRight
                   size={20}
                   className="group-hover:translate-x-1 transition-transform"
                 />
               </Link>
               <Link
-                href="/services/mpesa-integration-kenya"
-                className="border border-border bg-card/50 backdrop-blur-sm px-10 py-5 rounded-2xl font-bold hover:bg-border transition-all flex items-center justify-center gap-2"
+                href="/contact"
+                className="border border-border bg-card/50 backdrop-blur-sm px-10 py-5 rounded-2xl font-bold hover:bg-border transition-all flex items-center justify-center gap-2 text-center"
               >
-                M-Pesa API Audit
+                Discuss Strategy
               </Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 3. CAPABILITIES: Focus on Business Outcomes */}
+      {/* 2. CAPABILITIES: Outcome-Focused Solutions */}
       <section className="p-4 md:p-8 bg-background border-t border-border">
-        <div className="max-w-7xl mx-auto py-12 md:py-24 transition-all duration-300 ease-in-out">
-          <div className="flex justify-between items-center flex-col md:flex-row">
-            <div className="max-w-2xl mb-4 md:mb-8">
-              <h2 className="text-h2 mb-4">Engineering Growth.</h2>
-              <p className="">
-                We don&apos;t just build features; we solve the technical
-                bottlenecks stopping you from scaling.
+        <div className="max-w-7xl mx-auto py-12 md:py-24">
+          <div className="flex justify-between items-end flex-col md:flex-row mb-16 gap-6">
+            <div className="max-w-2xl">
+              <h2 className="text-h2 mb-4">Engineering for Growth.</h2>
+              <p className="text-lg opacity-70">
+                We remove the technical bottlenecks that prevent scaling. Our
+                solutions are built for high-traffic, high-conversion, and
+                long-term stability.
               </p>
             </div>
             <Link
               href="/services"
-              className="text-brand-primary  font-bold flex items-center gap-2 hover:underline mb-8 md:mb-0 transition-all"
+              className="text-brand-primary font-bold flex items-center gap-2 hover:gap-3 transition-all group"
             >
-              Explore All Services <ArrowRight size={18} />
+              View Our Capabilities{" "}
+              <ArrowRight size={18} className="transition-all" />
             </Link>
           </div>
 
@@ -74,31 +87,39 @@ export default function Homepage() {
             {[
               {
                 title: "Fintech & M-Pesa",
-                desc: "Automated C2B/B2C settlements with real-time reconciliation and Daraja 3.0 security.",
+                desc: "Enterprise-grade M-Pesa STK Push and Daraja 3.0 integrations. We handle the complexity of settlements so you can focus on sales.",
                 icon: <CreditCard className="text-brand-primary" />,
                 accent: "bg-brand-primary/10",
+                stat: "99.9% Uptime",
               },
               {
-                title: "Enterprise Mobile",
-                desc: "Native-feel iOS & Android apps optimized for Kenya's mobile-first infrastructure.",
+                title: "High-Scale Mobile",
+                desc: "Native iOS & Android apps that work offline and scale effortlessly. Optimized for the local market connectivity constraints.",
                 icon: <Smartphone className="text-brand-secondary" />,
                 accent: "bg-brand-secondary/10",
+                stat: "Top 5% Latency",
               },
               {
-                title: "E-Commerce Engines",
-                desc: "High-performance digital shelves built with Next.js for sub-2s load times.",
+                title: "Next-Gen E-Commerce",
+                desc: "Headless commerce builds that load in under 2 seconds. Performance engineering designed to lower customer acquisition costs.",
                 icon: <ShoppingBag className="text-brand-accent" />,
                 accent: "bg-brand-accent/10",
+                stat: "Sub-2s Load",
               },
             ].map((s, i) => (
               <div
                 key={i}
-                className="card-layered p-6 md:p-8 border-border hover:shadow-glow transition-all hover:-translate-y-2"
+                className="card-layered p-8 border-border hover:shadow-glow transition-all hover:-translate-y-2 group"
               >
-                <div
-                  className={`w-14 h-14 ${s.accent} rounded-2xl flex items-center justify-center mb-8 group-hover:rotate-6 transition-transform`}
-                >
-                  {s.icon}
+                <div className="flex justify-between items-start mb-8">
+                  <div
+                    className={`w-14 h-14 ${s.accent} rounded-2xl flex items-center justify-center group-hover:rotate-6 transition-transform`}
+                  >
+                    {s.icon}
+                  </div>
+                  <span className="text-[10px] font-black tracking-tighter text-brand-primary px-2 py-1 bg-brand-primary/5 rounded border border-brand-primary/10">
+                    {s.stat}
+                  </span>
                 </div>
                 <h3 className="text-2xl font-bold mb-4">{s.title}</h3>
                 <p className="opacity-70 leading-relaxed text-sm">{s.desc}</p>
@@ -106,40 +127,40 @@ export default function Homepage() {
             ))}
           </div>
         </div>
-
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-end justify-between mb-20 gap-8"></div>
       </section>
 
-      {/* 4. THE NET-HUB EDGE: Process & Reliability */}
+      {/* 3. THE NET-HUB EDGE: Why Engineering Matters */}
       <section className="py-32 card-layered rounded-none my-4 border-y border-border">
         <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-20 items-center">
           <div>
             <h2 className="text-4xl font-bold mb-8 tracking-tight">
-              Why NetHub?
+              The Engineering Partner Your Business Deserves.
             </h2>
-            <div className="space-y-8">
+            <div className="space-y-10">
               {[
                 {
-                  label: "Clean Code Guarantee",
-                  desc: "Technical debt is a killer. We write documented, scalable TypeScript.",
-                  icon: <Code2 />,
+                  label: "Performance as a Feature",
+                  desc: "Every 100ms of lag costs you money. We treat speed as a non-negotiable business metric, not just a technical spec.",
+                  icon: <Zap />,
                 },
                 {
-                  label: "Revenue-First Design",
-                  desc: "Every pixel is placed to guide users toward the checkout button.",
-                  icon: <TrendingUp />,
-                },
-                {
-                  label: "Data Security",
-                  desc: "Fully compliant with the Kenya Data Protection Act (2019).",
+                  label: "Compliance & Security",
+                  desc: "From PCI-DSS gateway standards to the Kenya Data Protection Act, we ensure your client data and revenue are bulletproof.",
                   icon: <ShieldCheck />,
                 },
+                {
+                  label: "Zero-Fragility Code",
+                  desc: "We build scalable TypeScript systems. No technical debt. No 'spaghetti code'—just documented, enterprise-ready infrastructure.",
+                  icon: <Code2 />,
+                },
               ].map((item, i) => (
-                <div key={i} className="flex gap-6">
-                  <div className="mt-1 text-brand-primary">{item.icon}</div>
+                <div key={i} className="flex gap-6 group">
+                  <div className="mt-1 text-brand-primary transition-transform group-hover:scale-110">
+                    {item.icon}
+                  </div>
                   <div>
-                    <h4 className="font-bold text-lg mb-1">{item.label}</h4>
-                    <p className="text-sm opacity-60 leading-relaxed">
+                    <h4 className="font-bold text-xl mb-2">{item.label}</h4>
+                    <p className="text-sm opacity-65 leading-relaxed max-w-md">
                       {item.desc}
                     </p>
                   </div>
@@ -147,63 +168,109 @@ export default function Homepage() {
               ))}
             </div>
           </div>
+
           <div className="relative">
-            <div className="aspect-video bg-background rounded-3xl border border-border shadow-2xl p-8 flex flex-col justify-center">
-              <div className="space-y-4">
-                <div className="h-2 w-1/2 bg-brand-primary/20 rounded" />
-                <div className="h-2 w-3/4 bg-border rounded" />
-                <div className="h-2 w-2/3 bg-border rounded" />
-                <div className="pt-4 flex gap-2">
-                  <div className="h-8 w-24 bg-brand-primary rounded-lg" />
-                  <div className="h-8 w-24 bg-surface rounded-lg border border-border" />
+            {/* Visual representation of a 'system' dashboard */}
+            <div className="aspect-square bg-card rounded-[3rem] border border-border shadow-2xl p-10 flex flex-col justify-between overflow-hidden">
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="h-4 w-32 bg-brand-primary/20 rounded-full" />
+                  <div className="h-8 w-8 rounded-full bg-brand-primary animate-pulse" />
+                </div>
+                <div className="space-y-3">
+                  <div className="h-3 w-full bg-border/50 rounded-full" />
+                  <div className="h-3 w-[90%] bg-border/50 rounded-full" />
+                  <div className="h-3 w-[70%] bg-border/50 rounded-full" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="h-24 bg-surface rounded-2xl border border-border p-4">
+                  <TrendingUp size={16} className="text-brand-primary mb-2" />
+                  <div className="h-2 w-12 bg-brand-primary/30 rounded mb-2" />
+                  <div className="h-4 w-16 bg-foreground rounded" />
+                </div>
+                <div className="h-24 bg-surface rounded-2xl border border-border p-4">
+                  <Users size={16} className="text-brand-secondary mb-2" />
+                  <div className="h-2 w-12 bg-brand-secondary/30 rounded mb-2" />
+                  <div className="h-4 w-16 bg-foreground rounded" />
                 </div>
               </div>
             </div>
-            {/* Trust badge overlay */}
-            <div className="absolute -bottom-6 -right-6 bg-card border border-brand-primary/20 p-6 rounded-2xl shadow-xl max-w-50">
-              <div className="flex items-center gap-2 mb-2">
-                <CheckCircle className="text-brand-primary" size={16} />
-                <span className="text-[10px] font-bold uppercase tracking-widest">
-                  Verified
-                </span>
+
+            <div className="absolute -bottom-10 -left-10 bg-background border border-border p-8 rounded-3xl shadow-2xl max-w-64">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center">
+                  <CheckCircle className="text-green-500" size={20} />
+                </div>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                    System Status
+                  </p>
+                  <p className="text-sm font-bold">All Systems Nominal</p>
+                </div>
               </div>
-              <p className="text-xs font-bold leading-tight">
-                Delivering 2.4x average ROI for clients.
+              <p className="text-xs opacity-60 italic leading-snug">
+                "NetHub didn't just build our app; they fixed our entire payment
+                workflow."
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 5. FINAL CALL TO ACTION */}
-      <footer className="card-layered rounded-none my-4 border-y border-border py-12 md:py-24 transition-all duration-300 ease-in-out">
-        <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
-          <h2 className="text-5xl md:text-7xl font-black mb-8 tracking-tighter">
-            Stop guessing. <br /> Start{" "}
-            <span className="text-brand-primary underline decoration-brand-primary/30">
-              building.
+      {/* 4. FINAL CALL TO ACTION: The Strategy Invitation */}
+      <footer className="card-layered rounded-none my-4 border-y border-border py-12 md:py-32 transition-all duration-300 ease-in-out">
+        <div className="max-w-5xl mx-auto px-6 text-center relative z-10">
+          <h2 className="text-5xl md:text-8xl font-black mb-8 tracking-tighter leading-tight">
+            Engineering your <br />
+            <span className="text-brand-primary underline decoration-brand-primary/20">
+              next million.
             </span>
           </h2>
-          <p className="text-xl opacity-60 mb-12 max-w-xl mx-auto">
-            Ready to integrate M-Pesa, build a mobile app, or refresh your
-            digital presence?
+          <p className="text-xl opacity-70 mb-12 max-w-2xl mx-auto">
+            Stop treating technology as a cost center. Partner with engineers
+            who understand that growth is the only metric that matters.
           </p>
-          <div className="flex flex-col sm:flex-row justify-center gap-4">
+          <div className="flex flex-col sm:flex-row justify-center gap-6">
             <Link
               href="/contact"
-              className="bg-foreground text-background px-12 py-5 rounded-2xl font-bold text-lg hover:scale-[1.03] active:scale-95 transition-all"
+              className="bg-foreground text-background px-12 py-6 rounded-2xl font-bold text-xl hover:shadow-2xl hover:-translate-y-1 active:scale-95 transition-all"
             >
-              Book a Free Strategy Call
+              Book Strategic Consult
             </Link>
             <a
               href="mailto:hello@nethub.co.ke"
-              className="px-12 py-5 rounded-2xl font-bold text-lg border border-border hover:bg-surface transition-all"
+              className="px-12 py-6 rounded-2xl font-bold text-xl border border-border hover:bg-card transition-all"
             >
-              Email Us Directly
+              Email Direct
             </a>
           </div>
         </div>
       </footer>
     </div>
+  );
+}
+
+// Logic Component Helper
+function Users({ size, className }: { size: number; className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
   );
 }

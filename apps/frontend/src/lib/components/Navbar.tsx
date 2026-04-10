@@ -56,7 +56,8 @@ const Navbar = () => {
           <span className="text-2xl text-gradient font-bold tracking-tighter">
             NetHub
             <span className="text-brand-primary group-hover:text-brand-secondary transition-colors">
-              .co.ke
+              {" "}
+              Kenya
             </span>
           </span>
         </Link>
