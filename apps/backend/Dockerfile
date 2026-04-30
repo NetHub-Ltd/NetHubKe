@@ -30,7 +30,7 @@ RUN pip install --no-cache-dir -r requirements.txt gunicorn
 COPY app/ ./app
 # COPY fastapi ./fastapi
 # COPY realms ./realms
-COPY scripts ./scripts
+# COPY scripts ./scripts
 COPY entrypoint.sh ./entrypoint.sh
 COPY alembic.ini ./alembic.ini
 COPY alembic ./alembic
