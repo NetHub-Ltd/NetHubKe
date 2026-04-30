@@ -29,14 +29,14 @@ RUN pip install --no-cache-dir -r requirements.txt gunicorn
 # Matching your manual copy logic
 COPY app/ ./app
 # COPY fastapi ./fastapi
-COPY realms ./realms
-COPY scripts ./scripts
+# COPY realms ./realms
+# COPY scripts ./scripts
 COPY entrypoint.sh ./entrypoint.sh
 COPY alembic.ini ./alembic.ini
 COPY alembic ./alembic
 
 # 6. Final touches
-RUN chmod +x entrypoint.sh && chmod +x scripts/init-db.sh
+RUN chmod +x entrypoint.sh
 EXPOSE 8000
 
 # Using dots for the module path, not slashes!
