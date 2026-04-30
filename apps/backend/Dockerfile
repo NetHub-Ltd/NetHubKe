@@ -28,7 +28,7 @@ RUN pip install --no-cache-dir -r requirements.txt gunicorn
 # 5. Copy your source folders specifically
 # Matching your manual copy logic
 COPY app/ ./app
-COPY fastapi ./fastapi
+# COPY fastapi ./fastapi
 COPY realms ./realms
 COPY scripts ./scripts
 COPY entrypoint.sh ./entrypoint.sh
