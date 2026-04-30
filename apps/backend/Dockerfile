@@ -29,7 +29,7 @@ RUN pip install --no-cache-dir -r requirements.txt gunicorn
 # Matching your manual copy logic
 COPY app/ ./app
 # COPY fastapi ./fastapi
-COPY realms ./realms
+# COPY realms ./realms
 COPY scripts ./scripts
 COPY entrypoint.sh ./entrypoint.sh
 COPY alembic.ini ./alembic.ini
