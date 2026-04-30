@@ -9,9 +9,10 @@ from app.api.v1.api_router import router as api_router
 
 from app.core.config import settings
 from app.db.session import engine
-from app.utils.logging import  setup_logger, logger
+from app.utils.logging import logger
+from loguru import logger
 
-setup_logger()
+# setup_logging()
 
 
 @asynccontextmanager
@@ -49,7 +50,7 @@ def create_application() -> FastAPI:
         # docs_url="/docs" if settings.environment != "production" else None,
         redoc_url=None,
     )
-
+    logger.info(f"Allowe Origins: {settings.cors_origins}")
     # 1. Middleware
     application.add_middleware(
         CORSMiddleware,
@@ -72,6 +73,7 @@ async def health_check():
     Health check endpoint to verify that the API is running.
     """
     return JSONResponse(content={"status": "healthy"}, status_code=200)
+
 
 
 

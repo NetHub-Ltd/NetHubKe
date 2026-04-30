@@ -2,6 +2,7 @@
 import { useSession, signOut } from "next-auth/react";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+// import { LogoutButton } from "@/lib/components/loginButton";
 
 export default function WelcomePage() {
   const { data: session, status } = useSession();
@@ -22,6 +23,9 @@ export default function WelcomePage() {
 
       {/* Sign out of both NextAuth AND Keycloak */}
       <button onClick={() => signOut({ callbackUrl: "/" })}>Logout</button>
+      {/* Alternatively, use the LogoutButton component which handles federated logout */}
+      {/* <LogoutButton /> */}
+      {/* <LogoutButton /> */}
     </main>
   );
 }

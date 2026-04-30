@@ -1,4 +1,96 @@
-name: Build, Push & Deploy Nethub Backend
+# name: Build, Push & Deploy Nethub Backend
+
+# on:
+#   push:
+#     tags:
+#       - "v*"
+
+# jobs:
+#   # --- JOB 1: Build the Image (Inlined) ---
+#   build-api:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
+
+#       - name: Set up Docker Buildx
+#         uses: docker/setup-buildx-action@v3
+
+#       - name: Login to Docker Hub
+#         uses: docker/login-action@v3
+#         with:
+#           username: ${{ secrets.DOCKERHUB_USERNAME }}
+#           password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+#       - name: Build and push
+#         uses: docker/build-push-action@v5
+#         with:
+#           # context is the folder containing your code
+#           context: ./apps/backend
+#           # file is relative to the repo root
+#           file: ./apps/backend/Dockerfile
+#           push: true
+#           # Tags the image with your Git Tag (e.g., v0.0.3)
+#           tags: ${{ secrets.DOCKERHUB_USERNAME }}/nethubke:${{ github.ref_name }}
+#           cache-from: type=gha
+#           cache-to: type=gha,mode=max
+
+#   # --- JOB 2: Sync Prod Config to VPS ---
+#   sync-configs:
+#     needs: build-api
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v4
+
+#       - name: Copy Production Compose to VPS
+#         uses: appleboy/scp-action@v0.1.7
+#         with:
+#           host: ${{ secrets.VPS_HOST }}
+#           username: ${{ secrets.VPS_USERNAME }}
+#           key: ${{ secrets.VPS_SSH_KEY }}
+#           # REMOVE the "./" prefix to make the component count predictable
+#           source: "apps/backend/docker-compose.prod.yml"
+#           target: "/home/davie/docker_stack/nethubke"
+#           # strip_components: 2 removes "apps" and "backend"
+#           strip_components: 2
+
+#       - name: Rename and Cleanup
+#         uses: appleboy/ssh-action@v1.0.3
+#         with:
+#           host: ${{ secrets.VPS_HOST }}
+#           username: ${{ secrets.VPS_USERNAME }}
+#           key: ${{ secrets.VPS_SSH_KEY }}
+#           script: |
+#             cd /home/davie/docker_stack/nethubke
+
+#             # 1. Find the file in any subfolder and move it here as docker-compose.yml
+#             find . -name "docker-compose.prod.yml" -exec mv -f {} ./docker-compose.yml \;
+
+#             # 2. Clean up the empty 'apps/backend' folders left behind
+#             rm -rf apps/
+
+#             # 3. Verify it worked
+#             if [ -f "docker-compose.yml" ]; then
+#               echo "✅ Successfully moved and renamed docker-compose.yml"
+#             else
+#               echo "❌ Error: Could not find docker-compose.prod.yml"
+#               exit 1
+#             fi
+
+#   # --- JOB 3: Deploy to VPS ---
+#   deploy-api:
+#     needs: sync-configs
+#     uses: daviekaranja/workflows/.github/workflows/reusable-deploy.yml@master
+#     with:
+#       target_directory: "/home/davie/docker_stack/nethubke"
+#       image_tag: ${{ github.ref_name }}
+#     secrets:
+#       VPS_HOST: ${{ secrets.VPS_HOST }}
+#       VPS_USERNAME: ${{ secrets.VPS_USERNAME }}
+#       VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+
+name: Build & Push Nethub Backend Image
 
 on:
   push:
@@ -6,86 +98,49 @@ on:
       - "v*"
 
 jobs:
-  # --- JOB 1: Build the Image (Inlined) ---
-  build-api:
+  build-and-push:
     runs-on: ubuntu-latest
+
     steps:
+      # 1. Checkout source
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # 2. Enable QEMU (required for cross-platform builds)
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      # 3. Enable Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      # 4. Login to Docker Hub
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push
+      # 5. Build & Push Multi-Platform Image
+      - name: Build and push multi-arch image
         uses: docker/build-push-action@v5
         with:
-          # context is the folder containing your code
           context: ./apps/backend
-          # file is relative to the repo root
           file: ./apps/backend/Dockerfile
+
+          # 🔥 Multi-platform target
+          platforms: linux/amd64,linux/arm64
+
           push: true
-          # Tags the image with your Git Tag (e.g., v0.0.3)
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/nethubke:${{ github.ref_name }}
+
+          # Tag with Git tag (v1.0.0)
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/nethubke:${{ github.ref_name }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/nethubke:latest
+
+          # 🚀 Build cache (important for speed)
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # --- JOB 2: Sync Prod Config to VPS ---
-  sync-configs:
-    needs: build-api
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Copy Production Compose to VPS
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USERNAME }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          # REMOVE the "./" prefix to make the component count predictable
-          source: "apps/backend/docker-compose.prod.yml"
-          target: "/home/davie/docker_stack/nethubke"
-          # strip_components: 2 removes "apps" and "backend"
-          strip_components: 2
-
-      - name: Rename and Cleanup
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USERNAME }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          script: |
-            cd /home/davie/docker_stack/nethubke
-
-            # 1. Find the file in any subfolder and move it here as docker-compose.yml
-            find . -name "docker-compose.prod.yml" -exec mv -f {} ./docker-compose.yml \;
-
-            # 2. Clean up the empty 'apps/backend' folders left behind
-            rm -rf apps/
-
-            # 3. Verify it worked
-            if [ -f "docker-compose.yml" ]; then
-              echo "✅ Successfully moved and renamed docker-compose.yml"
-            else
-              echo "❌ Error: Could not find docker-compose.prod.yml"
-              exit 1
-            fi
-
-  # --- JOB 3: Deploy to VPS ---
-  deploy-api:
-    needs: sync-configs
-    uses: daviekaranja/workflows/.github/workflows/reusable-deploy.yml@master
-    with:
-      target_directory: "/home/davie/docker_stack/nethubke"
-      image_tag: ${{ github.ref_name }}
-    secrets:
-      VPS_HOST: ${{ secrets.VPS_HOST }}
-      VPS_USERNAME: ${{ secrets.VPS_USERNAME }}
-      VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          # Optional but recommended for provenance
+          provenance: false

@@ -1,28 +1,33 @@
 {
-  "realm": "${REALM_NAME}",
+  "realm": "nethub",
   "enabled": true,
   "sslRequired": "external",
+
   "registrationAllowed": true,
   "resetPasswordAllowed": true,
   "loginWithEmailAllowed": true,
   "duplicateEmailsAllowed": false,
   "registrationEmailAsUsername": true,
   "rememberMe": true,
+
   "displayName": "Nethub Kenya",
   "verifyEmail": true,
+
   "passwordPolicy": "length(12) and notUsername and notEmail",
+
   "smtpServer": {
-    "host": "${SMTP_HOST}",
+    "host": "smtp.gmail.com",
     "port": "587",
-    "from": "${SMTP_USER}",
+    "from": "nethubdigitalsolutions@gmail.com",
     "fromDisplayName": "Nethub Support",
     "auth": "true",
     "ssl": "false",
     "starttls": "true",
-    "user": "${SMTP_USER}",
-    "password": "${SMTP_PASSWORD}",
-    "replyTo": "${SMTP_USER}"
+    "user": "nethubdigitalsolutions@gmail.com",
+    "password": "mkja gqft xthb kjju",
+    "replyTo": "nethubdigitalsolutions@gmail.com"
   },
+
   "roles": {
     "realm": [
       {
@@ -47,6 +52,7 @@
       }
     ]
   },
+
   "groups": [
     {
       "name": "nethub-admins",
@@ -63,29 +69,51 @@
       "subGroups": []
     }
   ],
+
   "defaultGroups": ["/nethub-users"],
+
   "clients": [
     {
       "clientId": "nethub-frontend",
       "name": "Nethub Web Frontend",
       "enabled": true,
       "publicClient": true,
-      "redirectUris": ["https://nethub.co.ke/*", "http://localhost:3000/*"],
+
+      "redirectUris": [
+        "https://nethub.co.ke/*",
+        "https://www.nethub.co.ke/*",
+        "http://localhost:3000/*"
+      ],
+
       "webOrigins": ["+"],
       "fullScopeAllowed": false,
+
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+
       "defaultClientScopes": ["roles", "groups", "openid", "profile", "email"]
     },
+
     {
       "clientId": "nethub-backend",
       "name": "Nethub FastAPI Backend",
       "enabled": true,
-      "secret": "${BACKEND_CLIENT_SECRET}",
+
+      "clientAuthenticatorType": "client-secret",
+      "secret": "REPLACE_WITH_STRONG_BACKEND_SECRET_64_CHARS",
+
       "serviceAccountsEnabled": true,
       "authorizationServicesEnabled": true,
+
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+
       "fullScopeAllowed": false,
       "defaultClientScopes": ["roles", "groups"]
     }
   ],
+
   "clientScopes": [
     {
       "name": "roles",
@@ -110,6 +138,7 @@
         }
       ]
     },
+
     {
       "name": "groups",
       "description": "Adds user group membership to tokens",
@@ -132,6 +161,7 @@
         }
       ]
     },
+
     {
       "name": "openid",
       "protocol": "openid-connect",
@@ -139,6 +169,7 @@
         "display.on.consent.screen": "false"
       }
     },
+
     {
       "name": "profile",
       "protocol": "openid-connect",
@@ -208,6 +239,7 @@
         }
       ]
     },
+
     {
       "name": "email",
       "protocol": "openid-connect",

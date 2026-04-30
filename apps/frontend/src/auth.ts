@@ -1,50 +1,126 @@
-// auth.ts
 import NextAuth from "next-auth";
 import Keycloak from "next-auth/providers/keycloak";
+import { zUserRead } from "./lib/types/api/zod.gen";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  // debug: process.env.NODE_ENV === "development",
   providers: [
     Keycloak({
       clientId: process.env.KEYCLOAK_CLIENT_ID!,
       clientSecret: process.env.KEYCLOAK_CLIENT_SECRET!,
       issuer: process.env.KEYCLOAK_ISSUER!,
+      authorization: { params: { scope: "openid profile email" } },
     }),
   ],
-
-  session: {
-    strategy: "jwt",
-  },
-
   callbacks: {
-    async jwt({ token, account, profile }) {
-      // First login
-      if (account && profile) {
-        token.accessToken = account.access_token;
-        token.idToken = account.id_token;
-        token.refreshToken = account.refresh_token;
+    async jwt({ token, account, user }) {
+      // 1. INITIAL SIGN-IN
+      if (account && user) {
+        try {
+          const response = await fetch(
+            `${process.env.BACKEND_URL}/users/sync`,
+            {
+              method: "POST",
+              headers: { Authorization: `Bearer ${account.access_token}` },
+            },
+          );
 
-        // OIDC user info
-        token.user = {
-          id: profile.sub,
-          name: profile.name,
-          email: profile.email,
-          username: profile.preferred_username,
-        };
+          if (!response.ok) throw new Error("Backend rejected IdP token");
 
-        // Extract Keycloak roles
-        token.roles = profile?.realm_access?.roles ?? [];
+          const backendUser = await response.json();
+          const parsed_data = zUserRead.parse(backendUser);
+
+          if (!parsed_data.is_active) {
+            throw new Error("User account is inactive");
+          }
+
+          return {
+            accessToken: account.access_token,
+            refreshToken: account.refresh_token,
+            idToken: account.id_token, // Saved for federated logout
+            expiresAt: (account.expires_at ?? 0) * 1000,
+            user: {
+              id: parsed_data.id,
+              // email: parsed_data.email,
+              isActive: parsed_data.is_active,
+              // tenantId: parsed_data.tenant_id,
+            },
+          };
+        } catch (error) {
+          console.error("Backend Sync Error:", error);
+          return { ...token, error: "SyncError" };
+        }
+      }
+
+      // 2. STALE SESSION CLEARANCE
+      // If the session was flagged as dead in a previous cycle, return null to delete the cookie
+      if (
+        token.error === "RefreshAccessTokenError" ||
+        token.error === "SyncError"
+      ) {
+        console.warn("JWT: Cleaning up stale session cookie.");
+        return null;
+      }
+
+      // 3. MAINTENANCE: Token Freshness check
+      const now = Date.now();
+      const buffer = 60 * 1000; // 1 minute
+      if (now > (token.expiresAt as number) - buffer) {
+        return await refreshAccessToken(token);
       }
 
       return token;
     },
 
     async session({ session, token }) {
-      session.user = token.user as any;
-      session.accessToken = token.accessToken as string;
-      session.roles = token.roles as string[];
-
-      console.log("session", session);
+      // Pass all our custom data to the client-side session object
+      if (token) {
+        session.user = {
+          ...session.user,
+          ...(token.user as any),
+        };
+        session.accessToken = token.accessToken as string;
+        session.idToken = token.idToken as string; // Available for federatedLogout action
+        session.error = token.error as string;
+      }
       return session;
     },
   },
 });
+
+async function refreshAccessToken(token: any) {
+  console.log("Attempting token refresh...");
+  try {
+    const response = await fetch(
+      `${process.env.KEYCLOAK_ISSUER}/protocol/openid-connect/token`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          client_id: process.env.KEYCLOAK_CLIENT_ID!,
+          client_secret: process.env.KEYCLOAK_CLIENT_SECRET!,
+          grant_type: "refresh_token",
+          refresh_token: token.refreshToken,
+        }),
+      },
+    );
+
+    const tokens = await response.json();
+    if (!response.ok) throw tokens;
+
+    console.log("Token refreshed successfully.");
+
+    return {
+      ...token,
+      accessToken: tokens.access_token,
+      idToken: tokens.id_token ?? token.idToken, // Update ID token if provided
+      expiresAt: Date.now() + tokens.expires_in * 1000,
+      refreshToken: tokens.refresh_token ?? token.refreshToken,
+      error: undefined,
+    };
+  } catch (error) {
+    console.error("Refresh Error Logic Triggered:", error);
+    // Flag the token as dead
+    return { ...token, error: "RefreshAccessTokenError" };
+  }
+}

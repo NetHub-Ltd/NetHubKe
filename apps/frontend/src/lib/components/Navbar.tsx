@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { Menu, X, ArrowRight, Zap } from "lucide-react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
+// import { LoginButton } from "./loginButton";
 
 const navLinks = [
   { name: "Home", href: "/" },
@@ -56,7 +57,8 @@ const Navbar = () => {
           <span className="text-2xl text-gradient font-bold tracking-tighter">
             NetHub
             <span className="text-brand-primary group-hover:text-brand-secondary transition-colors">
-              .co.ke
+              {" "}
+              Kenya
             </span>
           </span>
         </Link>
@@ -86,9 +88,11 @@ const Navbar = () => {
             })}
           </div>
 
+          {/* <LoginButton /> */}
+
           {/* Premium CTA */}
           <Link
-            href="/contact"
+            href="/services"
             className="relative overflow-hidden bg-brand-primary text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 group shadow-glow hover:shadow-brand-primary/40 transition-all active:scale-95"
           >
             <span className="relative z-10 flex items-center gap-2">
