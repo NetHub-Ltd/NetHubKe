@@ -1,120 +1,126 @@
-import NextAuth, { User } from "next-auth";
+import NextAuth from "next-auth";
 import Keycloak from "next-auth/providers/keycloak";
 import { zUserRead } from "./lib/types/api/zod.gen";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  debug: process.env.NODE_ENV === "development",
+  // debug: process.env.NODE_ENV === "development",
   providers: [
     Keycloak({
       clientId: process.env.KEYCLOAK_CLIENT_ID!,
-      clientSecret: process.env.KEYCLOAK_CLIENT_SECRET!, // Required for refresh
+      clientSecret: process.env.KEYCLOAK_CLIENT_SECRET!,
       issuer: process.env.KEYCLOAK_ISSUER!,
+      authorization: { params: { scope: "openid profile email" } },
     }),
   ],
   callbacks: {
     async jwt({ token, account, user }) {
-      // 1. Initial Sign-in: Sync with Backend and store tokens
+      // 1. INITIAL SIGN-IN
       if (account && user) {
         try {
           const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/users/sync`,
+            `${process.env.BACKEND_URL}/users/sync`,
             {
               method: "POST",
               headers: { Authorization: `Bearer ${account.access_token}` },
             },
           );
 
-          if (!response.ok) throw new Error("Backend sync failed");
+          if (!response.ok) throw new Error("Backend rejected IdP token");
 
-          const externalUser = await response.json();
-          const data = zUserRead.parse(externalUser);
+          const backendUser = await response.json();
+          const parsed_data = zUserRead.parse(backendUser);
+
+          if (!parsed_data.is_active) {
+            throw new Error("User account is inactive");
+          }
 
           return {
-            ...token,
             accessToken: account.access_token,
             refreshToken: account.refresh_token,
-            expiresAt: account.expires_at! * 1000, // NextAuth uses seconds, we want ms
+            idToken: account.id_token, // Saved for federated logout
+            expiresAt: (account.expires_at ?? 0) * 1000,
             user: {
-              id: data.id,
-              tenantId: data.tenant_id,
-              isActive: data.is_active,
-              name: data.full_name,
-              email: data.email,
+              id: parsed_data.id,
+              // email: parsed_data.email,
+              isActive: parsed_data.is_active,
+              // tenantId: parsed_data.tenant_id,
             },
           };
         } catch (error) {
-          console.error("Auth Handshake Error:", error);
+          console.error("Backend Sync Error:", error);
           return { ...token, error: "SyncError" };
         }
       }
 
-      // 2. Return token if it hasn't expired yet
-      if (Date.now() < (token.expiresAt as number)) {
-        return token;
+      // 2. STALE SESSION CLEARANCE
+      // If the session was flagged as dead in a previous cycle, return null to delete the cookie
+      if (
+        token.error === "RefreshAccessTokenError" ||
+        token.error === "SyncError"
+      ) {
+        console.warn("JWT: Cleaning up stale session cookie.");
+        return null;
       }
 
-      // 3. Token expired: Try to refresh it via Keycloak
-      try {
-        const response = await fetch(
-          `${process.env.KEYCLOAK_ISSUER}/protocol/openid-connect/token`,
-          {
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: new URLSearchParams({
-              client_id: process.env.KEYCLOAK_CLIENT_ID!,
-              client_secret: process.env.KEYCLOAK_CLIENT_SECRET!,
-              grant_type: "refresh_token",
-              refresh_token: token.refreshToken as string,
-            }),
-            method: "POST",
-          },
-        );
-
-        const tokens = await response.json();
-        if (!response.ok) throw tokens;
-
-        return {
-          ...token,
-          accessToken: tokens.access_token,
-          expiresAt: Date.now() + tokens.expires_in * 1000,
-          // Keycloak might not always return a new refresh token; fallback to the old one
-          refreshToken: tokens.refresh_token ?? token.refreshToken,
-        };
-      } catch (error) {
-        console.error("RefreshAccessTokenError", error);
-        return { ...token, error: "RefreshAccessTokenError" };
+      // 3. MAINTENANCE: Token Freshness check
+      const now = Date.now();
+      const buffer = 60 * 1000; // 1 minute
+      if (now > (token.expiresAt as number) - buffer) {
+        return await refreshAccessToken(token);
       }
+
+      return token;
     },
 
     async session({ session, token }) {
-      // 4. Pass the custom data and error state to the client
+      // Pass all our custom data to the client-side session object
       if (token) {
         session.user = {
           ...session.user,
-          id: (token.user as any)?.id,
-          tenantId: (token.user as any)?.tenantId,
-          isActive: (token.user as any)?.isActive,
+          ...(token.user as any),
         };
         session.accessToken = token.accessToken as string;
-        session.error = token.error as string | undefined;
+        session.idToken = token.idToken as string; // Available for federatedLogout action
+        session.error = token.error as string;
       }
       return session;
     },
   },
-  events: {
-    async signOut() {
-      // 5. Federated Logout: When NextAuth signs out, notify Keycloak
-      const issuerUrl = process.env.KEYCLOAK_ISSUER;
-      const clientId = process.env.KEYCLOAK_CLIENT_ID;
-      console.log("Federated Logout:", { issuerUrl, clientId});
-
-      if (issuerUrl && clientId) {
-        const url = `${issuerUrl}/protocol/openid-connect/logout?client_id=${clientId}&post_logout_redirect_uri=${encodeURIComponent(process.env.NEXTAUTH_URL!)}`;
-        try {
-          await fetch(url);
-        } catch (err) {
-          console.error("Federated logout failed", err);
-        }
-      }
-    },
-  },
 });
+
+async function refreshAccessToken(token: any) {
+  console.log("Attempting token refresh...");
+  try {
+    const response = await fetch(
+      `${process.env.KEYCLOAK_ISSUER}/protocol/openid-connect/token`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          client_id: process.env.KEYCLOAK_CLIENT_ID!,
+          client_secret: process.env.KEYCLOAK_CLIENT_SECRET!,
+          grant_type: "refresh_token",
+          refresh_token: token.refreshToken,
+        }),
+      },
+    );
+
+    const tokens = await response.json();
+    if (!response.ok) throw tokens;
+
+    console.log("Token refreshed successfully.");
+
+    return {
+      ...token,
+      accessToken: tokens.access_token,
+      idToken: tokens.id_token ?? token.idToken, // Update ID token if provided
+      expiresAt: Date.now() + tokens.expires_in * 1000,
+      refreshToken: tokens.refresh_token ?? token.refreshToken,
+      error: undefined,
+    };
+  } catch (error) {
+    console.error("Refresh Error Logic Triggered:", error);
+    // Flag the token as dead
+    return { ...token, error: "RefreshAccessTokenError" };
+  }
+}

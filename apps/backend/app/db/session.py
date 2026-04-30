@@ -1,3 +1,7 @@
+from typing import AsyncGenerator
+
+from loguru import logger
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine, async_sessionmaker
 from sqlmodel.ext.asyncio.session import AsyncSession
 from app.core.config import settings
@@ -33,3 +37,20 @@ AsyncSessionLocal = async_sessionmaker(
     expire_on_commit=False,
     autoflush=False,
 )
+
+
+async def get_session() -> AsyncGenerator[AsyncSession, None]:
+    """
+    Provides a scoped AsyncSession for each request.
+    Optimized for SQLModel + asyncpg.
+    """
+    async with AsyncSessionLocal() as session:
+        try:
+            yield session
+            # We don't commit here. The Service Layer handles the 'Save'.
+        except SQLAlchemyError as e:
+            # Explicit rollback ensures the DB connection is clean
+            await session.rollback()
+            logger.error("DB Session Error | {}", str(e))
+            raise
+        # No 'finally' needed; 'async with' handles closure automatically

@@ -22,12 +22,12 @@ export default function Homepage() {
         <div className="max-w-7xl mx-auto py-12 md:py-24">
           <div className="flex flex-col items-start">
             {/* Partnership Badge */}
-            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-brand-primary/5 border border-brand-primary/10 mb-6">
+            {/* <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-brand-primary/5 border border-brand-primary/10 mb-6">
               <Zap size={14} className="text-brand-primary" />
               <span className="text-[10px] font-bold uppercase tracking-widest text-brand-primary">
                 Your Strategic Engineering Partner
               </span>
-            </div>
+            </div> */}
 
             <h1 className="text-gradient text-h1 mb-6 max-w-4xl">
               We build the systems that power Kenya&apos;s

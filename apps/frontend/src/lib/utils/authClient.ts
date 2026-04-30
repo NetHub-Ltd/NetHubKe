@@ -3,9 +3,9 @@
 
 import { signIn } from "next-auth/react";
 
-export const login = async () => {
+export const keycloakLogin = async () => {
   const callbackUrl =
-    window.location.pathname === "/login" ? "/welcome" : window.location.href;
+    window.location.pathname === "/login" ? "/dashboard" : window.location.href;
 
   await signIn("keycloak", { callbackUrl });
 };

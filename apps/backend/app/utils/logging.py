@@ -1,166 +1,304 @@
-# import logging
+# # logger.py
 # import sys
+# import os
+# import logging
 # from loguru import logger as log
 #
+# ENV = os.getenv("ENV", "dev").lower()
+# LOG_LEVEL = os.getenv("LOG_LEVEL", "DEBUG" if ENV == "dev" else "INFO")
 #
+#
+# # ----------------------------
+# # 🎨 Custom Level Colors (Pill Style)
+# # ----------------------------
+# log.level("DEBUG", color="<black><bg #2196F3>")
+# log.level("INFO", color="<black><bg #4CAF50>")
+# log.level("WARNING", color="<black><bg #FFC107>")
+# log.level("ERROR", color="<white><bg #F44336>")
+# log.level("CRITICAL", color="<white><bg #9C27B0>")
+#
+#
+# # ----------------------------
+# # 🔌 Intercept Standard Logging
+# # ----------------------------
 # class InterceptHandler(logging.Handler):
-#     """
-#     Standard logging handler to intercept and redirect
-#     standard logging calls to Loguru.
-#     """
-#
 #     def emit(self, record):
-#         # Get corresponding Loguru level if it exists
 #         try:
 #             level = log.level(record.levelname).name
-#         except ValueError:
+#         except Exception:
 #             level = record.levelno
 #
-#         # Find caller from where originated the logged message
-#         frame, depth = logging.currentframe(), 2
-#         while frame.f_code.co_filename == logging.__file__:
-#             frame = frame.f_back
-#             depth += 1
+#         log.bind(
+#             logger_name=record.name
+#         ).opt(
+#             depth=6,
+#             exception=record.exc_info
+#         ).log(level, record.getMessage())
 #
-#         log.opt(depth=depth, exception=record.exc_info).log(level, record.getMessage())
+#
+# def setup_intercept():
+#     logging.root.handlers = [InterceptHandler()]
+#     logging.root.setLevel(LOG_LEVEL)
+#
+#     # intercept uvicorn loggers
+#     for name in ("uvicorn", "uvicorn.error", "uvicorn.access", "fastapi"):
+#         logging.getLogger(name).handlers = [InterceptHandler()]
 #
 #
+# # ----------------------------
+# # 🧱 Logger Setup
+# # ----------------------------
 # def setup_logger():
-#     # 1. Clear Loguru's default handler and standard logging handlers
 #     log.remove()
-#     logging.getLogger().handlers = [InterceptHandler()]
 #
-#     # 2. Block/Silence noisy 3rd party loggers
-#     # We set them to WARNING to ignore the "INFO: Connected to DB" chatter
-#     logging.getLogger("uvicorn").handlers = []
-#     logging.getLogger("uvicorn.access").handlers = []
-#     logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
-#     logging.getLogger("aiosqlite").setLevel(logging.WARNING)
-#
-#     # 3. Add Loguru File Sink
-#     log.add(
-#         "app/logs/app.log",
-#         rotation="10 MB",
-#         retention="7 days",
-#         compression="zip",
-#         format="{time:YYYY-MM-DD HH:mm:ss} | <level>{level: <8}</level> | {message}",
-#         level="DEBUG",
-#         enqueue=True,  # 👈 Async-safe logging
-#     )
-#
-#     # 4. Add Clean Console Sink (Optional: only if not in production)
+#     # Pretty console logs (dev)
 #     log.add(
 #         sys.stdout,
-#         format="<green>{time:HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{message}</cyan>",
-#         level="INFO",
+#         level=LOG_LEVEL,
 #         colorize=True,
+#         backtrace=ENV == "dev",
+#         diagnose=ENV == "dev",
+#         format=(
+#             "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
+#             "<level> {level:^8} </level> | "
+#             "<cyan>{extra[request_id]}</cyan> | "
+#             "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - "
+#             "<level>{message}</level>"
+#         ),
 #     )
 #
-#     # 5. Redirect all standard logging to Loguru
-#     logging.basicConfig(handlers=[InterceptHandler()], level=0, force=True)
+#     # File logs (JSON for production)
+#     log.add(
+#         "logs/app.log",
+#         level="INFO",
+#         rotation="10 MB",
+#         retention="14 days",
+#         compression="zip",
+#         serialize=True,   # JSON logs
+#         enqueue=True,     # async logging (production safe)
+#     )
+#
+#     setup_intercept()
+#
+#     return log
 #
 #
-# # Export the configured instance
-# logger = log
+# # Initialize once
+# logger = setup_logger()
+
+#
+# # logger.py
+# import sys
+# import os
+# import logging
+# from loguru import logger as log
+#
+# ENV = os.getenv("ENV", "dev").lower()
+# LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")  # default to INFO to reduce noise
+#
+#
+# # ----------------------------
+# # 🎨 LEVEL STYLES (MATCH YOUR SCREENSHOT)
+# # ----------------------------
+# LEVEL_STYLES = {
+#     "DEBUG": "<black><bg #607D8B>",   # grey-blue
+#     "INFO": "<black><bg #26A69A>",    # teal (matches your screenshot)
+#     "WARNING": "<black><bg #FFB300>", # amber
+#     "ERROR": "<white><bg #E53935>",   # red
+#     "CRITICAL": "<white><bg #8E24AA>" # purple
+# }
+#
+# for level, style in LEVEL_STYLES.items():
+#     log.level(level, color=style)
+#
+#
+# # ----------------------------
+# # 🔇 NOISE FILTER
+# # ----------------------------
+# NOISY_LOGGERS = (
+#     "watchfiles",
+#     "uvicorn.error",
+#     "uvicorn.access",
+#     "uvicorn.reload",
+#     "asyncio",
+# )
+#
+# def noise_filter(record):
+#     name = record["name"]
+#
+#     # filter noisy modules
+#     if any(name.startswith(n) for n in NOISY_LOGGERS):
+#         return False
+#
+#     # drop DEBUG logs in dev unless explicitly needed
+#     if record["level"].name == "DEBUG" and ENV != "dev":
+#         return False
+#
+#     return True
+#
+#
+# # ----------------------------
+# # 🔌 INTERCEPT STANDARD LOGGING
+# # ----------------------------
+# class InterceptHandler(logging.Handler):
+#     def emit(self, record):
+#         try:
+#             level = log.level(record.levelname).name
+#         except Exception:
+#             level = record.levelno
+#
+#         log.opt(
+#             depth=6,
+#             exception=record.exc_info
+#         ).log(level, record.getMessage())
+#
+#
+# def setup_intercept():
+#     logging.root.handlers = [InterceptHandler()]
+#     logging.root.setLevel(LOG_LEVEL)
+#
+#     for name in logging.root.manager.loggerDict.keys():
+#         logging.getLogger(name).handlers = [InterceptHandler()]
+#
+#
+# # ----------------------------
+# # 🧱 LOGGER SETUP
+# # ----------------------------
+# def setup_logger():
+#     log.remove()
+#
+#     # 🎯 THIS FORMAT MATCHES YOUR SCREENSHOT
+#     log.add(
+#         sys.stdout,
+#         level=LOG_LEVEL,
+#         colorize=True,
+#         filter=noise_filter,
+#         format=(
+#             "<level>{level: <8}</level> "
+#             "<white>{message}</white>"
+#         ),
+#     )
+#
+#     # 📦 File logging (clean JSON)
+#     log.add(
+#         "logs/app.log",
+#         level="INFO",
+#         rotation="10 MB",
+#         retention="14 days",
+#         compression="zip",
+#         serialize=True,
+#         enqueue=True,
+#     )
+#
+#     setup_intercept()
+#     return log
+#
+#
+# logger = setup_logger()
 
 
-import logging
 import sys
-from loguru import logger as log
+import os
+import logging
+from loguru import logger as loguru_logger
 
+ENV = os.getenv("ENV", "dev").lower()
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+
+# ----------------------------
+# 🎨 LEVEL COLORS (with nice backgrounds like your screenshot)
+# ----------------------------
+LEVEL_STYLES = {
+    "DEBUG":    "<black><bg #607D8B>",   # grey-blue
+    "INFO":     "<black><bg #26A69A>",   # teal (matches your screenshot)
+    "WARNING":  "<black><bg #FFB300>",   # amber
+    "ERROR":    "<white><bg #E53935>",   # red
+    "CRITICAL": "<white><bg #8E24AA>",   # purple
+}
+
+for level_name, color in LEVEL_STYLES.items():
+    loguru_logger.level(level_name, color=color)
+
+# ----------------------------
+# 🔇 NOISE FILTER
+# ----------------------------
+NOISY_LOGGERS = {"watchfiles", "uvicorn.access", "uvicorn.reload", "asyncio"}
+
+def noise_filter(record):
+    name = record["name"]
+    if any(name.startswith(noisy) for noisy in NOISY_LOGGERS):
+        return False
+    # In non-dev, drop DEBUG unless explicitly wanted
+    if record["level"].name == "DEBUG" and ENV != "dev":
+        return False
+    return True
+
+# ----------------------------
+# 🔌 INTERCEPT STANDARD LOGGING (cleaner version)
+# ----------------------------
 class InterceptHandler(logging.Handler):
-    """
-    Redirect all standard logging calls to Loguru.
-    """
-    def emit(self, record: logging.LogRecord):
+    def emit(self, record):
+        # Convert standard logging level to Loguru level
         try:
-            level = log.level(record.levelname).name
+            level = loguru_logger.level(record.levelname).name
         except ValueError:
             level = record.levelno
 
-        # Find the real caller (skip logging internals)
-        frame, depth = logging.currentframe(), 2
-        while frame and frame.f_code.co_filename == logging.__file__:
-            frame = frame.f_back
-            depth += 1
-
-        log.opt(
-            depth=depth,
-            exception=record.exc_info,
-            lazy=True,                # ← small perf improvement
+        loguru_logger.opt(
+            depth=6,
+            exception=record.exc_info
         ).log(level, record.getMessage())
 
 
-def setup_logger(
-    log_level: str = "INFO",
-    file_level: str = "DEBUG",
-    console_level: str = "INFO",
-):
-    # 1. Remove default Loguru handler (prevents duplicate colorful output)
-    log.remove()
+def setup_intercept():
+    # Replace root handlers
+    logging.root.handlers = [InterceptHandler()]
+    logging.root.setLevel(LOG_LEVEL)
 
-    # 2. Intercept ALL standard logging → send to Loguru
-    logging.basicConfig(
-        handlers=[InterceptHandler()],
-        level=0,           # Capture everything
-        force=True
+    # Propagate everything through our interceptor
+    for logger_name in logging.root.manager.loggerDict:
+        logger_obj = logging.getLogger(logger_name)
+        logger_obj.handlers = []
+        logger_obj.propagate = True
+
+
+# ----------------------------
+# 🧱 MAIN LOGGER SETUP
+# ----------------------------
+def setup_logger():
+    loguru_logger.remove()  # Clear default handlers
+
+    # === Console sink (beautiful colored output) ===
+    loguru_logger.add(
+        sys.stdout,
+        level=LOG_LEVEL,
+        colorize=True,
+        filter=noise_filter,
+        format=(
+            "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
+            "<level>{level: <8}</level> | "
+            "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - "
+            "<level>{message}</level>"
+        ),
+        enqueue=True,        # safer with async / multiple workers
     )
 
-    # 3. Silence / raise level for noisy third-party loggers
-    noisy_loggers = [
-        "uvicorn",
-        "uvicorn.error",
-        "uvicorn.access",
-        "gunicorn",
-        "gunicorn.access",
-        "gunicorn.error",
-        "asyncio",
-        "sqlalchemy.engine",
-        "sqlalchemy.pool",
-        "aiosqlite",
-        "httpx",
-        "httpcore",
-        "fastapi",
-    ]
-
-    for name in noisy_loggers:
-        logger = logging.getLogger(name)
-        logger.handlers = []           # remove any pre-existing handlers
-        logger.propagate = True        # let it go to root (which we intercept)
-        logger.setLevel(logging.WARNING)  # or CRITICAL if you want almost silence
-
-    # 4. File sink (detailed, rotated, async-safe)
-    log.add(
-        "app/logs/app_{time:YYYY-MM-DD}.log",   # daily rotation is often nicer
-        rotation="500 MB",                      # or "10 MB" if you prefer smaller files
+    # === File sink (structured JSON, clean for production) ===
+    loguru_logger.add(
+        "logs/app_{time:YYYY-MM-DD}.log",   # daily files recommended
+        level="INFO",
+        rotation="10 MB",
         retention="14 days",
         compression="zip",
-        level=file_level,
-        enqueue=True,                           # critical for multi-process
-        backtrace=True,
-        diagnose=True,                          # helpful in dev
-        format="{time:YYYY-MM-DD HH:mm:ss.SSS} | {level: <8} | {name}:{function}:{line} | {message}",
-    )
-
-    # 5. Clean console sink (human-friendly, no file noise)
-    log.add(
-        sys.stdout,
-        format="<green>{time:HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{message}</cyan>",
-        level=console_level,
-        colorize=True,
+        serialize=True,      # JSON format
         enqueue=True,
+        backtrace=True,
+        diagnose=ENV == "dev",
     )
 
-    log.info("Logging initialized – Loguru is now controlling all output")
+    setup_intercept()
+    return loguru_logger
 
 
-# Usage (call this very early – ideally right after imports)
-if __name__ == "__main__" or "gunicorn" in sys.modules:
-    setup_logger(
-        log_level="INFO",
-        file_level="DEBUG",     # more detail in files
-        console_level="INFO"    # cleaner console
-    )
-
-
-logger = log
+# Initialize
+logger = setup_logger()
