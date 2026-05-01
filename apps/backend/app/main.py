@@ -14,7 +14,6 @@ from loguru import logger
 
 # setup_logging()
 
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info(
@@ -50,7 +49,7 @@ def create_application() -> FastAPI:
         # docs_url="/docs" if settings.environment != "production" else None,
         redoc_url=None,
     )
-    logger.info(f"Allowe Origins: {settings.cors_origins}")
+    logger.info(f"Allowed Origins: {settings.cors_origins}")
     # 1. Middleware
     application.add_middleware(
         CORSMiddleware,
