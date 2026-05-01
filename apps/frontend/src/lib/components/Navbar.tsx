@@ -92,7 +92,7 @@ const Navbar = () => {
 
           {/* Premium CTA */}
           <Link
-            href="/services"
+            href="/dashboard"
             className="relative overflow-hidden bg-brand-primary text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 group shadow-glow hover:shadow-brand-primary/40 transition-all active:scale-95"
           >
             <span className="relative z-10 flex items-center gap-2">

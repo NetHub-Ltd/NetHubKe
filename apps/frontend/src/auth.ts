@@ -33,7 +33,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           if (!parsed_data.is_active) {
             throw new Error("User account is inactive");
           }
-
           return {
             accessToken: account.access_token,
             refreshToken: account.refresh_token,
