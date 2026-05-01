@@ -5,6 +5,7 @@ import Footer from "@/lib/components/Footer";
 import CookieBanner from "@/lib/components/cookieBanner";
 import { Providers } from "@/lib/components/providers";
 import { metadataConfig, viewportConfig, jsonLd } from "@/lib/seo";
+import { Analytics } from "@vercel/analytics/next";
 
 // 1. Optimization: Use display: "swap" and preload for LCP/CLS stability
 const inter = Inter({
@@ -58,6 +59,7 @@ export default function RootLayout({
           <Footer />
           <CookieBanner />
         </Providers>
+        <Analytics />
       </body>
     </html>
   );
