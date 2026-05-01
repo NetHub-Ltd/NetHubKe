@@ -40,6 +40,7 @@ class Settings(BaseSettings):
     audience: str = "fJK8wA1x4HHeBm1BtaHyptTvz9qQrFnMjGyiXbT6"
     algorithms: list[str] = ["RS256"]
     jwks_cache_ttl: int = 3600 # e.g. 300 (seconds)
+    allowed_origins: str
 
 
     @property
@@ -50,11 +51,18 @@ class Settings(BaseSettings):
     def sync_db_url(self) -> str:
         return f"postgresql://{self.FASTAPI_DB_USER}:{self.FASTAPI_DB_PASSWORD}@{self.FASTAPI_DB_HOST}:{self.FASTAPI_DB_PORT}/{self.FASTAPI_DB_NAME}"
 
-    cors_origins: list[str] = ["http://localhost:3000"]  # In production, specify allowed origins
+    # cors_origins: list[str] = ["http://localhost:3000"]
+    @property
+    def cors_origins(self) -> list:
+        if not self.allowed_origins:
+            return []
+        # Split by comma, strip whitespace, and filter out empty strings or "*"
+        return [f.strip() for f in self.allowed_origins.split(",") if f.strip() and f.strip() != "*"]
+
+    # In production, specify allowed origins
     # Environment
     environment: EnvironmentEnum = Field(
         default=EnvironmentEnum.DEVELOPMENT,
-        env="ENVIRONMENT",
     )
 
 @lru_cache()
