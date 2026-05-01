@@ -29,7 +29,7 @@ export async function federatedLogout() {
     process.env.NEXTAUTH_URL || "http://localhost:3000";
 
   // 1. Get the id_token if you stored it in the session earlier
-  const idToken = session?.id_token;
+  const idToken = session?.idToken;
 
   // 2. Clear local session (NextAuth cookies)
   await signOut({ redirect: false });

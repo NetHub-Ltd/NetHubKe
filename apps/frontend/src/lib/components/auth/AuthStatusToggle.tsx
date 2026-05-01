@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { login } from "@/lib/utils/authClient";
+import { keycloakLogin } from "@/lib/utils/authClient";
 import { federatedLogout } from "@/lib/actions/logout";
 
 export function AuthButton() {
@@ -20,7 +20,7 @@ export function AuthButton() {
       Sign Out ({session?.user?.email})
     </button>
   ) : (
-    <button className="bg-brand-primary" onClick={login}>
+    <button className="bg-brand-primary" onClick={keycloakLogin}>
       Login
     </button>
   );
