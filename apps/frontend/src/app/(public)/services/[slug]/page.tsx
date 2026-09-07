@@ -1,83 +1,100 @@
-"use client";
-
-import React from "react";
-import Script from "next/script";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import {
-  CheckCircle2,
-  ArrowRight,
-  ShieldCheck,
   Zap,
-  Loader2,
-  AlertCircle,
-  MessageSquare,
-  Shield,
   Activity,
+  CheckCircle,
+  Shield,
+  ArrowRight,
 } from "lucide-react";
-import { useApi } from "@/lib/hooks/useApi";
-import { z } from "zod";
-import { ServiceRead } from "@/lib/types/api";
+import { services } from "@/lib/data/services";
 
-
-// type Service = z.infer<typeof ServiceRead>;
-
-export default function ServicePage({
-  params,
-}: {
+type Props = {
   params: Promise<{ slug: string }>;
-}) {
-  const { slug } = React.use(params);
+};
 
-  const { data, error, isLoading, isError } = useApi<ServiceRead[]>(
-    slug,
-    `/services/get-services`, {slug: slug}
-  );
+export function generateStaticParams() {
+  return services.map((s) => ({ slug: s.slug }));
+}
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
-        <Loader2 className="w-10 h-10 text-brand-primary animate-spin" />
-        <p className="text-muted font-medium tracking-widest uppercase text-xs">
-          Synchronizing Expertise...
-        </p>
-      </div>
-    );
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  const service = services.find((s) => s.slug === slug);
+
+  if (!service) {
+    return {
+      title: "Service not found",
+    };
   }
 
-  const service = data?.[0];
-  if (isError || !service) notFound();
+  const title = service.title;
+  const description =
+    service.shortDesc.length > 155
+      ? `${service.shortDesc.slice(0, 152)}...`
+      : service.shortDesc;
+
+  return {
+    title,
+    description,
+    keywords: service.seoKeywords,
+    alternates: {
+      canonical: `/services/${service.slug}`,
+    },
+    openGraph: {
+      title: `${service.title} | NetHub Kenya`,
+      description,
+      url: `https://nethub.co.ke/services/${service.slug}`,
+      type: "website",
+    },
+  };
+}
+
+/**
+ * Service detail — fully server-rendered from the static catalogue.
+ * Content (title, description, features, FAQs, pricing) is in the initial HTML.
+ */
+export default async function ServiceDetailPage({ params }: Props) {
+  const { slug } = await params;
+  const service = services.find((s) => s.slug === slug);
+
+  if (!service) {
+    notFound();
+  }
+
+  const faqSchema =
+    service.faqs && service.faqs.length > 0
+      ? {
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: service.faqs.map((faq) => ({
+            "@type": "Question",
+            name: faq.question,
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: faq.answer,
+            },
+          })),
+        }
+      : null;
 
   return (
     <>
-      {/* SEO FAQ Schema */}
-      <Script
-        id="faq-schema"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "FAQPage",
-            mainEntity:
-              service.faqs?.map((faq: any) => ({
-                "@type": "Question",
-                name: faq.question,
-                acceptedAnswer: { "@type": "Answer", text: faq.answer },
-              })) || [],
-          }),
-        }}
-      />
+      {faqSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+        />
+      )}
 
       <article className="min-h-screen pb-24 selection:bg-brand-primary/20">
-        {/* 1. Hero Section: Outcome-Focused */}
         <header className="relative py-24 md:py-32 bg-surface/30 border-b border-border overflow-hidden">
           <div className="max-w-7xl mx-auto px-6 relative z-10">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-primary/10 text-brand-primary text-[10px] font-bold uppercase tracking-[0.2em] mb-8">
               <Zap size={14} /> Performance • Security • Scale
             </div>
-            <h1 className="text-h1 mb-4 text-gradient">
-              {service.title}
-            </h1>
-            <p className=" text-pretty">
+            <h1 className="text-h1 mb-4 text-gradient">{service.title}</h1>
+            <p className="text-lg md:text-xl text-muted-foreground max-w-3xl text-pretty leading-relaxed">
               {service.description}
             </p>
           </div>
@@ -85,9 +102,7 @@ export default function ServicePage({
 
         <div className="max-w-7xl mx-auto px-6 py-20">
           <div className="grid lg:grid-cols-3 gap-16 items-start">
-            {/* Left: Deep Authority Content */}
             <div className="lg:col-span-2 space-y-24">
-              {/* Technical Capabilities */}
               <section>
                 <div className="flex items-center gap-4 mb-10">
                   <div className="w-10 h-10 rounded-xl bg-brand-primary/10 flex items-center justify-center text-brand-primary">
@@ -98,15 +113,15 @@ export default function ServicePage({
                   </h2>
                 </div>
                 <div className="grid sm:grid-cols-2 gap-4">
-                  {service.features?.map((feature, i) => (
+                  {service.features.map((feature, i) => (
                     <div
                       key={i}
                       className="group p-6 rounded-2xl bg-card border border-border hover:border-brand-primary/30 transition-all duration-300"
                     >
-                      <div className="flex items-center gap-3 mb-2">
-                        <CheckCircle2
-                          className="text-brand-primary shrink-0"
+                      <div className="flex items-center gap-3">
+                        <CheckCircle
                           size={18}
+                          className="text-brand-primary shrink-0"
                         />
                         <span className="font-bold text-foreground tracking-tight">
                           {feature}
@@ -117,7 +132,25 @@ export default function ServicePage({
                 </div>
               </section>
 
-              {/* Consultation Process (Fixed Content) */}
+              <section>
+                <h2 className="text-3xl font-bold tracking-tight mb-8">
+                  Business outcomes
+                </h2>
+                <ul className="space-y-4">
+                  {service.benefits.map((benefit, i) => (
+                    <li key={i} className="flex items-start gap-3">
+                      <CheckCircle
+                        size={18}
+                        className="text-brand-primary mt-1 shrink-0"
+                      />
+                      <span className="text-muted-foreground leading-relaxed">
+                        {benefit}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+
               <section className="relative p-10 rounded-[2.5rem] bg-brand-primary/2 border border-brand-primary/10 overflow-hidden">
                 <div className="absolute top-0 right-0 p-8 text-brand-primary/5">
                   <Shield size={120} />
@@ -147,14 +180,14 @@ export default function ServicePage({
                       title: "Scalable Launch",
                       desc: "Production deployment with post-launch optimization.",
                     },
-                  ].map((p, i) => (
-                    <div key={i} className="flex gap-6 group">
+                  ].map((p) => (
+                    <div key={p.step} className="flex gap-6 group">
                       <span className="text-sm font-bold text-brand-primary opacity-40 group-hover:opacity-100 transition-opacity uppercase tracking-widest">
                         {p.step}
                       </span>
                       <div>
-                        <h4 className="font-bold text-lg mb-1">{p.title}</h4>
-                        <p className="text-muted text-sm leading-relaxed">
+                        <h3 className="font-bold text-lg mb-1">{p.title}</h3>
+                        <p className="text-muted-foreground text-sm leading-relaxed">
                           {p.desc}
                         </p>
                       </div>
@@ -163,20 +196,19 @@ export default function ServicePage({
                 </div>
               </section>
 
-              {/* FAQ */}
-              {service.faqs && (
+              {service.faqs && service.faqs.length > 0 && (
                 <section>
                   <h2 className="text-3xl font-bold mb-10">Common Questions</h2>
-                  <div className="grid gap-6">
-                    {service.faqs.map((faq: any, i) => (
+                  <div className="space-y-6">
+                    {service.faqs.map((faq, i) => (
                       <div
                         key={i}
-                        className="p-8 rounded-3xl bg-surface border border-border"
+                        className="p-6 rounded-2xl border border-border bg-card"
                       >
-                        <h3 className="text-lg font-bold mb-3">
+                        <h3 className="font-bold text-lg mb-2">
                           {faq.question}
                         </h3>
-                        <p className="text-muted leading-relaxed">
+                        <p className="text-muted-foreground leading-relaxed">
                           {faq.answer}
                         </p>
                       </div>
@@ -186,49 +218,42 @@ export default function ServicePage({
               )}
             </div>
 
-            {/* Right: Sticky Conversion Sidebar */}
-            <aside className="sticky top-24">
-              <div className="card-layered p-8 rounded-4xl border border-brand-primary/20 shadow-2xl shadow-brand-primary/5">
-                <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
-                  Consultation
-                </h3>
-
-                <p className="text-sm text-muted leading-relaxed mb-8">
-                  Ready to modernize your infrastructure? Book a strategy call
-                  to discuss your specific requirements and get a custom quote.
-                </p>
-
-                <div className="space-y-4 mb-8">
-                  <div className="flex items-center gap-3 text-xs font-bold text-foreground">
-                    <CheckCircle2 size={14} className="text-brand-primary" />
-                    Direct Access to Senior Engineers
-                  </div>
-                  <div className="flex items-center gap-3 text-xs font-bold text-foreground">
-                    <CheckCircle2 size={14} className="text-brand-primary" />
-                    No-Obligation Architecture Review
-                  </div>
-                </div>
-
-                <button className="w-full bg-brand-primary text-white py-5 rounded-2xl font-bold hover:shadow-glow transition-all flex items-center justify-center gap-2 group">
-                  Book Strategy Call
-                  <ArrowRight
-                    size={18}
-                    className="group-hover:translate-x-1 transition-transform"
-                  />
-                </button>
-
-                <p className="text-center text-[10px] text-muted mt-6 uppercase tracking-[0.2em] font-bold opacity-60">
-                  Response within 24 hours
-                </p>
+            {/* Sidebar: Pricing + CTA */}
+            <aside className="lg:sticky lg:top-28 space-y-8">
+              <div className="p-8 rounded-3xl border border-border bg-card shadow-sm">
+                <h2 className="text-xl font-bold mb-6">Investment</h2>
+                <ul className="space-y-4 mb-8">
+                  {service.pricing.map((tier, i) => (
+                    <li
+                      key={i}
+                      className="flex flex-col gap-1 pb-4 border-b border-border last:border-0 last:pb-0"
+                    >
+                      <div className="flex justify-between items-baseline gap-4">
+                        <span className="font-semibold">{tier.label}</span>
+                        <span className="font-bold text-brand-primary whitespace-nowrap">
+                          {tier.price}
+                        </span>
+                      </div>
+                      {tier.description && (
+                        <span className="text-xs text-muted-foreground">
+                          {tier.description}
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  href="/contact"
+                  className="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl bg-brand-primary text-white font-bold hover:opacity-90 transition-opacity"
+                >
+                  Start a project
+                  <ArrowRight size={18} />
+                </Link>
               </div>
-
-              {/* Local Contact Signal */}
-              <div className="mt-8 flex items-center justify-center gap-4 text-muted">
-                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                <span className="text-[10px] font-bold uppercase tracking-widest">
-                  Team Available in Nairobi
-                </span>
-              </div>
+              <p className="text-xs text-muted-foreground text-center px-2">
+                Pricing in Kenyan Shillings. Final scope confirmed after a short
+                technical discovery call.
+              </p>
             </aside>
           </div>
         </div>
