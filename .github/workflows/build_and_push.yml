@@ -1,54 +1,113 @@
-name: Build & Push Nethub Backend Image
+name: Build & Push NetHub Backend (GHCR)
+
+# Build and push to GitHub Container Registry on every push to master/main,
+# and on manual version tags (v*).
+# Tags:
+#   - ghcr.io/nethub-ltd/nethubke:0.0.<run_number>  (semver-friendly for Flux ImagePolicy)
+#   - ghcr.io/nethub-ltd/nethubke:sha-<shortsha>
+#   - ghcr.io/nethub-ltd/nethubke:latest            (branch pushes only)
+#   - ghcr.io/nethub-ltd/nethubke:<git-tag>         (when pushing v* tags)
 
 on:
   push:
+    branches:
+      - master
+      - main
+    paths:
+      - "apps/backend/**"
+      - ".github/workflows/build_and_push.yml"
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      tag_suffix:
+        description: "Optional extra tag (e.g. hotfix-1). Leave empty for default tags only."
+        required: false
+        default: ""
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: nethub-ltd/nethubke
+
+permissions:
+  contents: read
+  packages: write
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-
     steps:
-      # 1. Checkout source
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      # 2. Enable QEMU (required for cross-platform builds)
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
-      # 3. Enable Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # 4. Login to Docker Hub
-      - name: Login to Docker Hub
+      - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      # 5. Build & Push Multi-Platform Image
+      - name: Compute tags
+        id: meta
+        run: |
+          set -euo pipefail
+          SHORT_SHA="${GITHUB_SHA::7}"
+          TAGS="${REGISTRY}/${IMAGE_NAME}:sha-${SHORT_SHA}"
+
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            # Push of v1.2.3 → tag image as v1.2.3 (and without v if present)
+            RAW="${GITHUB_REF_NAME}"
+            TAGS="${TAGS},${REGISTRY}/${IMAGE_NAME}:${RAW}"
+            if [[ "${RAW}" == v* ]]; then
+              TAGS="${TAGS},${REGISTRY}/${IMAGE_NAME}:${RAW#v}"
+            fi
+          else
+            # Branch push / workflow_dispatch → semver-like 0.0.<run_number> + latest
+            VER="0.0.${GITHUB_RUN_NUMBER}"
+            TAGS="${TAGS},${REGISTRY}/${IMAGE_NAME}:${VER}"
+            TAGS="${TAGS},${REGISTRY}/${IMAGE_NAME}:latest"
+            echo "version=${VER}" >> "$GITHUB_OUTPUT"
+          fi
+
+          if [[ -n "${{ github.event.inputs.tag_suffix }}" ]]; then
+            TAGS="${TAGS},${REGISTRY}/${IMAGE_NAME}:${{ github.event.inputs.tag_suffix }}"
+          fi
+
+          echo "tags<<EOF" >> "$GITHUB_OUTPUT"
+          echo "${TAGS}" | tr ',' '\n' >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+          echo "Computed tags:" 
+          echo "${TAGS}" | tr ',' '\n'
+
       - name: Build and push multi-arch image
         uses: docker/build-push-action@v5
         with:
           context: ./apps/backend
           file: ./apps/backend/Dockerfile
-
-          # 🔥 Multi-platform target
           platforms: linux/amd64,linux/arm64
-
           push: true
-
-          # Tag with Git tag (v1.0.0)
-          tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/nethubke:${{ github.ref_name }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/nethubke:latest
-
-          # 🚀 Build cache (important for speed)
+          tags: ${{ steps.meta.outputs.tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-          # Optional but recommended for provenance
           provenance: false
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+
+      - name: Summary
+        run: |
+          echo "### NetHub backend image pushed" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "${{ steps.meta.outputs.tags }}" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          if [[ -n "${{ steps.meta.outputs.version }}" ]]; then
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "Flux-friendly version: \`0.0.${GITHUB_RUN_NUMBER}\`" >> "$GITHUB_STEP_SUMMARY"
+          fi
