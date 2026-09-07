@@ -1,4 +1,5 @@
 # Rollback
+Revert workflow to previous Docker Hub version if needed.
 
 - **Previous known-good:** e994990 on dev
 - **Rollback:** Revert the feat/seo-p0-foundations PR or reset branch to e994990
