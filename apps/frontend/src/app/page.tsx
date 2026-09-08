@@ -1,276 +1,324 @@
 import Link from "next/link";
-import {
-  ArrowRight,
-  Smartphone,
-  CreditCard,
-  ShoppingBag,
-  CheckCircle,
-  Code2,
-  TrendingUp,
-  ShieldCheck,
-  Zap,
-} from "lucide-react";
 
 export default function Homepage() {
   return (
-    <div className="min-h-screen">
-      {/* 1. HERO: The Strategic Value Proposition */}
-      <section
-        id="hero-section"
-        className="p-6 md:px-12 bg-background my-2 transition-all duration-300 ease-in-out"
-      >
-        <div className="max-w-7xl mx-auto py-12 md:py-24">
-          <div className="flex flex-col items-start">
-            {/* Partnership Badge */}
-            {/* <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-brand-primary/5 border border-brand-primary/10 mb-6">
-              <Zap size={14} className="text-brand-primary" />
-              <span className="text-[10px] font-bold uppercase tracking-widest text-brand-primary">
-                Your Strategic Engineering Partner
+    <div className="flex flex-col w-full bg-surface">
+      {/* 1. HERO SECTION */}
+      <section className="relative w-full bg-surface-canvas overflow-hidden pt-space-3xl pb-space-4xl">
+        <div className="absolute inset-0 pointer-events-none opacity-40">
+          <div className="absolute -top-32 right-0 w-[540px] h-[540px] bg-primary/5 rounded-full blur-3xl"></div>
+          <div className="absolute top-1/2 -left-20 w-[420px] h-[420px] bg-secondary-container/40 rounded-full blur-3xl"></div>
+        </div>
+
+        <div className="max-w-container-max mx-auto px-gutter-mobile lg:px-gutter-desktop relative z-10">
+          {/* Telemetry Header */}
+          <div className="flex flex-wrap items-center justify-between gap-space-sm mb-space-xl">
+            <div className="inline-flex items-center gap-space-xs bg-brand-cobalt-light px-space-md py-space-2xs rounded-full">
+              <span className="font-metric-mono text-metric-mono text-primary font-bold tracking-widest uppercase">
+                ENTERPRISE SOFTWARE &amp; FINTECH AUTHORITY
               </span>
-            </div> */}
+            </div>
+            <div className="inline-flex items-center gap-space-xs bg-surface-subtle px-space-md py-space-2xs rounded-full text-slate-text-muted">
+              <span className="material-symbols-outlined text-[16px] text-primary">
+                bolt
+              </span>
+              <span className="font-metric-mono text-metric-mono uppercase tracking-wider">
+                Sub-Second STK Push • Sub-200ms Latency
+              </span>
+            </div>
+          </div>
 
-            <h1 className="text-gradient text-h1 mb-6 max-w-4xl">
-              We build the systems that power Kenya&apos;s
-              fastest-growing brands.
-            </h1>
+          {/* Headline and Description */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-space-2xl items-center mb-space-3xl">
+            <div className="lg:col-span-8 flex flex-col gap-space-md">
+              <h1 className="font-display-xl text-display-xl text-on-surface tracking-tight font-extrabold">
+                Engineering Scalable Systems for{" "}
+                <span className="text-primary-container">African Market Leaders.</span>
+              </h1>
+              <p className="font-body-lg text-body-lg text-slate-text-muted max-w-2xl leading-relaxed">
+                We build the technical foundations of East Africa&apos;s digital economy:
+                high-throughput Daraja 3.0 M-Pesa payment gateways, fault-tolerant
+                cloud backends, and sub-200ms web platforms engineered for extreme
+                conversion.
+              </p>
 
-            <p className="text-xl md:text-2xl mb-8 transition-all duration-300 ease-in-out leading-relaxed max-w-2xl text-pretty opacity-80">
-              Beyond code—we build revenue-generating infrastructure. From
-              M-Pesa integrations to high-performance mobile ecosystems, we
-              align engineering with your business bottom line.
-            </p>
+              {/* CTAs */}
+              <div className="flex flex-col sm:flex-row items-center gap-space-md pt-space-md">
+                <Link
+                  href="/services"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-space-xs font-label-md text-label-md text-on-primary bg-primary-container hover:bg-brand-cobalt-hover px-space-xl py-space-sm rounded-lg shadow-md transition-all font-semibold"
+                >
+                  <span>Explore Engineering Services</span>
+                  <span className="material-symbols-outlined text-[18px]">
+                    arrow_forward
+                  </span>
+                </Link>
+                <Link
+                  href="/schedule"
+                  className="w-full sm:w-auto inline-flex items-center justify-center font-label-md text-label-md text-on-surface bg-surface-canvas hover:bg-surface-subtle px-space-xl py-space-sm rounded-lg shadow-sm border border-border-subtle transition-all font-semibold"
+                >
+                  <span>Book Architecture Review</span>
+                </Link>
+              </div>
+            </div>
 
-            <div className="flex flex-col sm:flex-row gap-5 w-full sm:w-auto">
-              <Link
-                href="/services"
-                className="bg-brand-secondary text-white px-10 py-5 rounded-2xl font-bold hover:shadow-glow transition-all flex items-center justify-center gap-2 group"
-              >
-                Scale Your Business
-                <ArrowRight
-                  size={20}
-                  className="group-hover:translate-x-1 transition-transform"
-                />
-              </Link>
-              <Link
-                href="/contact"
-                className="border border-border bg-card/50 backdrop-blur-sm px-10 py-5 rounded-2xl font-bold hover:bg-border transition-all flex items-center justify-center gap-2 text-center"
-              >
-                Discuss Strategy
-              </Link>
+            {/* Quick Metrics Terminal */}
+            <div className="lg:col-span-4 bg-surface p-space-xl rounded-xl border border-border-subtle shadow-sm flex flex-col gap-space-md">
+              <div className="flex items-center justify-between pb-space-xs border-b border-border-subtle">
+                <span className="font-metric-mono text-metric-mono text-primary font-bold">
+                  PRODUCTION SLA TELEMETRY
+                </span>
+                <span className="font-metric-mono text-[11px] text-success-emerald bg-success-emerald-bg px-2 py-0.5 rounded-full font-bold">
+                  LIVE
+                </span>
+              </div>
+              <div className="space-y-space-sm">
+                <div>
+                  <div className="flex justify-between font-label-sm text-label-sm text-slate-text-muted mb-1">
+                    <span>M-Pesa STK Push Avg Latency</span>
+                    <span className="text-on-surface font-bold">450ms</span>
+                  </div>
+                  <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                    <div className="bg-primary h-full w-[95%]"></div>
+                  </div>
+                </div>
+                <div>
+                  <div className="flex justify-between font-label-sm text-label-sm text-slate-text-muted mb-1">
+                    <span>Gateway Availability SLA</span>
+                    <span className="text-on-surface font-bold">99.99%</span>
+                  </div>
+                  <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                    <div className="bg-success-emerald h-full w-[99.99%]"></div>
+                  </div>
+                </div>
+                <div>
+                  <div className="flex justify-between font-label-sm text-label-sm text-slate-text-muted mb-1">
+                    <span>Core Web Vitals Score</span>
+                    <span className="text-on-surface font-bold">100 / 100</span>
+                  </div>
+                  <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                    <div className="bg-primary h-full w-[100%]"></div>
+                  </div>
+                </div>
+              </div>
+              <p className="text-[12px] text-slate-text-muted pt-space-xs border-t border-border-subtle">
+                Westlands Nairobi Node • Safaricom G2/G3 Daraja Switch
+              </p>
+            </div>
+          </div>
+
+          {/* 4 Trust Metrics */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-space-md pt-space-md border-t border-border-subtle">
+            <div className="flex items-center gap-space-sm">
+              <span className="material-symbols-outlined text-primary text-[28px]">
+                account_balance_wallet
+              </span>
+              <div>
+                <span className="font-label-sm text-label-sm text-on-surface font-bold block">
+                  Daraja 3.0 API
+                </span>
+                <span className="font-body-sm text-body-sm text-slate-text-muted">
+                  Certified Partner Node
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-space-sm">
+              <span className="material-symbols-outlined text-success-emerald text-[28px]">
+                verified_user
+              </span>
+              <div>
+                <span className="font-label-sm text-label-sm text-on-surface font-bold block">
+                  PCI-DSS Level 1
+                </span>
+                <span className="font-body-sm text-body-sm text-slate-text-muted">
+                  Encrypted Financial Rails
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-space-sm">
+              <span className="material-symbols-outlined text-primary text-[28px]">
+                speed
+              </span>
+              <div>
+                <span className="font-label-sm text-label-sm text-on-surface font-bold block">
+                  Sub-200ms TTFB
+                </span>
+                <span className="font-body-sm text-body-sm text-slate-text-muted">
+                  Next.js Edge Platforms
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-space-sm">
+              <span className="material-symbols-outlined text-success-emerald text-[28px]">
+                shield
+              </span>
+              <div>
+                <span className="font-label-sm text-label-sm text-on-surface font-bold block">
+                  Kenya DPA 2019
+                </span>
+                <span className="font-body-sm text-body-sm text-slate-text-muted">
+                  Data Protection Compliant
+                </span>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 2. CAPABILITIES: Outcome-Focused Solutions */}
-      <section className="p-4 md:p-8 bg-background border-t border-border">
-        <div className="max-w-7xl mx-auto py-12 md:py-24">
-          <div className="flex justify-between items-end flex-col md:flex-row mb-16 gap-6">
-            <div className="max-w-2xl">
-              <h2 className="text-h2 mb-4">Engineering for Growth.</h2>
-              <p className="text-lg opacity-70">
-                We remove the technical bottlenecks that prevent scaling. Our
-                solutions are built for high-traffic, high-conversion, and
-                long-term stability.
-              </p>
+      {/* 2. CORE CAPABILITIES BENTO */}
+      <section className="w-full bg-surface py-space-4xl">
+        <div className="max-w-container-max mx-auto px-gutter-mobile lg:px-gutter-desktop">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-space-lg mb-space-2xl">
+            <div>
+              <span className="font-label-sm text-label-sm text-primary uppercase font-bold tracking-wider">
+                SYSTEM CAPABILITIES
+              </span>
+              <h2 className="font-headline-lg text-headline-lg text-on-surface font-bold tracking-tight mt-space-xs">
+                Built for High Concurrency &amp; Reliability
+              </h2>
             </div>
             <Link
               href="/services"
-              className="text-brand-primary font-bold flex items-center gap-2 hover:gap-3 transition-all group"
+              className="inline-flex items-center gap-space-xs text-primary font-label-md text-label-md font-bold hover:underline"
             >
-              View Our Capabilities{" "}
-              <ArrowRight size={18} className="transition-all" />
+              <span>View Full Service Catalog</span>
+              <span className="material-symbols-outlined text-[18px]">
+                arrow_forward
+              </span>
             </Link>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                title: "Fintech & M-Pesa",
-                desc: "Enterprise-grade M-Pesa STK Push and Daraja 3.0 integrations. We handle the complexity of settlements so you can focus on sales.",
-                icon: <CreditCard className="text-brand-primary" />,
-                accent: "bg-brand-primary/10",
-                stat: "99.9% Uptime",
-              },
-              {
-                title: "High-Scale Mobile",
-                desc: "Native iOS & Android apps that work offline and scale effortlessly. Optimized for the local market connectivity constraints.",
-                icon: <Smartphone className="text-brand-secondary" />,
-                accent: "bg-brand-secondary/10",
-                stat: "Top 5% Latency",
-              },
-              {
-                title: "Next-Gen E-Commerce",
-                desc: "Headless commerce builds that load in under 2 seconds. Performance engineering designed to lower customer acquisition costs.",
-                icon: <ShoppingBag className="text-brand-accent" />,
-                accent: "bg-brand-accent/10",
-                stat: "Sub-2s Load",
-              },
-            ].map((s, i) => (
-              <div
-                key={i}
-                className="card-layered p-8 border-border hover:shadow-glow transition-all hover:-translate-y-2 group"
-              >
-                <div className="flex justify-between items-start mb-8">
-                  <div
-                    className={`w-14 h-14 ${s.accent} rounded-2xl flex items-center justify-center group-hover:rotate-6 transition-transform`}
-                  >
-                    {s.icon}
-                  </div>
-                  <span className="text-[10px] font-black tracking-tighter text-brand-primary px-2 py-1 bg-brand-primary/5 rounded border border-brand-primary/10">
-                    {s.stat}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-space-xl">
+            {/* Card 1 */}
+            <div className="bg-surface-canvas p-space-xl rounded-xl shadow-sm border border-border-subtle flex flex-col justify-between hover:shadow-md transition-shadow">
+              <div>
+                <div className="w-12 h-12 rounded-lg bg-brand-cobalt-light text-primary flex items-center justify-center mb-space-md">
+                  <span className="material-symbols-outlined text-[28px]">
+                    account_balance_wallet
                   </span>
                 </div>
-                <h3 className="text-2xl font-bold mb-4">{s.title}</h3>
-                <p className="opacity-70 leading-relaxed text-sm">{s.desc}</p>
+                <span className="font-metric-mono text-metric-mono text-primary bg-brand-cobalt-light px-space-xs py-space-2xs rounded-full font-bold uppercase">
+                  FINTECH
+                </span>
+                <h3 className="font-headline-md text-headline-md text-on-surface font-bold mt-space-sm mb-space-xs">
+                  M-Pesa Daraja 3.0 Switch
+                </h3>
+                <p className="font-body-md text-body-md text-slate-text-muted leading-relaxed">
+                  Sub-second STK Push, instant C2B reconciliation, automated B2C
+                  payouts, and idempotent queue handling with zero lost transactions.
+                </p>
               </div>
-            ))}
+              <Link
+                href="/service/mpesa-integration"
+                className="mt-space-lg pt-space-md border-t border-border-subtle flex items-center justify-between text-primary font-label-md text-label-md font-bold hover:underline"
+              >
+                <span>Explore Daraja Architecture</span>
+                <span className="material-symbols-outlined text-[18px]">
+                  arrow_forward
+                </span>
+              </Link>
+            </div>
+
+            {/* Card 2 */}
+            <div className="bg-surface-canvas p-space-xl rounded-xl shadow-sm border border-border-subtle flex flex-col justify-between hover:shadow-md transition-shadow">
+              <div>
+                <div className="w-12 h-12 rounded-lg bg-surface-container-high text-primary flex items-center justify-center mb-space-md">
+                  <span className="material-symbols-outlined text-[28px]">
+                    web
+                  </span>
+                </div>
+                <span className="font-metric-mono text-metric-mono text-primary bg-brand-cobalt-light px-space-xs py-space-2xs rounded-full font-bold uppercase">
+                  CLOUD SYSTEMS
+                </span>
+                <h3 className="font-headline-md text-headline-md text-on-surface font-bold mt-space-sm mb-space-xs">
+                  Enterprise Web Platforms
+                </h3>
+                <p className="font-body-md text-body-md text-slate-text-muted leading-relaxed">
+                  SSR architectures powered by Next.js and Go-Fiber. 100/100 Core Web
+                  Vitals, sub-200ms latency, and automated zero-downtime deployment.
+                </p>
+              </div>
+              <Link
+                href="/services"
+                className="mt-space-lg pt-space-md border-t border-border-subtle flex items-center justify-between text-primary font-label-md text-label-md font-bold hover:underline"
+              >
+                <span>View Web Systems</span>
+                <span className="material-symbols-outlined text-[18px]">
+                  arrow_forward
+                </span>
+              </Link>
+            </div>
+
+            {/* Card 3 */}
+            <div className="bg-surface-canvas p-space-xl rounded-xl shadow-sm border border-border-subtle flex flex-col justify-between hover:shadow-md transition-shadow">
+              <div>
+                <div className="w-12 h-12 rounded-lg bg-success-emerald-bg text-tertiary flex items-center justify-center mb-space-md">
+                  <span className="material-symbols-outlined text-[28px]">
+                    search_insights
+                  </span>
+                </div>
+                <span className="font-metric-mono text-metric-mono text-tertiary bg-success-emerald-bg px-space-xs py-space-2xs rounded-full font-bold uppercase">
+                  SEO ENGINE
+                </span>
+                <h3 className="font-headline-md text-headline-md text-on-surface font-bold mt-space-sm mb-space-xs">
+                  Technical SEO &amp; CWV
+                </h3>
+                <p className="font-body-md text-body-md text-slate-text-muted leading-relaxed">
+                  Dynamic JSON-LD schema graphs, structured canonical hierarchies,
+                  and sub-1.2s LCP guarantees to dominate Kenyan search rankings.
+                </p>
+              </div>
+              <Link
+                href="/services"
+                className="mt-space-lg pt-space-md border-t border-border-subtle flex items-center justify-between text-primary font-label-md text-label-md font-bold hover:underline"
+              >
+                <span>Explore Technical SEO</span>
+                <span className="material-symbols-outlined text-[18px]">
+                  arrow_forward
+                </span>
+              </Link>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* 3. THE NET-HUB EDGE: Why Engineering Matters */}
-      <section className="py-32 card-layered rounded-none my-4 border-y border-border">
-        <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-20 items-center">
-          <div>
-            <h2 className="text-4xl font-bold mb-8 tracking-tight">
-              The Engineering Partner Your Business Deserves.
-            </h2>
-            <div className="space-y-10">
-              {[
-                {
-                  label: "Performance as a Feature",
-                  desc: "Every 100ms of lag costs you money. We treat speed as a non-negotiable business metric, not just a technical spec.",
-                  icon: <Zap />,
-                },
-                {
-                  label: "Compliance & Security",
-                  desc: "From PCI-DSS gateway standards to the Kenya Data Protection Act, we ensure your client data and revenue are bulletproof.",
-                  icon: <ShieldCheck />,
-                },
-                {
-                  label: "Zero-Fragility Code",
-                  desc: "We build scalable TypeScript systems. No technical debt. No 'spaghetti code'—just documented, enterprise-ready infrastructure.",
-                  icon: <Code2 />,
-                },
-              ].map((item, i) => (
-                <div key={i} className="flex gap-6 group">
-                  <div className="mt-1 text-brand-primary transition-transform group-hover:scale-110">
-                    {item.icon}
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-xl mb-2">{item.label}</h4>
-                    <p className="text-sm opacity-65 leading-relaxed max-w-md">
-                      {item.desc}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="relative">
-            {/* Visual representation of a 'system' dashboard */}
-            <div className="aspect-square bg-card rounded-[3rem] border border-border shadow-2xl p-10 flex flex-col justify-between overflow-hidden">
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div className="h-4 w-32 bg-brand-primary/20 rounded-full" />
-                  <div className="h-8 w-8 rounded-full bg-brand-primary animate-pulse" />
-                </div>
-                <div className="space-y-3">
-                  <div className="h-3 w-full bg-border/50 rounded-full" />
-                  <div className="h-3 w-[90%] bg-border/50 rounded-full" />
-                  <div className="h-3 w-[70%] bg-border/50 rounded-full" />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="h-24 bg-surface rounded-2xl border border-border p-4">
-                  <TrendingUp size={16} className="text-brand-primary mb-2" />
-                  <div className="h-2 w-12 bg-brand-primary/30 rounded mb-2" />
-                  <div className="h-4 w-16 bg-foreground rounded" />
-                </div>
-                <div className="h-24 bg-surface rounded-2xl border border-border p-4">
-                  <Users size={16} className="text-brand-secondary mb-2" />
-                  <div className="h-2 w-12 bg-brand-secondary/30 rounded mb-2" />
-                  <div className="h-4 w-16 bg-foreground rounded" />
-                </div>
-              </div>
-            </div>
-
-            <div className="absolute -bottom-10 -left-10 bg-background border border-border p-8 rounded-3xl shadow-2xl max-w-64">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center">
-                  <CheckCircle className="text-green-500" size={20} />
-                </div>
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                    System Status
-                  </p>
-                  <p className="text-sm font-bold">All Systems Nominal</p>
-                </div>
-              </div>
-              <p className="text-xs opacity-60 italic leading-snug">
-                "NetHub didn't just build our app; they fixed our entire payment
-                workflow."
+      {/* 3. CTA BANNER */}
+      <section className="w-full bg-surface-canvas py-space-4xl">
+        <div className="max-w-container-max mx-auto px-gutter-mobile lg:px-gutter-desktop">
+          <div className="relative bg-surface-muted p-space-2xl md:p-space-3xl rounded-xl shadow-sm overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-space-2xl">
+            <div className="relative z-10 max-w-xl flex flex-col gap-space-sm text-center lg:text-left">
+              <span className="font-metric-mono text-metric-mono text-primary font-bold uppercase tracking-wider">
+                PROJECT ACCELERATION
+              </span>
+              <h2 className="font-headline-lg text-headline-lg text-on-surface font-extrabold tracking-tight">
+                Ready to build resilient digital infrastructure?
+              </h2>
+              <p className="font-body-md text-body-md text-slate-text-muted">
+                Partner with Nairobi&apos;s premier enterprise engineering team to
+                architect M-Pesa payment gateways, high-throughput cloud
+                backends, and sub-200ms applications.
               </p>
             </div>
+            <div className="relative z-10 flex flex-col sm:flex-row items-center gap-space-md shrink-0 w-full sm:w-auto">
+              <Link
+                className="w-full sm:w-auto inline-flex items-center justify-center font-label-md text-label-md text-on-primary bg-primary-container hover:bg-brand-cobalt-hover px-space-xl py-space-sm rounded-lg shadow-md transition-all font-semibold"
+                href="/contact"
+              >
+                <span>Start Consultation</span>
+                <span className="material-symbols-outlined text-[18px] ml-space-xs">
+                  arrow_forward
+                </span>
+              </Link>
+              <Link
+                className="w-full sm:w-auto inline-flex items-center justify-center font-label-md text-label-md text-on-surface bg-surface-canvas hover:bg-surface-subtle px-space-xl py-space-sm rounded-lg shadow-sm transition-all font-semibold"
+                href="/schedule"
+              >
+                <span>Schedule Architecture Review</span>
+              </Link>
+            </div>
           </div>
         </div>
       </section>
-
-      {/* 4. FINAL CALL TO ACTION: The Strategy Invitation */}
-      <footer className="card-layered rounded-none my-4 border-y border-border py-12 md:py-32 transition-all duration-300 ease-in-out">
-        <div className="max-w-5xl mx-auto px-6 text-center relative z-10">
-          <h2 className="text-5xl md:text-8xl font-black mb-8 tracking-tighter leading-tight">
-            Engineering your <br />
-            <span className="text-brand-primary underline decoration-brand-primary/20">
-              next million.
-            </span>
-          </h2>
-          <p className="text-xl opacity-70 mb-12 max-w-2xl mx-auto">
-            Stop treating technology as a cost center. Partner with engineers
-            who understand that growth is the only metric that matters.
-          </p>
-          <div className="flex flex-col sm:flex-row justify-center gap-6">
-            <Link
-              href="/contact"
-              className="bg-foreground text-background px-12 py-6 rounded-2xl font-bold text-xl hover:shadow-2xl hover:-translate-y-1 active:scale-95 transition-all"
-            >
-              Book Strategic Consult
-            </Link>
-            <a
-              href="mailto:hello@nethub.co.ke"
-              className="px-12 py-6 rounded-2xl font-bold text-xl border border-border hover:bg-card transition-all"
-            >
-              Email Direct
-            </a>
-          </div>
-        </div>
-      </footer>
     </div>
-  );
-}
-
-// Logic Component Helper
-function Users({ size, className }: { size: number; className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-    </svg>
   );
 }
