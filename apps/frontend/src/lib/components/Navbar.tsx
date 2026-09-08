@@ -39,7 +39,7 @@ const Navbar = () => {
             <img
               alt="NetHub Kenya Logo"
               className="h-8 w-auto object-contain"
-              src="https://lh3.googleusercontent.com/aida/AEtjO1UHsikKjlAvspjnMYt3JWRomKLvAQ2d00ACECPeufCebeg2m62KM0rvqPGVSDX46l9pKnEiNLEnvBN5yM_gUERaccczyLAj0DjvPP2kDPhbbOy2I4xd_Ry-7XxF8JbXWZ2FwutiiE6AQJHB7qSw4s8QjAMEOTvmdv63_6fAM63xCq3hnZIPjdoEgl2zidklATqEGecCbMkwqDSjoUgW70DkzMSRtvpaUFrEJF2VkbDy6XauyEmYEAu933s"
+              src="/logo.svg"
             />
             <span className="font-headline-sm text-headline-sm text-on-surface tracking-tight font-bold">
               NetHub

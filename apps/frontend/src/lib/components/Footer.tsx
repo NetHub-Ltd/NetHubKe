@@ -9,6 +9,11 @@ const Footer = () => {
           {/* Brand and Description */}
           <div className="lg:col-span-2 flex flex-col gap-space-md">
             <div className="flex items-center gap-space-xs">
+              <img
+                alt="NetHub Kenya Logo"
+                className="h-7 w-auto object-contain"
+                src="/logo.svg"
+              />
               <span className="font-headline-md text-headline-md text-surface-canvas font-bold">
                 NetHub Kenya
               </span>
