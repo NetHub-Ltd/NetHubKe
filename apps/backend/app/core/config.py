@@ -37,9 +37,11 @@ class Settings(BaseSettings):
     keycloak_jwks: str
     keycloak_issuer_url: str
 
-    audience: str = "fJK8wA1x4HHeBm1BtaHyptTvz9qQrFnMjGyiXbT6"
+    # JWT audience expected in access tokens (Keycloak client / API audience).
+    # Override with env AUDIENCE. Must match tokens issued for this resource server.
+    audience: str = "nethub-backend"
     algorithms: list[str] = ["RS256"]
-    jwks_cache_ttl: int = 3600 # e.g. 300 (seconds)
+    jwks_cache_ttl: int = 3600  # seconds; PyJWKClient lifespan uses its own cache
     allowed_origins: str
 
 

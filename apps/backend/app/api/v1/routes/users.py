@@ -41,7 +41,7 @@ async def read_current_user(db: SessionDep,current_user: TokenData = Depends(req
         raise HTTPException(status_code=500, detail="An error occurred, please try again later")
 
 @router.patch("/me", status_code=200, response_model=UserRead)
-async def update_current_user(db: SessionDep, user_data: UserUpdate, current_user: TokenData = Depends(require_scopes(['user:read']))):
+async def update_current_user(db: SessionDep, user_data: UserUpdate, current_user: TokenData = Depends(require_scopes(['user:write']))):
     try:
         db_obj = await user_crud.get(db, current_user.sub)
         user = await user_crud.update(db, db_obj=db_obj, obj_in=user_data)

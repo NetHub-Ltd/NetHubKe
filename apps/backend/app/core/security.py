@@ -1,77 +1,79 @@
+"""JWT validation for the NetHubKe resource server (Keycloak as IdP only)."""
+
+from fastapi import HTTPException
 from fastapi.security import HTTPBearer
+import jwt
+from jwt import PyJWKClient, exceptions
 
 from app.core.config import settings
 from app.db.schemas.schemas import TokenData
 from app.utils.logging import logger
 
-# ------------------------------------------------------------------
-# HTTP Bearer (Resource Server Pattern)
-# ------------------------------------------------------------------
-
 bearer_scheme = HTTPBearer(auto_error=False)
 
 
-# ------------------------------------------------------------------
-# Token Validation
-# ------------------------------------------------------------------
-import jwt  # This is PyJWT
-from jwt import PyJWKClient, exceptions
-from fastapi import HTTPException
-
-
 def _decode_token(token: str) -> TokenData:
+    """
+    Validate a bearer access token against Keycloak JWKS.
+
+    Checks: signature (RS256), exp, issuer, audience (from settings).
+    Does not load the local user row — callers use deps for that.
+    """
     try:
-        # 1. PyJWT's native JWKS client (cleaner than custom wrappers)
-        # Customizing the cache behavior
-        logger.debug(f"Keycloak Issuer | {settings.keycloak_issuer_url}")
+        logger.debug("Keycloak Issuer | {}", settings.keycloak_issuer_url)
         jwks_client = PyJWKClient(
             uri=settings.keycloak_jwks,
             cache_jwk_set=True,
-            lifespan=600,
+            lifespan=min(600, settings.jwks_cache_ttl),
             cache_keys=True,
             max_cached_keys=16,
-            # Add this block below
             headers={
                 "User-Agent": "FastAPI-Resource-Server",
-                "Accept": "application/json"
-            }
+                "Accept": "application/json",
+            },
         )
         signing_key = jwks_client.get_signing_key_from_jwt(token)
 
-        # 2. Decode & Validate
         payload = jwt.decode(
             token,
             signing_key.key,
             algorithms=settings.algorithms,
-            audience="nethub-backend",
+            audience=settings.audience,
             issuer=settings.keycloak_issuer_url,
-            leeway=10
+            leeway=10,
         )
 
-        # 3. Flat Dictionary for your Pydantic Schema
-        # 3. Flat Dictionary for your Pydantic Schema
+        # Keycloak: space-separated scopes in "scope"; some setups use "permissions"
+        raw_scope = payload.get("scope") or payload.get("permissions") or ""
+        if isinstance(raw_scope, list):
+            raw_scope = " ".join(raw_scope)
+
+        # Roles: prefer realm roles; fall back to groups
+        realm_access = payload.get("realm_access") or {}
+        roles = list(realm_access.get("roles") or payload.get("groups") or [])
+
         validate_data = {
             "sub": payload.get("sub"),
             "email": payload.get("email"),
             "preferred_username": payload.get("preferred_username"),
             "name": payload.get("name"),
             "email_verified": payload.get("email_verified", False),
-            # If your Pydantic model requires 'roles', map Authentik groups to it
-            "roles": payload.get("groups", []),
-            "groups": payload.get("groups", []),
-            "scope": payload.get("permissions", ""),
+            "roles": roles,
+            "scope": raw_scope,
         }
-        data = TokenData(**validate_data)
-        return data
+        return TokenData(**validate_data)
 
     except exceptions.ExpiredSignatureError:
         logger.warning("Auth Fail | Token expired")
         raise HTTPException(status_code=401, detail="Token has expired")
     except exceptions.InvalidAudienceError:
-        logger.error("Auth Fail | Token audience mismatch")
+        logger.error("Auth Fail | Token audience mismatch | expected={}", settings.audience)
         raise HTTPException(status_code=401, detail="Invalid token audience")
+    except exceptions.InvalidIssuerError:
+        logger.error("Auth Fail | Token issuer mismatch")
+        raise HTTPException(status_code=401, detail="Invalid token issuer")
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error("Auth Fail | JWT Error: {}", str(e))
         raise HTTPException(status_code=401, detail="Invalid credentials")
-
-
