@@ -5,8 +5,9 @@ import Footer from "@/lib/components/Footer";
 import CookieBanner from "@/lib/components/cookieBanner";
 import { Providers } from "@/lib/components/providers";
 import { metadataConfig, viewportConfig, jsonLd } from "@/lib/seo";
-import { Analytics } from "@vercel/analytics/next";
-import { SpeedInsights } from "@vercel/speed-insights/next";
+// Platform SDK stubs per AI Studio web migration guidelines
+const Analytics = () => null;
+const SpeedInsights = () => null;
 
 // 1. Optimization: Use display: "swap" and preload for LCP/CLS stability
 const inter = Inter({
