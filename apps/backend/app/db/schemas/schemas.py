@@ -47,7 +47,7 @@ class TokenData(BaseModel):
 
     def has_permission(self, perm: str) -> bool:
         """Helper to check for a specific fine-grained scope."""
-        return perm in self.permissions
+        return perm in self.scopes
 
     def has_role(self, role: str) -> bool:
         """Helper to check for a high-level application role."""

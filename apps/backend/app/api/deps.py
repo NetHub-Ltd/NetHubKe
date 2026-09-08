@@ -33,14 +33,15 @@ async def get_token_data(
 
     try:
         token_data: TokenData = _decode_token(credentials.credentials)
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Auth Fail | Reason: Malformed or Expired Token | Error: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired token"
+            detail="Invalid or expired token",
         )
 
-    # This only checks the signature and expiry
     return token_data
 
 
