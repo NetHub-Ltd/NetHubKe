@@ -3,178 +3,201 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, ArrowRight, Zap } from "lucide-react";
-import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
-// import { LoginButton } from "./loginButton";
-
-const navLinks = [
-  { name: "Home", href: "/" },
-  { name: "Services", href: "/services" },
-  { name: "About", href: "/about" },
-  { name: "Contact", href: "/contact" },
-];
+import { Menu, X } from "lucide-react";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
 
-  // Handle scroll state for glassmorphism toggle
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+    setIsOpen(false);
+  }, [pathname]);
 
-  // Close mobile menu on route change
-  useEffect(() => setIsOpen(false), [pathname]);
+  const isActive = (href: string) => {
+    if (href === "/service/mpesa-integration") {
+      return (
+        pathname === "/service/mpesa-integration" ||
+        pathname.startsWith("/services/mpesa") ||
+        pathname.includes("mpesa")
+      );
+    }
+    if (href === "/services") {
+      return (
+        pathname === "/services" ||
+        (pathname.startsWith("/services") && !pathname.includes("mpesa"))
+      );
+    }
+    return pathname === href;
+  };
 
   return (
-    <nav
-      className={`sticky top-0 z-100 transition-all duration-500 ${
-        scrolled
-          ? "bg-background/80 backdrop-blur-xl py-3 border-b border-border shadow-lg"
-          : "bg-background shadow-sm py-5 border-b border-transparent"
-      }`}
-    >
-      <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-        {/* Logo with Hover Animation */}
-        <Link href="/" className="group flex gap-2 items-center">
-          <motion.div
-            whileHover={{ rotate: 12 }}
-            className="relative w-10 h-10 flex items-center justify-center bg-brand-primary/10 rounded-xl border border-brand-primary/20"
-          >
-            <Image
-              src="/logo.svg"
-              alt="NetHub Logo"
-              width={40}
-              height={40}
-              priority // Tells Next.js to load this immediately without waiting for other assets
-              className="shrink-0 text-gradient"
+    <header className="fixed top-0 left-0 w-full z-50 bg-surface-canvas/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(15,23,42,0.04)] border-b border-border-subtle/50">
+      <div className="h-16 max-w-container-max mx-auto px-gutter-mobile lg:px-gutter-desktop flex items-center justify-between gap-space-md">
+        {/* Brand Logo and Telemetry */}
+        <div className="flex items-center gap-space-md shrink-0">
+          <Link className="flex items-center gap-space-xs" href="/">
+            <img
+              alt="NetHub Kenya Logo"
+              className="h-8 w-auto object-contain"
+              src="https://lh3.googleusercontent.com/aida/AEtjO1UHsikKjlAvspjnMYt3JWRomKLvAQ2d00ACECPeufCebeg2m62KM0rvqPGVSDX46l9pKnEiNLEnvBN5yM_gUERaccczyLAj0DjvPP2kDPhbbOy2I4xd_Ry-7XxF8JbXWZ2FwutiiE6AQJHB7qSw4s8QjAMEOTvmdv63_6fAM63xCq3hnZIPjdoEgl2zidklATqEGecCbMkwqDSjoUgW70DkzMSRtvpaUFrEJF2VkbDy6XauyEmYEAu933s"
             />
-          </motion.div>
-          <span className="text-2xl text-gradient font-bold tracking-tighter">
-            NetHub
-            <span className="text-brand-primary group-hover:text-brand-secondary transition-colors">
-              {" "}
-              Kenya
+            <span className="font-headline-sm text-headline-sm text-on-surface tracking-tight font-bold">
+              NetHub
             </span>
-          </span>
-        </Link>
-
-        {/* Desktop Links with Active Indicator */}
-        <div className="hidden md:flex gap-10 items-center">
-          <div className="flex gap-8 items-center">
-            {navLinks.map((link) => {
-              const isActive = pathname === link.href;
-              return (
-                <Link
-                  key={link.name}
-                  href={link.href}
-                  className={`relative font-bold  tracking-widest transition-all hover:text-brand-primary ${
-                    isActive ? "text-brand-primary" : "text-foreground"
-                  }`}
-                >
-                  {link.name}
-                  {isActive && (
-                    <motion.div
-                      layoutId="nav-underline"
-                      className="absolute -bottom-1 left-0 w-full h-0.5 bg-brand-primary rounded-full"
-                    />
-                  )}
-                </Link>
-              );
-            })}
-          </div>
-
-          {/* <LoginButton /> */}
-
-          {/* Premium CTA */}
-          <Link
-            href="/dashboard"
-            className="relative overflow-hidden bg-brand-primary text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 group shadow-glow hover:shadow-brand-primary/40 transition-all active:scale-95"
-          >
-            <span className="relative z-10 flex items-center gap-2">
-              Start Project
-              <ArrowRight
-                size={18}
-                className="group-hover:translate-x-1 transition-transform"
-              />
+            <span className="font-label-sm text-label-sm text-primary uppercase font-bold tracking-wider">
+              KE
             </span>
-            <motion.div
-              initial={{ x: "-100%" }}
-              whileHover={{ x: "100%" }}
-              transition={{ duration: 0.5 }}
-              className="absolute inset-0 bg-linear-to-r from-transparent via-white/20 to-transparent z-0"
-            />
           </Link>
+          <div className="hidden xl:flex items-center gap-space-xs bg-success-emerald-bg px-space-sm py-space-2xs rounded-full shadow-[0_1px_3px_0_rgba(15,23,42,0.04)]">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success-emerald opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-success-emerald"></span>
+            </span>
+            <span className="font-metric-mono text-metric-mono text-tertiary font-bold">
+              All Systems Nominal
+            </span>
+          </div>
         </div>
 
-        {/* Mobile Menu Toggle */}
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="md:hidden p-2 text-foreground focus:outline-none"
-          aria-label="Toggle Menu"
-        >
-          {isOpen ? <X size={30} /> : <Menu size={30} />}
-        </button>
+        {/* Desktop Navigation Links */}
+        <nav className="hidden lg:flex items-center gap-space-lg">
+          <Link
+            className={`font-label-md text-label-md transition-colors ${
+              isActive("/services")
+                ? "text-primary font-bold"
+                : "text-on-surface-variant hover:text-primary"
+            }`}
+            href="/services"
+          >
+            Services
+          </Link>
+          <Link
+            className={`font-label-md text-label-md transition-colors ${
+              isActive("/service/mpesa-integration")
+                ? "text-primary font-bold"
+                : "text-on-surface-variant hover:text-primary"
+            }`}
+            href="/service/mpesa-integration"
+          >
+            Daraja 3.0 M-Pesa
+          </Link>
+          <Link
+            className={`font-label-md text-label-md transition-colors ${
+              isActive("/about")
+                ? "text-primary font-bold"
+                : "text-on-surface-variant hover:text-primary"
+            }`}
+            href="/about"
+          >
+            About
+          </Link>
+          <Link
+            className={`font-label-md text-label-md transition-colors ${
+              isActive("/contact")
+                ? "text-primary font-bold"
+                : "text-on-surface-variant hover:text-primary"
+            }`}
+            href="/contact"
+          >
+            Contact
+          </Link>
+        </nav>
+
+        {/* Action CTAs & Mobile Menu Button */}
+        <div className="flex items-center gap-space-sm shrink-0">
+          <Link
+            className="hidden sm:inline-flex items-center font-label-md text-label-md text-on-surface px-space-md py-space-xs rounded-lg hover:bg-surface-subtle hover:text-primary transition-all"
+            href="/schedule"
+          >
+            Book Architecture Review
+          </Link>
+          <Link
+            className="inline-flex items-center font-label-md text-label-md text-on-primary bg-primary-container hover:bg-brand-cobalt-hover hover:text-on-primary px-space-lg py-space-xs rounded-lg shadow-[0_1px_3px_0_rgba(15,23,42,0.04)] transition-all font-semibold"
+            href="/contact"
+          >
+            Start Project
+          </Link>
+
+          {/* Mobile hamburger button */}
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="lg:hidden p-2 text-on-surface hover:text-primary transition-colors focus:outline-none"
+            aria-label="Toggle Navigation Menu"
+          >
+            {isOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
       </div>
 
-      {/* Mobile Menu Overlay */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, x: "100%" }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: "100%" }}
-            transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed inset-0 top-19 bg-background z-90 md:hidden border-t border-border"
+      {/* Mobile Menu Drawer */}
+      {isOpen && (
+        <div className="lg:hidden bg-surface-canvas border-b border-border-subtle shadow-lg px-gutter-mobile py-space-md flex flex-col gap-space-sm">
+          <div className="flex items-center gap-space-xs bg-success-emerald-bg px-space-sm py-space-2xs rounded-full w-fit mb-space-xs">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success-emerald opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-success-emerald"></span>
+            </span>
+            <span className="font-metric-mono text-metric-mono text-tertiary font-bold">
+              All Systems Nominal
+            </span>
+          </div>
+          <Link
+            href="/services"
+            className={`font-label-md text-label-md py-2 px-3 rounded-lg ${
+              isActive("/services")
+                ? "bg-brand-cobalt-light text-primary font-bold"
+                : "text-on-surface-variant hover:bg-surface-subtle"
+            }`}
           >
-            <div className="flex flex-col p-8 gap-6 h-full justify-between pb-24">
-              <div className="flex flex-col gap-6">
-                {navLinks.map((link, i) => (
-                  <motion.div
-                    key={link.name}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.1 }}
-                  >
-                    <Link
-                      href={link.href}
-                      className={`text-4xl font-black tracking-tighter flex items-center justify-between group ${
-                        pathname === link.href
-                          ? "text-brand-primary"
-                          : "text-foreground"
-                      }`}
-                    >
-                      {link.name}
-                      <ArrowRight className="opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </Link>
-                  </motion.div>
-                ))}
-              </div>
-
-              <div className="space-y-6">
-                <p className="text-muted text-sm font-medium flex items-center gap-2 italic">
-                  <Zap
-                    size={16}
-                    className="text-brand-primary fill-brand-primary"
-                  />
-                  Nairobi&apos;s Fintech Engineering Partner
-                </p>
-                <Link
-                  href="/contact"
-                  className="w-full bg-foreground text-background py-6 rounded-3xl font-black text-xl text-center flex items-center justify-center gap-3 active:scale-[0.98] transition-transform"
-                >
-                  Get a Free Quote <ArrowRight />
-                </Link>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </nav>
+            Services
+          </Link>
+          <Link
+            href="/service/mpesa-integration"
+            className={`font-label-md text-label-md py-2 px-3 rounded-lg ${
+              isActive("/service/mpesa-integration")
+                ? "bg-brand-cobalt-light text-primary font-bold"
+                : "text-on-surface-variant hover:bg-surface-subtle"
+            }`}
+          >
+            Daraja 3.0 M-Pesa
+          </Link>
+          <Link
+            href="/about"
+            className={`font-label-md text-label-md py-2 px-3 rounded-lg ${
+              isActive("/about")
+                ? "bg-brand-cobalt-light text-primary font-bold"
+                : "text-on-surface-variant hover:bg-surface-subtle"
+            }`}
+          >
+            About
+          </Link>
+          <Link
+            href="/contact"
+            className={`font-label-md text-label-md py-2 px-3 rounded-lg ${
+              isActive("/contact")
+                ? "bg-brand-cobalt-light text-primary font-bold"
+                : "text-on-surface-variant hover:bg-surface-subtle"
+            }`}
+          >
+            Contact
+          </Link>
+          <div className="pt-space-xs border-t border-border-subtle flex flex-col gap-space-xs">
+            <Link
+              href="/schedule"
+              className="font-label-md text-label-md text-on-surface py-2 px-3 rounded-lg hover:bg-surface-subtle text-center"
+            >
+              Book Architecture Review
+            </Link>
+            <Link
+              href="/contact"
+              className="font-label-md text-label-md text-on-primary bg-primary-container hover:bg-brand-cobalt-hover py-2.5 px-4 rounded-lg text-center font-bold"
+            >
+              Start Project
+            </Link>
+          </div>
+        </div>
+      )}
+    </header>
   );
 };
 

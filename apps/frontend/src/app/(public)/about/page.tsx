@@ -1,212 +1,23 @@
-// import React from "react";
-// import {
-//   Users,
-//   Target,
-//   Rocket,
-//   ShieldCheck,
-//   CheckCircle2,
-//   MessageCircle,
-// } from "lucide-react";
-// import Script from "next/script";
+"use client";
 
-// const stats = [
-//   { label: "Successful Integrations", value: "50+" },
-//   { label: "System Uptime", value: "99.9%" },
-//   { label: "Tech Specialists", value: "12+" },
-//   { label: "Client Satisfaction", value: "100%" },
-// ];
+import React, { useState } from "react";
+import Link from "next/link";
 
-// const aboutFaqs = [
-//   {
-//     question: "Where is NetHub based?",
-//     answer:
-//       "NetHub is a premier software engineering agency headquartered in Nairobi, Kenya, serving clients across East Africa.",
-//   },
-//   {
-//     question: "Does NetHub offer post-integration support?",
-//     answer:
-//       "Yes, we provide 24/7 technical support for all our M-Pesa API and custom software solutions to ensure zero business downtime.",
-//   },
-// ];
-
-// export default function AboutPage() {
-//   // JSON-LD for Local Business & FAQ
-//   const jsonLd = {
-//     "@context": "https://schema.org",
-//     "@type": "AboutPage",
-//     mainEntity: {
-//       "@type": "FAQPage",
-//       mainEntity: aboutFaqs.map((faq) => ({
-//         "@type": "Question",
-//         name: faq.question,
-//         acceptedAnswer: { "@type": "Answer", text: faq.answer },
-//       })),
-//     },
-//   };
-
-//   return (
-//     <div className="min-h-screen">
-//       <Script
-//         id="about-jsonld"
-//         type="application/ld+json"
-//         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-//       />
-
-//       {/* Hero Section */}
-//       <section className="section-padding w-full card-layered rounded-none mt-4 mx-auto px-6">
-//         <div className="max-w-7xl mx-auto">
-//           <div className="grid lg:grid-cols-2 gap-16 items-center">
-//             <div>
-//               <h1 className="text-h1 mb-8 text-gradient">
-//                 Driving Digital <span className="">Transformation</span> in
-//                 Kenya.
-//               </h1>
-//               <p className="text-xl text-muted leading-relaxed mb-6">
-//                 NetHub was founded to bridge the gap between local business
-//                 needs and global engineering standards. We empower Kenyan brands
-//                 with the technical infrastructure required to compete in a
-//                 digital-first economy.
-//               </p>
-//               <p className="text-lg text-muted/80 mb-8 italic border-l-4 border-brand-primary pl-6">
-//                 "Based in Nairobi, we specialize in high-stakes M-Pesa API
-//                 integrations, custom software engineering, and technical SEO
-//                 that puts your brand on the map."
-//               </p>
-
-//               <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 py-8 border-y border-border">
-//                 {stats.map((stat) => (
-//                   <div key={stat.label}>
-//                     <div className="text-3xl font-bold text-foreground">
-//                       {stat.value}
-//                     </div>
-//                     <div className="text-[10px] text-brand-secondary uppercase tracking-tighter font-bold">
-//                       {stat.label}
-//                     </div>
-//                   </div>
-//                 ))}
-//               </div>
-//             </div>
-
-//             <div className="relative group">
-//               <div className="aspect-square bg-card border border-border rounded-3xl overflow-hidden shadow-2xl relative z-10 flex items-center justify-center p-12 transition-transform duration-500 group-hover:-translate-y-2">
-//                 <div className="text-center">
-//                   <div className="w-24 h-24 bg-brand-primary/10 rounded-3xl rotate-12 flex items-center justify-center mx-auto mb-6 group-hover:rotate-0 transition-transform">
-//                     <ShieldCheck className="text-brand-primary w-12 h-12 -rotate-12 group-hover:rotate-0 transition-transform" />
-//                   </div>
-//                   <h3 className="text-2xl font-bold text-foreground">
-//                     ISO-Standard <br /> Code Quality
-//                   </h3>
-//                   <p className="text-muted mt-4 text-sm">
-//                     Nairobi&apos;s most trusted engineering team.
-//                   </p>
-//                 </div>
-//               </div>
-//               <div className="absolute -bottom-10 -left-10 w-72 h-72 bg-brand-primary/10 blur-[120px] -z-10" />
-//             </div>
-//           </div>
-//         </div>
-//       </section>
-
-//       {/* Core Values Section - Semantic Keyword Injection */}
-//       <section className="card-layered mt-4 rounded-none py-12 md:py-24 transition-all duration-300 ease-in-out">
-//         <div className="max-w-7xl mx-auto">
-//           <div className="text-center mb-16">
-//             <h2 className="text-h2">The Pillars of NetHub</h2>
-//             <p className="text-muted max-w-2xl mx-auto mt-4">
-//               We don&apos;t just write code; we build the future of Kenyan
-//               commerce.
-//             </p>
-//           </div>
-//           <div className="grid md:grid-cols-3 gap-8">
-//             {[
-//               {
-//                 title: "Local Insight",
-//                 desc: "Deep understanding of M-Pesa Daraja 2.0 and the local payment ecosystem.",
-//                 icon: <Target className="text-brand-primary" />,
-//               },
-//               {
-//                 title: "Performance First",
-//                 desc: "Building lightweight, high-speed apps for low-bandwidth environments.",
-//                 icon: <Rocket className="text-brand-primary" />,
-//               },
-//               {
-//                 title: "Strategic SEO",
-//                 desc: "Technical visibility strategies tailored for the Nairobi search landscape.",
-//                 icon: <Users className="text-brand-primary" />,
-//               },
-//             ].map((v, i) => (
-//               <div
-//                 key={i}
-//                 className="bg-background p-8 rounded-2xl border border-border hover:shadow-glow transition-all"
-//               >
-//                 <div className="mb-4">{v.icon}</div>
-//                 <h3 className="text-xl font-bold mb-2">{v.title}</h3>
-//                 <p className="text-muted text-sm leading-relaxed">{v.desc}</p>
-//               </div>
-//             ))}
-//           </div>
-//         </div>
-//       </section>
-
-//       {/* FAQ Section - Final SEO Boost */}
-//       <div className="card-layered py-12 md:py-24 transition-all duration-300 ease-in-out rounded-none mt-4 md:mt-8 mb-8">
-//         <section className="py-24 px-6 max-w-4xl mx-auto">
-//           <div className="flex items-center gap-3 mb-12">
-//             <MessageCircle className="text-brand-primary" size={32} />
-//             <h2 className="text-3xl font-bold">Frequently Asked Questions</h2>
-//           </div>
-//           <div className="space-y-6">
-//             {aboutFaqs.map((faq, i) => (
-//               <div
-//                 key={i}
-//                 className="p-6 rounded-2xl border border-border bg-card"
-//               >
-//                 <h3 className="text-lg font-bold mb-2 flex items-center gap-2">
-//                   <CheckCircle2 size={18} className="text-brand-accent" />
-//                   {faq.question}
-//                 </h3>
-//                 <p className="text-muted pl-7">{faq.answer}</p>
-//               </div>
-//             ))}
-//           </div>
-//         </section>
-//       </div>
-//     </div>
-//   );
-// }
-
-import React from "react";
-import {
-  Users,
-  Target,
-  Rocket,
-  ShieldCheck,
-  CheckCircle2,
-  MessageCircle,
-  Globe,
-  Cpu,
-} from "lucide-react";
-import Script from "next/script";
-
-const stats = [
-  { label: "High-Scale Integrations", value: "50+" },
-  { label: "SLA Guaranteed Uptime", value: "99.9%" },
-  { label: "Engineering Experts", value: "12+" },
-  { label: "Client ROI Success", value: "100%" },
-];
-
-const aboutFaqs = [
+const faqs = [
   {
+    id: 1,
     question: "Where is NetHub Kenya located?",
     answer:
       "NetHub is a premier software engineering agency headquartered in Nairobi, Kenya. Our physical presence in the East African tech hub allows us to provide localized M-Pesa API expertise and on-site strategic consulting for regional enterprises.",
   },
   {
+    id: 2,
     question: "Does NetHub provide technical support after deployment?",
     answer:
       "Yes. We offer enterprise-grade Service Level Agreements (SLAs) including 24/7 monitoring and technical support for all M-Pesa gateways and custom cloud infrastructure to ensure zero business downtime.",
   },
   {
+    id: 3,
     question: "What industries does NetHub specialize in?",
     answer:
       "We specialize in Fintech, E-commerce, and Logistics. Our engineering team focuses on building high-concurrency systems that handle thousands of transactions per second seamlessly.",
@@ -214,194 +25,460 @@ const aboutFaqs = [
 ];
 
 export default function AboutPage() {
-  // Enhanced JSON-LD for Local Business & FAQ
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "AboutPage",
-    description:
-      "About NetHub Kenya - Leading Software Engineering and M-Pesa Integration Agency in Nairobi.",
-    publisher: {
-      "@type": "Organization",
-      name: "NetHub Kenya",
-      logo: "https://nethub.co.ke/og-image.png",
-    },
-    mainEntity: {
-      "@type": "FAQPage",
-      mainEntity: aboutFaqs.map((faq) => ({
-        "@type": "Question",
-        name: faq.question,
-        acceptedAnswer: { "@type": "Answer", text: faq.answer },
-      })),
-    },
+  const [openFaq, setOpenFaq] = useState<number | null>(2);
+
+  const toggleFaq = (id: number) => {
+    setOpenFaq((prev) => (prev === id ? null : id));
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Script
-        id="about-jsonld"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+    <div className="flex flex-col w-full bg-surface">
+      {/* Top Mission Hero Section */}
+      <section className="relative w-full bg-surface-canvas overflow-hidden pt-space-3xl pb-space-4xl">
+        {/* Ambient high-tech background pattern */}
+        <div className="absolute inset-0 pointer-events-none opacity-40">
+          <div className="absolute -top-32 right-0 w-[540px] h-[540px] bg-primary/5 rounded-full blur-3xl"></div>
+          <div className="absolute top-1/2 -left-20 w-[420px] h-[420px] bg-secondary-container/40 rounded-full blur-3xl"></div>
+        </div>
 
-      {/* 1. ARCHITECTURAL HERO: Establishing Entity Authority */}
-      <section className="py-16 md:py-32 w-full card-layered rounded-none mt-4 mx-auto px-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            <div>
-              <div className="flex items-center gap-2 mb-6">
-                <div className="h-[1px] w-8 bg-brand-primary" />
-                <span className="text-xs font-bold uppercase tracking-widest text-brand-primary">
-                  The NetHub Mission
-                </span>
-              </div>
-              <h1 className="text-h1 mb-8 text-gradient">
-                Engineering the Future of <br />
-                <span className="text-foreground">
-                  Kenyan Digital Commerce.
-                </span>
+        <div className="max-w-container-max mx-auto px-gutter-mobile lg:px-gutter-desktop relative z-10">
+          {/* Breadcrumb & Telemetry Marker */}
+          <div className="flex flex-wrap items-center justify-between gap-space-sm mb-space-xl">
+            <div className="inline-flex items-center gap-space-xs bg-brand-cobalt-light px-space-md py-space-2xs rounded-full">
+              <span className="font-metric-mono text-metric-mono text-primary font-bold tracking-widest uppercase">
+                THE NETHUB MISSION
+              </span>
+            </div>
+            <div className="inline-flex items-center gap-space-xs bg-surface-subtle px-space-md py-space-2xs rounded-full text-slate-text-muted">
+              <span className="material-symbols-outlined text-[16px] text-primary">
+                terminal
+              </span>
+              <span className="font-metric-mono text-metric-mono uppercase tracking-wider">
+                Nairobi, KE • Est. 2024
+              </span>
+            </div>
+          </div>
+
+          {/* Main Heading Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-space-xl items-start mb-space-3xl">
+            <div className="lg:col-span-8 flex flex-col gap-space-md">
+              <h1 className="font-display-xl text-display-xl text-on-surface tracking-tight font-extrabold">
+                Engineering the Future of <br className="hidden sm:inline" />
+                <span className="text-primary-container">Kenyan Digital Commerce.</span>
               </h1>
-              <p className="text-xl text-muted-foreground leading-relaxed mb-8 text-pretty">
-                NetHub was established to solve the "Fragility Gap" in East
-                Africa's tech landscape. We combine global engineering
+              <p className="font-body-lg text-body-lg text-slate-text-muted max-w-2xl leading-relaxed">
+                NetHub was established to solve the &quot;Fragility Gap&quot; in East
+                Africa&apos;s tech landscape. We combine global engineering
                 standards—clean code, scalable architecture, and ISO-grade
                 security—with a deep, localized understanding of the M-Pesa
                 ecosystem.
               </p>
+            </div>
 
-              <div className="bg-card/50 border border-border p-6 rounded-2xl mb-12">
-                <p className="text-lg text-foreground italic border-l-4 border-brand-primary pl-6 leading-relaxed">
-                  "We don't just build software; we build the technical
-                  resilience required for Kenyan brands to scale from local
-                  startups to regional leaders."
-                </p>
+            {/* Executive Citation Plaque */}
+            <div className="lg:col-span-4 bg-surface-subtle p-space-xl rounded-xl shadow-sm relative">
+              <div className="flex items-center gap-space-xs mb-space-sm">
+                <span className="material-symbols-outlined text-primary text-[28px]">
+                  format_quote
+                </span>
+                <span className="font-label-sm text-label-sm text-primary uppercase tracking-wider font-bold">
+                  Executive Thesis
+                </span>
               </div>
+              <p className="font-body-md text-body-md text-on-surface italic font-medium leading-relaxed mb-space-md">
+                &quot;We don&apos;t just build software; we build the technical
+                resilience required for Kenyan brands to scale from local startups to
+                regional leaders.&quot;
+              </p>
+              <div className="flex items-center gap-space-sm pt-space-xs">
+                <div className="w-2 h-2 rounded-full bg-success-emerald"></div>
+                <span className="font-metric-mono text-metric-mono text-slate-text-muted">
+                  Core Infrastructure Directorate
+                </span>
+              </div>
+            </div>
+          </div>
 
-              {/* Data-Driven Trust Indicators */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 py-8 border-t border-border">
-                {stats.map((stat) => (
-                  <div key={stat.label}>
-                    <div className="text-3xl font-bold text-foreground mb-1">
-                      {stat.value}
-                    </div>
-                    <div className="text-[9px] text-brand-secondary uppercase tracking-widest font-black leading-tight">
-                      {stat.label}
-                    </div>
-                  </div>
-                ))}
+          {/* Metrics Grid */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-space-md">
+            <div className="bg-surface p-space-lg rounded-xl shadow-sm flex flex-col justify-between group hover:bg-surface-canvas transition-all">
+              <div className="flex items-center justify-between mb-space-md">
+                <span className="material-symbols-outlined text-primary text-[24px]">
+                  hub
+                </span>
+                <span className="font-metric-mono text-metric-mono text-metric-badge-blue-text bg-metric-badge-blue-bg px-space-xs py-space-2xs rounded-full">
+                  FINTECH
+                </span>
+              </div>
+              <div>
+                <div className="font-display-lg text-display-lg text-on-surface font-extrabold tracking-tight">
+                  50+
+                </div>
+                <p className="font-label-md text-label-md text-slate-text-muted mt-space-2xs">
+                  High-Scale Integrations
+                </p>
               </div>
             </div>
 
-            {/* Visual Engineering Credibility */}
-            <div className="relative group lg:block hidden">
-              <div className="aspect-square bg-card border border-border rounded-[3rem] overflow-hidden shadow-2xl relative z-10 flex items-center justify-center p-16 transition-all duration-700 group-hover:shadow-brand-primary/10 group-hover:-translate-y-2">
-                <div className="text-center">
-                  <div className="w-28 h-28 bg-brand-primary/5 rounded-[2rem] rotate-12 flex items-center justify-center mx-auto mb-8 transition-all duration-500 group-hover:rotate-0 group-hover:bg-brand-primary/10">
-                    <ShieldCheck className="text-brand-primary w-14 h-14 -rotate-12 transition-all duration-500 group-hover:rotate-0" />
-                  </div>
-                  <h3 className="text-3xl font-bold text-foreground tracking-tight">
-                    Enterprise <br /> Engineering
-                  </h3>
-                  <p className="text-muted-foreground mt-4 text-sm font-medium">
-                    Strict Adherence to clean code & <br /> Data Protection
-                    Standards.
-                  </p>
-                </div>
+            <div className="bg-surface p-space-lg rounded-xl shadow-sm flex flex-col justify-between group hover:bg-surface-canvas transition-all">
+              <div className="flex items-center justify-between mb-space-md">
+                <span className="material-symbols-outlined text-success-emerald text-[24px]">
+                  verified
+                </span>
+                <span className="font-metric-mono text-metric-mono text-tertiary bg-success-emerald-bg px-space-xs py-space-2xs rounded-full">
+                  SLA TIER
+                </span>
               </div>
-              {/* Decorative background elements for "Depth" */}
-              <div className="absolute -top-10 -right-10 w-64 h-64 bg-brand-secondary/5 blur-[100px] -z-10" />
-              <div className="absolute -bottom-10 -left-10 w-72 h-72 bg-brand-primary/10 blur-[120px] -z-10" />
+              <div>
+                <div className="font-display-lg text-display-lg text-on-surface font-extrabold tracking-tight">
+                  99.9%
+                </div>
+                <p className="font-label-md text-label-md text-slate-text-muted mt-space-2xs">
+                  SLA Guaranteed Uptime
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-surface p-space-lg rounded-xl shadow-sm flex flex-col justify-between group hover:bg-surface-canvas transition-all">
+              <div className="flex items-center justify-between mb-space-md">
+                <span className="material-symbols-outlined text-primary text-[24px]">
+                  groups
+                </span>
+                <span className="font-metric-mono text-metric-mono text-metric-badge-blue-text bg-metric-badge-blue-bg px-space-xs py-space-2xs rounded-full">
+                  CORE SQUAD
+                </span>
+              </div>
+              <div>
+                <div className="font-display-lg text-display-lg text-on-surface font-extrabold tracking-tight">
+                  12+
+                </div>
+                <p className="font-label-md text-label-md text-slate-text-muted mt-space-2xs">
+                  Engineering Experts
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-surface p-space-lg rounded-xl shadow-sm flex flex-col justify-between group hover:bg-surface-canvas transition-all">
+              <div className="flex items-center justify-between mb-space-md">
+                <span className="material-symbols-outlined text-tertiary-container text-[24px]">
+                  trending_up
+                </span>
+                <span className="font-metric-mono text-metric-mono text-tertiary bg-success-emerald-bg px-space-xs py-space-2xs rounded-full">
+                  DELIVERY
+                </span>
+              </div>
+              <div>
+                <div className="font-display-lg text-display-lg text-on-surface font-extrabold tracking-tight">
+                  100%
+                </div>
+                <p className="font-label-md text-label-md text-slate-text-muted mt-space-2xs">
+                  Client ROI Success
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 2. THE PILLARS: Logic & Value Injection */}
-      <section className="card-layered mt-4 rounded-none py-20 md:py-32">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
-            <div className="max-w-2xl">
-              <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-4 text-foreground">
+      {/* Core Architecture Pillars Section */}
+      <section className="w-full bg-surface py-space-4xl">
+        <div className="max-w-container-max mx-auto px-gutter-mobile lg:px-gutter-desktop">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-space-lg mb-space-2xl">
+            <div className="max-w-xl">
+              <span className="font-label-sm text-label-sm text-primary uppercase font-bold tracking-wider">
+                FOUNDATIONAL FRAMEWORKS
+              </span>
+              <h2 className="font-headline-lg text-headline-lg text-on-surface font-bold tracking-tight mt-space-xs">
                 Our Core Architecture
               </h2>
-              <p className="text-lg text-muted-foreground">
-                We approach every project with an architectural mindset,
-                ensuring long-term viability and immediate conversion gains.
+              <p className="font-body-md text-body-md text-slate-text-muted mt-space-xs">
+                We approach every project with an architectural mindset, ensuring
+                long-term viability and immediate conversion gains.
               </p>
             </div>
-            <div className="flex items-center gap-4 text-xs font-bold uppercase tracking-widest opacity-50">
-              <span>Nairobi, KE</span>
-              <span className="h-1 w-1 bg-foreground rounded-full" />
-              <span>Est. 2024</span>
+            <div className="shrink-0">
+              <div className="inline-flex items-center gap-space-xs bg-surface-canvas px-space-md py-space-xs rounded-lg shadow-sm text-slate-text-muted font-body-sm text-body-sm">
+                <span className="material-symbols-outlined text-primary text-[20px]">
+                  security
+                </span>
+                <span>Kenya DPA 2019 &amp; ISO/IEC Standards</span>
+              </div>
             </div>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                title: "Localized Fintech Mastery",
-                desc: "Specialized integration of M-Pesa G2/G3 APIs, enabling instant STK push and automated B2C disbursement with bank-grade security.",
-                icon: <Cpu className="w-8 h-8 text-brand-primary" />,
-              },
-              {
-                title: "Engineering for Performance",
-                desc: "Using Next.js and Go-Fiber to deliver sub-200ms API responses, critical for user retention in Kenya's mobile-first market.",
-                icon: <Rocket className="w-8 h-8 text-brand-primary" />,
-              },
-              {
-                title: "Technical Search Authority",
-                desc: "Beyond keywords—we engineer websites with perfect Core Web Vitals and Schema architectures to dominate Nairobi's search results.",
-                icon: <Globe className="w-8 h-8 text-brand-primary" />,
-              },
-            ].map((v, i) => (
-              <div
-                key={i}
-                className="bg-background p-10 rounded-[2rem] border border-border hover:border-brand-primary/30 transition-all duration-500 group"
-              >
-                <div className="mb-6 bg-brand-primary/5 w-16 h-16 rounded-2xl flex items-center justify-center group-hover:bg-brand-primary group-hover:text-white transition-all">
-                  {v.icon}
+          {/* Architecture Pillars 4-Card Bento */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-space-lg">
+            {/* Pillar 1 */}
+            <div className="bg-surface-canvas p-space-xl rounded-xl shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+              <div>
+                <div className="w-12 h-12 rounded-lg bg-brand-cobalt-light flex items-center justify-center text-primary-container mb-space-lg">
+                  <span className="material-symbols-outlined text-[28px]">
+                    account_balance_wallet
+                  </span>
                 </div>
-                <h3 className="text-2xl font-bold mb-4 tracking-tight">
-                  {v.title}
+                <h3 className="font-headline-sm text-headline-sm text-on-surface font-bold mb-space-xs">
+                  Localized Fintech Mastery
                 </h3>
-                <p className="text-muted-foreground leading-relaxed">
-                  {v.desc}
+                <p className="font-body-sm text-body-sm text-slate-text-muted leading-relaxed">
+                  Specialized integration of M-Pesa G2/G3 APIs, enabling instant STK
+                  push and automated B2C disbursement with bank-grade security.
                 </p>
               </div>
-            ))}
+              <div className="mt-space-lg pt-space-md flex items-center gap-space-xs text-primary font-label-sm text-label-sm">
+                <span className="material-symbols-outlined text-[18px]">bolt</span>
+                <span>Sub-second STK Push</span>
+              </div>
+            </div>
+
+            {/* Pillar 2 */}
+            <div className="bg-surface-canvas p-space-xl rounded-xl shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+              <div>
+                <div className="w-12 h-12 rounded-lg bg-surface-container-high flex items-center justify-center text-primary mb-space-lg">
+                  <span className="material-symbols-outlined text-[28px]">speed</span>
+                </div>
+                <h3 className="font-headline-sm text-headline-sm text-on-surface font-bold mb-space-xs">
+                  Engineering for Performance
+                </h3>
+                <p className="font-body-sm text-body-sm text-slate-text-muted leading-relaxed">
+                  Using Next.js and Go-Fiber to deliver sub-200ms API responses,
+                  critical for user retention in Kenya&apos;s mobile-first market.
+                </p>
+              </div>
+              <div className="mt-space-lg pt-space-md flex items-center gap-space-xs text-primary font-label-sm text-label-sm">
+                <span className="material-symbols-outlined text-[18px]">timer</span>
+                <span>Sub-200ms Telemetry</span>
+              </div>
+            </div>
+
+            {/* Pillar 3 */}
+            <div className="bg-surface-canvas p-space-xl rounded-xl shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+              <div>
+                <div className="w-12 h-12 rounded-lg bg-surface-container flex items-center justify-center text-primary-container mb-space-lg">
+                  <span className="material-symbols-outlined text-[28px]">
+                    search_insights
+                  </span>
+                </div>
+                <h3 className="font-headline-sm text-headline-sm text-on-surface font-bold mb-space-xs">
+                  Technical Search Authority
+                </h3>
+                <p className="font-body-sm text-body-sm text-slate-text-muted leading-relaxed">
+                  Beyond keywords—we engineer websites with perfect Core Web Vitals
+                  and Schema architectures to dominate Nairobi&apos;s search results.
+                </p>
+              </div>
+              <div className="mt-space-lg pt-space-md flex items-center gap-space-xs text-primary font-label-sm text-label-sm">
+                <span className="material-symbols-outlined text-[18px]">
+                  award_star
+                </span>
+                <span>100/100 Core Web Vitals</span>
+              </div>
+            </div>
+
+            {/* Pillar 4 */}
+            <div className="bg-surface-canvas p-space-xl rounded-xl shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+              <div>
+                <div className="w-12 h-12 rounded-lg bg-success-emerald-bg flex items-center justify-center text-tertiary mb-space-lg">
+                  <span className="material-symbols-outlined text-[28px]">gavel</span>
+                </div>
+                <h3 className="font-headline-sm text-headline-sm text-on-surface font-bold mb-space-xs">
+                  Enterprise Engineering
+                </h3>
+                <p className="font-body-sm text-body-sm text-slate-text-muted leading-relaxed">
+                  Strict Adherence to clean code &amp; Data Protection Standards
+                  (Kenya DPA 2019) paired with resilient fallback mechanisms.
+                </p>
+              </div>
+              <div className="mt-space-lg pt-space-md flex items-center gap-space-xs text-tertiary font-label-sm text-label-sm">
+                <span className="material-symbols-outlined text-[18px]">
+                  verified_user
+                </span>
+                <span>Kenya DPA Compliant</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* 3. FAQ: Semantic Search Domination */}
-      <section className="py-24 px-6 max-w-5xl mx-auto">
-        <div className="text-center mb-16">
-          <div className="inline-flex items-center justify-center p-3 bg-brand-primary/10 rounded-full mb-6 text-brand-primary">
-            <MessageCircle size={28} />
-          </div>
-          <h2 className="text-4xl font-bold tracking-tight">Expert Insights</h2>
-          <p className="text-muted-foreground mt-2 font-medium">
-            Clear answers for technical decision-makers.
-          </p>
-        </div>
+      {/* Physical Presence & Headquarters Visual Section */}
+      <section className="w-full bg-surface-canvas py-space-4xl">
+        <div className="max-w-container-max mx-auto px-gutter-mobile lg:px-gutter-desktop">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-space-2xl items-center">
+            {/* Physical Location Information */}
+            <div className="lg:col-span-6 flex flex-col gap-space-lg">
+              <div>
+                <span className="font-label-sm text-label-sm text-primary uppercase font-bold tracking-wider">
+                  REGIONAL NEXUS
+                </span>
+                <h2 className="font-headline-lg text-headline-lg text-on-surface font-bold tracking-tight mt-space-xs">
+                  Headquartered in Nairobi, Kenya
+                </h2>
+                <p className="font-body-lg text-body-lg text-slate-text-muted mt-space-sm leading-relaxed">
+                  The Mirage Towers, Mezzanine 2, Chiromo Rd, Westlands, Nairobi.
+                  Est. 2024.
+                </p>
+              </div>
+              <div className="bg-surface-subtle p-space-lg rounded-xl shadow-sm flex flex-col gap-space-sm">
+                <div className="flex items-center gap-space-xs text-primary font-label-md text-label-md">
+                  <span className="material-symbols-outlined text-[22px]">
+                    corporate_fare
+                  </span>
+                  <span>Direct Strategic Presence</span>
+                </div>
+                <p className="font-body-md text-body-md text-on-surface leading-relaxed">
+                  Our physical presence in the East African tech hub allows us to
+                  provide localized M-Pesa API expertise and on-site strategic
+                  consulting for regional enterprises.
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-space-md pt-space-xs">
+                <div className="bg-surface p-space-md rounded-lg shadow-sm">
+                  <span className="font-metric-mono text-metric-mono text-slate-text-muted block mb-space-2xs">
+                    COORDINATES
+                  </span>
+                  <span className="font-label-md text-label-md text-on-surface font-bold">
+                    1.2676° S, 36.8044° E
+                  </span>
+                </div>
+                <div className="bg-surface p-space-md rounded-lg shadow-sm">
+                  <span className="font-metric-mono text-metric-mono text-slate-text-muted block mb-space-2xs">
+                    TIMEZONE
+                  </span>
+                  <span className="font-label-md text-label-md text-on-surface font-bold">
+                    East Africa Time (UTC+3)
+                  </span>
+                </div>
+              </div>
+            </div>
 
-        <div className="space-y-4">
-          {aboutFaqs.map((faq, i) => (
-            <div
-              key={i}
-              className="p-8 rounded-3xl border border-border bg-card/50 hover:bg-card transition-colors"
-            >
-              <h3 className="text-xl font-bold mb-3 flex items-start gap-3">
-                <CheckCircle2
-                  size={22}
-                  className="text-brand-primary shrink-0 mt-0.5"
+            {/* Headquarters Location Imagery / Visual Showcase */}
+            <div className="lg:col-span-6 flex flex-col gap-space-md">
+              <div className="relative w-full h-[360px] rounded-xl overflow-hidden shadow-lg">
+                <img
+                  className="w-full h-full object-cover"
+                  alt="A modern glass-clad architectural corporate skyscraper in Westlands Nairobi representing The Mirage Towers under bright blue daytime skies."
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuBMoE7to2j6jLOus0e2J_B3JQZQHQIGlYTuRXlqriicqnaw3VcN0vSei-s0y2CsZUfYE0lioEfpHFNTZjHfF5rLd8TxqbjGws2HAVV6Ogla1B2q5EuUYX0MpzhLu86tbNkrlTGQN0-tuyk8nah08geFIT5ek8AfgcY7rS33qZtaKZc34aAHUua98Po4YKbdsfp5j597W7STmyM7OcOPQIHN4P4mPLZKXswWMbA43E68iPFEKUCqLkQD"
                 />
-                <span className="leading-snug">{faq.question}</span>
-              </h3>
-              <p className="text-muted-foreground pl-9 leading-relaxed text-lg">
-                {faq.answer}
+                <div className="absolute bottom-4 left-4 right-4 bg-surface-canvas/90 backdrop-blur-md p-space-md rounded-lg shadow-md flex items-center justify-between">
+                  <div className="flex items-center gap-space-xs">
+                    <span className="material-symbols-outlined text-primary text-[20px]">
+                      pin_drop
+                    </span>
+                    <span className="font-label-sm text-label-sm text-on-surface font-bold">
+                      The Mirage Towers • Westlands, Nairobi
+                    </span>
+                  </div>
+                  <span className="font-metric-mono text-metric-mono text-success-emerald bg-success-emerald-bg px-space-xs py-space-2xs rounded-full">
+                    ACTIVE NODE
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Technical Decision-Maker Insights / FAQ Section */}
+      <section className="w-full bg-surface-subtle py-space-4xl">
+        <div className="max-w-container-max mx-auto px-gutter-mobile lg:px-gutter-desktop">
+          <div className="max-w-2xl mb-space-2xl">
+            <span className="font-label-sm text-label-sm text-primary uppercase font-bold tracking-wider">
+              TECHNICAL DIALOGUE
+            </span>
+            <h2 className="font-headline-lg text-headline-lg text-on-surface font-bold tracking-tight mt-space-xs">
+              Expert Insights
+            </h2>
+            <p className="font-body-md text-body-md text-slate-text-muted mt-space-xs">
+              Clear answers for technical decision-makers.
+            </p>
+          </div>
+
+          {/* Custom High-Impact Technical Accordion */}
+          <div className="flex flex-col gap-space-md max-w-3xl">
+            {faqs.map((faq) => {
+              const isOpen = openFaq === faq.id;
+              return (
+                <div
+                  key={faq.id}
+                  className="bg-surface-canvas rounded-xl shadow-sm overflow-hidden"
+                >
+                  <button
+                    className="w-full text-left p-space-xl flex items-center justify-between gap-space-md hover:bg-surface-subtle/50 transition-colors"
+                    onClick={() => toggleFaq(faq.id)}
+                    type="button"
+                  >
+                    <span className="font-headline-sm text-headline-sm text-on-surface font-bold">
+                      {faq.question}
+                    </span>
+                    <span
+                      className={`material-symbols-outlined text-primary text-[24px] transform transition-transform duration-200 ${
+                        isOpen ? "rotate-180" : ""
+                      }`}
+                    >
+                      expand_more
+                    </span>
+                  </button>
+                  {isOpen && (
+                    <div className="px-space-xl pb-space-xl pt-0 text-slate-text-muted font-body-md text-body-md leading-relaxed">
+                      {faq.answer}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* High-Conversion Bottom CTA Banner */}
+      <section className="w-full bg-surface-canvas py-space-4xl">
+        <div className="max-w-container-max mx-auto px-gutter-mobile lg:px-gutter-desktop">
+          <div className="relative bg-surface-muted p-space-2xl md:p-space-3xl rounded-xl shadow-sm overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-space-2xl">
+            {/* Abstract Tech Wave Overlay */}
+            <div className="absolute inset-0 pointer-events-none opacity-20">
+              <svg
+                className="w-full h-full"
+                fill="none"
+                preserveAspectRatio="none"
+                viewBox="0 0 1000 400"
+              >
+                <path
+                  className="text-primary-container"
+                  d="M0,200 C300,300 700,100 1000,200 L1000,400 L0,400 Z"
+                  fill="currentColor"
+                />
+              </svg>
+            </div>
+            <div className="relative z-10 max-w-xl flex flex-col gap-space-sm text-center lg:text-left">
+              <span className="font-metric-mono text-metric-mono text-primary font-bold uppercase tracking-wider">
+                PROJECT ACCELERATION
+              </span>
+              <h2 className="font-headline-lg text-headline-lg text-on-surface font-extrabold tracking-tight">
+                Ready to build resilient digital infrastructure?
+              </h2>
+              <p className="font-body-md text-body-md text-slate-text-muted">
+                Partner with Nairobi&apos;s premier enterprise engineering team to
+                architect M-Pesa payment gateways, high-throughput cloud
+                backends, and sub-200ms applications.
               </p>
             </div>
-          ))}
+            <div className="relative z-10 flex flex-col sm:flex-row items-center gap-space-md shrink-0 w-full sm:w-auto">
+              <Link
+                className="w-full sm:w-auto inline-flex items-center justify-center font-label-md text-label-md text-on-primary bg-primary-container hover:bg-brand-cobalt-hover px-space-xl py-space-sm rounded-lg shadow-md transition-all font-semibold"
+                href="/contact"
+              >
+                <span>Start Consultation</span>
+                <span className="material-symbols-outlined text-[18px] ml-space-xs">
+                  arrow_forward
+                </span>
+              </Link>
+              <Link
+                className="w-full sm:w-auto inline-flex items-center justify-center font-label-md text-label-md text-on-surface bg-surface-canvas hover:bg-surface-subtle px-space-xl py-space-sm rounded-lg shadow-sm transition-all font-semibold"
+                href="/schedule"
+              >
+                <span>Schedule Architecture Review</span>
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
     </div>
