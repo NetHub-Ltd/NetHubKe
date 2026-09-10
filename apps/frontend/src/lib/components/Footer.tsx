@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 const Footer = () => {
   return (
@@ -9,10 +10,13 @@ const Footer = () => {
           {/* Brand and Description */}
           <div className="lg:col-span-2 flex flex-col gap-space-md">
             <div className="flex items-center gap-space-xs">
-              <img
+              <Image
                 alt="NetHub Kenya Logo"
                 className="h-7 w-auto object-contain"
                 src="/logo.svg"
+                width={28}
+                height={28}
+                priority
               />
               <span className="font-headline-md text-headline-md text-surface-canvas font-bold">
                 NetHub Kenya

@@ -8,7 +8,7 @@ import { fetchData } from "../utils/api";
 export function useApi<T>(
   key: string,
   url: string,
-  params?: Record<string, any>,
+  params?: Record<string, unknown>,
 ): UseQueryResult<T, Error> {
   return useQuery({
     queryKey: [key, params],

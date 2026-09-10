@@ -15,7 +15,7 @@ import { federatedLogout } from "@/lib/actions/logout";
 
 export default function DashboardHome() {
   // Pull data directly from our TanStack-powered hook
-  const { user, status: authStatus, error } = useUser();
+  const { user, status: authStatus } = useUser();
 
   // 1. Loading State
   if (authStatus === "loading") {

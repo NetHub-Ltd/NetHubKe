@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 const faqs = [
   {
@@ -353,10 +354,13 @@ export default function AboutPage() {
             {/* Headquarters Location Imagery / Visual Showcase */}
             <div className="lg:col-span-6 flex flex-col gap-space-md">
               <div className="relative w-full h-[360px] rounded-xl overflow-hidden shadow-lg">
-                <img
-                  className="w-full h-full object-cover"
+                <Image
+                  className="object-cover"
                   alt="A modern glass-clad architectural corporate skyscraper in Westlands Nairobi representing The Mirage Towers under bright blue daytime skies."
                   src="https://lh3.googleusercontent.com/aida-public/AB6AXuBMoE7to2j6jLOus0e2J_B3JQZQHQIGlYTuRXlqriicqnaw3VcN0vSei-s0y2CsZUfYE0lioEfpHFNTZjHfF5rLd8TxqbjGws2HAVV6Ogla1B2q5EuUYX0MpzhLu86tbNkrlTGQN0-tuyk8nah08geFIT5ek8AfgcY7rS33qZtaKZc34aAHUua98Po4YKbdsfp5j597W7STmyM7OcOPQIHN4P4mPLZKXswWMbA43E68iPFEKUCqLkQD"
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  priority={false}
                 />
                 <div className="absolute bottom-4 left-4 right-4 bg-surface-canvas/90 backdrop-blur-md p-space-md rounded-lg shadow-md flex items-center justify-between">
                   <div className="flex items-center gap-space-xs">
