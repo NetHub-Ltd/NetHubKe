@@ -40,9 +40,9 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: apps/frontend/package-lock.json
+          node-version: "24"
+          # No npm cache until apps/frontend/package-lock.json is committed
+          # (cache: npm fails when cache-dependency-path is missing)
 
       - name: Install dependencies
         run: |

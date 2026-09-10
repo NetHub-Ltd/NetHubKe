@@ -1,15 +1,11 @@
 # Task: Frontend CI lint + build workflow
 
 ## Goal
-Add GitHub Actions workflow that runs `npm run lint` then `npm run build` for `apps/frontend`.
-
-## Approved scope
-- `.github/workflows/frontend-ci.yml` on push/PR to dev/master (frontend paths)
-- Placeholder env for NextAuth/Keycloak at build time only
+CI: lint then build for apps/frontend.
 
 ## Completed
-- Workflow: lint → build in `apps/frontend`
+- frontend-ci.yml: Node 24, no npm cache without lockfile (fixes setup-node path error)
+- lint → build with placeholder auth env
 
-## Out of scope
-- Backend CI
-- Changing lint rules
+## Follow-up
+- Commit package-lock.json and re-enable setup-node cache
