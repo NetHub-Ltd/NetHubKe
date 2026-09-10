@@ -1,9 +1,8 @@
 # Repository State
 
 - **Repository URL:** https://github.com/NetHub-Ltd/NetHubKe.git
+- **Default branch:** master
 - **Working / PR target:** dev
-- **Current branch:** feat/user-flow-bff-nav
-- **Session:** User-flow BFF + navbar auth
-- **Notes:**
-  - Browser must not call FastAPI; use /api/nethub/* BFF
-  - BACKEND_URL is server-only
+- **Current branch:** chore/frontend-ci-lint-build
+- **Deployment:** k3s
+- **Session:** Frontend CI workflow (lint + build)

@@ -1,6 +1,4 @@
 # Rollback
-Revert workflow to previous Docker Hub version if needed.
 
-- **Previous known-good:** e994990 on dev
-- **Rollback:** Revert the feat/seo-p0-foundations PR or reset branch to e994990
-- **Notes:** Frontend-only. No migrations, no secrets, no production config changes.
+- Revert or close PR that adds `.github/workflows/frontend-ci.yml`
+- No runtime or data impact; CI-only

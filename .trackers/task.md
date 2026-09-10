@@ -1,14 +1,15 @@
-# Current focus: User flow BFF + nav (implementing)
+# Task: Frontend CI lint + build workflow
 
-## Done in feat/user-flow-bff-nav
-- BFF GET/PATCH /api/nethub/users/me
-- useUser → same-origin BFF (no NEXT_PUBLIC backend)
-- backendFetch server helper + auth sync via helper
-- Navbar: Log in / Create account | Dashboard + Sign out
-- Login page register CTA; /welcome → /dashboard
-- /api/auth/register → Keycloak registrations
+## Goal
+Add GitHub Actions workflow that runs `npm run lint` then `npm run build` for `apps/frontend`.
 
-## Next after merge
-- Smoke login → dashboard profile
-- Confirm BACKEND_URL includes host (helper adds /api/v1)
-- Realm user registration enabled in Keycloak
+## Approved scope
+- `.github/workflows/frontend-ci.yml` on push/PR to dev/master (frontend paths)
+- Placeholder env for NextAuth/Keycloak at build time only
+
+## Completed
+- Workflow: lint → build in `apps/frontend`
+
+## Out of scope
+- Backend CI
+- Changing lint rules
