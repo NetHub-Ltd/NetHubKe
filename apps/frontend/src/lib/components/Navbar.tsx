@@ -31,9 +31,7 @@ function AuthControls({ mobile = false }: { mobile?: boolean }) {
     return (
       <div
         className={
-          mobile
-            ? "flex flex-col gap-3 w-full"
-            : "flex items-center gap-3"
+          mobile ? "flex flex-col gap-3 w-full" : "flex items-center gap-3"
         }
       >
         <Link
@@ -99,11 +97,14 @@ function AuthControls({ mobile = false }: { mobile?: boolean }) {
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
 
   useEffect(() => {
-    setIsOpen(false);
-  }, [pathname]);
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   return (
     <nav
@@ -127,20 +128,12 @@ const Navbar = () => {
               priority
               className="shrink-0 text-gradient"
             />
-            <span className="font-headline-sm text-headline-sm text-on-surface tracking-tight font-bold">
-              NetHub
-            </span>
-            <span className="font-label-sm text-label-sm text-primary uppercase font-bold tracking-wider">
-              KE
-            </span>
-          </Link>
-          <div className="hidden xl:flex items-center gap-space-xs bg-success-emerald-bg px-space-sm py-space-2xs rounded-full shadow-[0_1px_3px_0_rgba(15,23,42,0.04)]">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success-emerald opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-success-emerald"></span>
-            </span>
-            <span className="font-metric-mono text-metric-mono text-tertiary font-bold">
-              All Systems Nominal
+          </motion.div>
+          <span className="text-2xl text-gradient font-bold tracking-tighter">
+            NetHub
+            <span className="text-brand-primary group-hover:text-brand-secondary transition-colors">
+              {" "}
+              Kenya
             </span>
           </span>
         </Link>
@@ -172,6 +165,7 @@ const Navbar = () => {
         </div>
 
         <button
+          type="button"
           onClick={() => setIsOpen(!isOpen)}
           className="md:hidden p-2 text-foreground focus:outline-none"
           aria-label="Toggle Menu"
