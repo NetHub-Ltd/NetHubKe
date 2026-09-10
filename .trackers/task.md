@@ -1,14 +1,12 @@
-# Current focus: User flow BFF + nav (implementing)
+# Task: Frontend ESLint + CI green
 
-## Done in feat/user-flow-bff-nav
-- BFF GET/PATCH /api/nethub/users/me
-- useUser → same-origin BFF (no NEXT_PUBLIC backend)
-- backendFetch server helper + auth sync via helper
-- Navbar: Log in / Create account | Dashboard + Sign out
-- Login page register CTA; /welcome → /dashboard
-- /api/auth/register → Keycloak registrations
+## Root cause
+- `eslint-config-next` was wrongly pinned to `^0.2.4` (missing next/core-web-vitals)
+- ESLint 10 + FlatCompat circular config crash
+- react-hooks/set-state-in-effect errors in Navbar + cookieBanner
 
-## Next after merge
-- Smoke login → dashboard profile
-- Confirm BACKEND_URL includes host (helper adds /api/v1)
-- Realm user registration enabled in Keycloak
+## Completed
+- eslint-config-next@16.2.3, eslint@9, native flat config
+- Fixed Navbar/cookieBanner lint errors
+- package-lock.json committed; CI Node 24 + npm ci + cache
+- Verified: npm run lint (exit 0), npm run build (exit 0)

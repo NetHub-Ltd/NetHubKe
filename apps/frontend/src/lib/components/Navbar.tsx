@@ -108,8 +108,6 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  useEffect(() => setIsOpen(false), [pathname]);
-
   return (
     <nav
       className={`sticky top-0 z-100 transition-all duration-500 ${
@@ -197,6 +195,7 @@ const Navbar = () => {
                   >
                     <Link
                       href={link.href}
+                      onClick={() => setIsOpen(false)}
                       className={`text-4xl font-black tracking-tighter flex items-center justify-between group ${
                         pathname === link.href
                           ? "text-brand-primary"
