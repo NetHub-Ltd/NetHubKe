@@ -20,11 +20,12 @@ import { ServiceRead } from "@/lib/types/api";
 // type Service = z.infer<typeof ServiceRead>;
 
 const iconMap: Record<string, React.ReactNode> = {
-  CREDIT_CARD: <CreditCard className="w-6 h-6" />,
-  SMARTPHONE: <Smartphone className="w-6 h-6" />,
-  GLOBE: <Globe className="w-6 h-6" />,
-  SEARCH: <Search className="w-6 h-6" />,
-  SHOPPING_BAG: <ShoppingBag className="w-6 h-6" />,
+  CreditCard: <CreditCard className="w-6 h-6" />,
+  Smartphone: <Smartphone className="w-6 h-6" />,
+  Search: <Search className="w-6 h-6" />,
+  Wrench: <Code className="w-6 h-6" />,
+  Globe: <Globe className="w-6 h-6" />,
+  ShoppingBag: <ShoppingBag className="w-6 h-6" />,
 };
 
 export const ServiceCard = ({

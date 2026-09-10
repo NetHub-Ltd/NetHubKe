@@ -3,6 +3,7 @@ import { Cog } from "lucide-react";
 import Link from "next/link";
 import { ServiceCard } from "@/lib/components/services/servicecard";
 import { services } from "@/lib/data/services";
+import type { ServiceIcon } from "@/lib/types/api";
 
 export const metadata: Metadata = {
   title: "Services — M-Pesa, Apps & SEO for Kenyan Businesses",
@@ -19,16 +20,22 @@ export const metadata: Metadata = {
   },
 };
 
-/** Map static catalogue icons to the keys ServiceCard expects. */
-function toCardIcon(icon: string): string {
-  const map: Record<string, string> = {
-    CreditCard: "CREDIT_CARD",
-    Smartphone: "SMARTPHONE",
-    Search: "SEARCH",
-    Globe: "GLOBE",
-    ShoppingBag: "SHOPPING_BAG",
+/** Map static catalogue icons to ServiceRead.icon (ServiceIcon). */
+function toCardIcon(icon: string): ServiceIcon {
+  const allowed: ServiceIcon[] = ["CreditCard", "Smartphone", "Search", "Wrench"];
+  if ((allowed as string[]).includes(icon)) {
+    return icon as ServiceIcon;
+  }
+  // Catalogue may use Lucide names not in API enum
+  const map: Record<string, ServiceIcon> = {
+    CreditCard: "CreditCard",
+    Smartphone: "Smartphone",
+    Search: "Search",
+    Globe: "Search",
+    ShoppingBag: "Smartphone",
+    Wrench: "Wrench",
   };
-  return map[icon] ?? icon.toUpperCase();
+  return map[icon] ?? "Wrench";
 }
 
 /**
