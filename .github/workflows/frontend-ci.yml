@@ -1,0 +1,62 @@
+name: Frontend CI (lint + build)
+
+on:
+  push:
+    branches:
+      - dev
+      - master
+      - main
+    paths:
+      - "apps/frontend/**"
+      - ".github/workflows/frontend-ci.yml"
+  pull_request:
+    branches:
+      - dev
+      - master
+      - main
+    paths:
+      - "apps/frontend/**"
+      - ".github/workflows/frontend-ci.yml"
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: apps/frontend
+
+permissions:
+  contents: read
+
+jobs:
+  lint-and-build:
+    name: Lint & Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: apps/frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        env:
+          NODE_ENV: production
+          NEXTAUTH_URL: http://localhost:3000
+          NEXTAUTH_SECRET: ci-build-placeholder-not-a-real-secret
+          AUTH_SECRET: ci-build-placeholder-not-a-real-secret
+          KEYCLOAK_CLIENT_ID: ci-client
+          KEYCLOAK_CLIENT_SECRET: ci-secret
+          KEYCLOAK_ISSUER: https://example.com/realms/ci
+          BACKEND_URL: http://127.0.0.1:8000/api/v1
+        run: npm run build

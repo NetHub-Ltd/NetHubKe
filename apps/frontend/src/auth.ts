@@ -17,13 +17,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // 1. INITIAL SIGN-IN
       if (account && user) {
         try {
-          const response = await fetch(
-            `${process.env.BACKEND_URL}/users/sync`,
-            {
-              method: "POST",
-              headers: { Authorization: `Bearer ${account.access_token}` },
-            },
-          );
+          const { backendFetch } = await import("@/lib/server/backend");
+          const response = await backendFetch("/users/sync", {
+            method: "POST",
+            accessToken: account.access_token,
+          });
 
           if (!response.ok) throw new Error("Backend rejected IdP token");
 

@@ -9,12 +9,10 @@ import { zUserRead } from "../types/api/zod.gen";
 export function useUser() {
   const { data: session, status: sessionStatus } = useSession();
 
-  // 1. Status Derivation
   const isPoisoned = !!session?.error;
   const isUnauthenticated = sessionStatus === "unauthenticated";
   const isLoadingSession = sessionStatus === "loading";
 
-  // 2. Fetch User Data from Backend
   const {
     data: userData,
     isLoading: isLoadingUser,
@@ -23,14 +21,8 @@ export function useUser() {
   } = useQuery({
     queryKey: [`user-${session?.user?.id}`],
     queryFn: async () => {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/users/me`,
-        {
-          headers: {
-            Authorization: `Bearer ${session?.accessToken}`,
-          },
-        },
-      );
+      // Same-origin BFF — never call FastAPI from the browser
+      const response = await fetch("/api/nethub/users/me");
 
       if (response.status === 401) throw new Error("Unauthorized");
       if (!response.ok) throw new Error("Failed to fetch user data");
@@ -43,13 +35,11 @@ export function useUser() {
       }
       return parsed.data;
     },
-    // Only run if we have a token and the session isn't poisoned
-    enabled: !!session?.accessToken && !isPoisoned,
+    enabled: sessionStatus === "authenticated" && !isPoisoned,
     retry: 1,
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    staleTime: 1000 * 60 * 5,
   });
 
-  // 3. Side Effects (Toasts/Modals)
   useEffect(() => {
     if (isPoisoned) {
       toast.error("Session Expired", {
@@ -58,9 +48,8 @@ export function useUser() {
     }
   }, [isPoisoned]);
 
-  // 4. Final Derived Status
   const authStatus = (() => {
-    if (isLoadingSession || (!!session?.accessToken && isLoadingUser))
+    if (isLoadingSession || (sessionStatus === "authenticated" && isLoadingUser))
       return "loading";
     if (isPoisoned) return "stale";
     if (isUnauthenticated) return "unauthenticated";
@@ -69,8 +58,8 @@ export function useUser() {
   })();
 
   return {
-    user: userData, // Data from /me
-    status: authStatus, // loading | stale | unauthenticated | authenticated
+    user: userData,
+    status: authStatus,
     error: fetchError || (isPoisoned ? "Session Expired" : null),
     accessToken: session?.accessToken,
     idToken: session?.idToken,

@@ -6,11 +6,14 @@ import { X } from "lucide-react";
 const CookieBanner = () => {
   const [isVisible, setIsVisible] = useState(false);
 
+  // localStorage is client-only; defer setState to avoid set-state-in-effect
   useEffect(() => {
-    const consent = localStorage.getItem("nethub_cookie_consent");
-    if (!consent) {
-      setIsVisible(true);
-    }
+    const id = window.setTimeout(() => {
+      if (!localStorage.getItem("nethub_cookie_consent")) {
+        setIsVisible(true);
+      }
+    }, 0);
+    return () => window.clearTimeout(id);
   }, []);
 
   const acceptCookies = () => {
@@ -26,6 +29,7 @@ const CookieBanner = () => {
         <div className="flex justify-between items-start mb-4">
           <h4 className="font-bold text-brand-primary">Cookie Policy</h4>
           <button
+            type="button"
             onClick={() => setIsVisible(false)}
             className="opacity-50 hover:opacity-100"
           >
@@ -34,20 +38,22 @@ const CookieBanner = () => {
         </div>
         <p className="text-sm text-foreground/70 leading-relaxed mb-6">
           We use cookies to improve your experience and analyze our traffic. By
-          clicking "Accept", you agree to our
-          <Link href="/privacy" className="text-brand-primary underline ml-1">
+          clicking &quot;Accept&quot;, you agree to our
+          <Link href="/privacy-policy" className="text-brand-primary underline ml-1">
             Privacy Policy
           </Link>
           .
         </p>
         <div className="flex gap-3">
           <button
+            type="button"
             onClick={acceptCookies}
             className="flex-1 bg-brand-primary text-white py-2 rounded-xl text-sm font-bold hover:bg-brand-secondary transition-all"
           >
             Accept
           </button>
           <button
+            type="button"
             onClick={() => setIsVisible(false)}
             className="flex-1 border border-border py-2 rounded-xl text-sm font-bold hover:bg-background transition-all"
           >

@@ -2,40 +2,16 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { ServiceCard } from "@/lib/components/services/servicecard";
+import { services } from "@/lib/data/services";
+import type { ServiceIcon } from "@/lib/types/api";
 
-interface ServiceItem {
-  id: string;
-  category: "fintech" | "cloud" | "seo" | "middleware";
-  badge: string;
-  price: string;
-  priceSub: string;
-  title: string;
-  description: string;
-  techStack: string[];
-  features: string[];
-  link: string;
-  buttonText: string;
-}
-
-const serviceItems: ServiceItem[] = [
-  {
-    id: "mpesa",
-    category: "fintech",
-    badge: "Safaricom Certified",
-    price: "KSh 45,000",
-    priceSub: "Base Architecture",
-    title: "M-Pesa Daraja 3.0 Integration",
-    description:
-      "Production-ready payment infrastructure with sub-second STK Push, automated C2B reconciliation, B2C bulk disbursements, and encrypted callback handling.",
-    techStack: ["Next.js", "Go-Fiber", "Redis", "Daraja 3.0"],
-    features: [
-      "Sub-second STK Push with Instant Re-Query Fallback",
-      "Automated C2B Validation & Reconciliation",
-      "B2C Bulk Disbursement with Instant Callbacks",
-      "Direct Safaricom Production Queue Onboarding",
-    ],
-    link: "/service/mpesa-integration",
-    buttonText: "Explore Architecture",
+export const metadata: Metadata = {
+  title: "Services — M-Pesa, Apps & SEO for Kenyan Businesses",
+  description:
+    "Explore NetHub services: M-Pesa Daraja API integration, custom app development, and SEO for Kenyan businesses. Clear pricing and delivery focused on results.",
+  alternates: {
+    canonical: "/services",
   },
   {
     id: "web-systems",
@@ -56,85 +32,25 @@ const serviceItems: ServiceItem[] = [
     link: "/contact",
     buttonText: "Explore Architecture",
   },
-  {
-    id: "seo",
-    category: "seo",
-    badge: "SERP Dominance",
-    price: "KSh 35,000",
-    priceSub: "Audit & Execution",
-    title: "Technical SEO & Core Web Vitals",
-    description:
-      "Engineering-led search optimization: dynamic JSON-LD schema generation, sub-100ms Core Web Vitals, and localized canonical structuring.",
-    techStack: ["Schema.org", "Lighthouse CI", "Edge SEO", "Next/Dynamic"],
-    features: [
-      "Sub-1.2s LCP Guarantee with Critical CSS Inlining",
-      "Dynamic JSON-LD Schema Graph Generation",
-      "Hreflang & Canonical Architecture for East Africa",
-      "Automated Crawl-Budget & Server Log Optimization",
-    ],
-    link: "/contact",
-    buttonText: "Explore Architecture",
-  },
-  {
-    id: "mobile",
-    category: "cloud",
-    badge: "Flutter / Native",
-    price: "KSh 120,000",
-    priceSub: "Cross-Platform",
-    title: "Cross-Platform Mobile Applications",
-    description:
-      "High-performance Android and iOS applications with offline-first synchronization, native biometric authentication, and integrated M-Pesa SDKs.",
-    techStack: ["Flutter", "Kotlin", "Swift", "SQLite"],
-    features: [
-      "Offline-First Data Sync with Conflict Resolution",
-      "Biometric Authentication (Fingerprint / FaceID)",
-      "Native In-App Daraja STK Push Initiation",
-      "Automated Play Store & App Store Pipeline",
-    ],
-    link: "/contact",
-    buttonText: "Explore Architecture",
-  },
-  {
-    id: "ecommerce",
-    category: "middleware",
-    badge: "High-Concurrency",
-    price: "KSh 95,000",
-    priceSub: "Turnkey Solution",
-    title: "E-Commerce Core & Middleware",
-    description:
-      "Headless commerce platforms engineered for peak traffic events: flash sales, real-time inventory locking, and multi-currency payment routing.",
-    techStack: ["Medusa.js", "PostgreSQL", "Redis Queue", "Stripe/M-Pesa"],
-    features: [
-      "Distributed Inventory Locking (Zero Overselling)",
-      "Automated KRA eTIMS Tax Compliance Middleware",
-      "Multi-Currency Dynamic Conversion & Settling",
-      "Sub-50ms Cart Calculations via In-Memory Cache",
-    ],
-    link: "/contact",
-    buttonText: "Explore Architecture",
-  },
-  {
-    id: "devops",
-    category: "cloud",
-    badge: "Zero-Downtime",
-    price: "KSh 60,000",
-    priceSub: "Cloud Architecture",
-    title: "Cloud Infrastructure & DevOps",
-    description:
-      "Enterprise-grade cloud architectures on AWS and GCP. Automated Terraform provisioning, Docker containerization, and 24/7 observability.",
-    techStack: ["Terraform", "Docker", "AWS ECS", "Prometheus"],
-    features: [
-      "Infrastructure-as-Code (IaC) with Auto-Scaling",
-      "Zero-Downtime Blue/Green Deployment Pipelines",
-      "Automated Daily Multi-Region Snapshot Backups",
-      "24/7 Sentry & Datadog SLA Telemetry Dashboards",
-    ],
-    link: "/contact",
-    buttonText: "Explore Architecture",
-  },
-];
+};
 
-type CategoryFilter = "all" | "fintech" | "cloud" | "seo" | "middleware";
+/** Map static catalogue icons to ServiceRead.icon (ServiceIcon). */
+function toCardIcon(icon: string): ServiceIcon {
+  const allowed: ServiceIcon[] = ["CreditCard", "Smartphone", "Search", "Wrench"];
+  if ((allowed as string[]).includes(icon)) {
+    return icon as ServiceIcon;
+  }
+  // Catalogue may use Lucide names not in API enum
+  const map: Record<string, ServiceIcon> = {
+    CreditCard: "CreditCard",
+    Smartphone: "Smartphone",
+    Search: "Search",
+    Globe: "Search",
+    ShoppingBag: "Smartphone",
+    Wrench: "Wrench",
+  };
+  return map[icon] ?? "Wrench";
+}
 
 export default function ServicesPage() {
   const [filter, setFilter] = useState<CategoryFilter>("all");
