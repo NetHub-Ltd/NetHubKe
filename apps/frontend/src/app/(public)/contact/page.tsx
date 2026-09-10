@@ -17,6 +17,7 @@ export default function ContactPage() {
   const [agreeTerms, setAgreeTerms] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [intakeRef, setIntakeRef] = useState("");
 
   const toggleObjective = (obj: string) => {
     if (selectedObjectives.includes(obj)) {
@@ -33,7 +34,8 @@ export default function ContactPage() {
     setIsSubmitting(true);
     setTimeout(() => {
       setIsSubmitting(false);
-      setSubmitted(true);
+      setIntakeRef(`NH-INTAKE-${Math.floor(100000 + Math.random() * 900000)}`);
+    setSubmitted(true);
     }, 1200);
   };
 
@@ -218,7 +220,7 @@ export default function ContactPage() {
                     review your requirements and reply within 4 business hours.
                   </p>
                   <div className="bg-surface-subtle p-space-md rounded-lg w-full text-left font-metric-mono text-xs text-slate-text-muted mb-space-xl space-y-1">
-                    <div>Reference: NH-INTAKE-{Math.floor(100000 + Math.random() * 900000)}</div>
+                    <div>Reference: {intakeRef}</div>
                     <div>Target Objectives: {selectedObjectives.join(", ")}</div>
                     <div>Timeline: {timeline}</div>
                   </div>

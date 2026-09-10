@@ -297,7 +297,7 @@ export default function MpesaIntegrationPage() {
                 {/* Simulated Terminal Log Output */}
                 <div className="bg-slate-950 p-space-sm rounded border border-slate-800 space-y-1 text-slate-300">
                   <div className="text-slate-500">
-                    // Automated Gateway Handshake Log:
+                    {/* Automated Gateway Handshake Log */}
                   </div>
                   <div>
                     <span className="text-emerald-400">[200 OK]</span> OAuth2 Bearer

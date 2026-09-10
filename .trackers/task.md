@@ -1,11 +1,11 @@
-# Task: Frontend CI npm ci fix
+# Task: Fix master frontend build (Navbar JSX + services parse)
 
-## Issue
-CI `npm ci` failed with EUSAGE when package-lock.json was missing from the checkout.
+## Cause
+- Navbar.tsx: broken JSX (unclosed motion.div / mismatched Link/span), missing scrolled state
+- services/page.tsx: corrupted metadata object (parse error)
+- contact: Math.random during render (purity)
+- mpesa page: // comment as JSX text node
 
-## Fix
-- Install step: use npm ci if lockfile exists, else npm install + log warning
-- package-lock.json must remain tracked (not gitignored)
-
-## Note
-PR #28 (dev → master) should bring package-lock onto master; this hardens CI either way.
+## Verified
+- npm run lint → 0 errors
+- npm run build → success
