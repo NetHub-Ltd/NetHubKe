@@ -7,7 +7,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint ."
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -16,7 +16,6 @@
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
     "axios": "^1.14.0",
-    "eslint": "^10.2.0",
     "framer-motion": "^12.35.0",
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.576.0",
@@ -30,16 +29,17 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.5",
-    "@eslint/js": "^10.0.1",
+    "@eslint/js": "^9.22.0",
     "@hey-api/openapi-ts": "^0.95.0",
-    "@next/eslint-plugin-next": "^16.2.3",
+    "@next/eslint-plugin-next": "16.2.3",
     "@tailwindcss/postcss": "^4",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "eslint-config-next": "^0.2.4",
+    "eslint-config-next": "16.2.3",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "eslint": "^9.22.0"
   }
 }

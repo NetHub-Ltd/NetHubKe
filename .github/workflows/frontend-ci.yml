@@ -1,6 +1,5 @@
 name: Frontend CI (lint + build)
 
-# Ensures apps/frontend passes eslint and next build on PRs and pushes.
 on:
   push:
     branches:
@@ -41,23 +40,17 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "24"
-          # No npm cache until apps/frontend/package-lock.json is committed
-          # (cache: npm fails when cache-dependency-path is missing)
+          cache: npm
+          cache-dependency-path: apps/frontend/package-lock.json
 
       - name: Install dependencies
-        run: |
-          if [ -f package-lock.json ]; then
-            npm ci
-          else
-            npm install
-          fi
+        run: npm ci
 
       - name: Lint
         run: npm run lint
 
       - name: Build
         env:
-          # Placeholders so Next.js / Auth can compile without real secrets
           NODE_ENV: production
           NEXTAUTH_URL: http://localhost:3000
           NEXTAUTH_SECRET: ci-build-placeholder-not-a-real-secret

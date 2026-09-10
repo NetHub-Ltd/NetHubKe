@@ -1,22 +1,27 @@
-import { defineConfig } from "eslint/config";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import js from "@eslint/js";
-import { FlatCompat } from "@eslint/eslintrc";
+import { defineConfig, globalIgnores } from "eslint/config";
+import nextVitals from "eslint-config-next/core-web-vitals";
+import nextTs from "eslint-config-next/typescript";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const compat = new FlatCompat({
-    baseDirectory: __dirname,
-    recommendedConfig: js.configs.recommended,
-    allConfig: js.configs.all
-});
-
-export default defineConfig([{
-    extends: compat.extends("next/core-web-vitals", "eslint:recommended"),
-
+/**
+ * Next.js 16 flat ESLint config (native exports — no FlatCompat).
+ * @see https://nextjs.org/docs/app/api-reference/config/eslint
+ */
+const eslintConfig = defineConfig([
+  ...nextVitals,
+  ...nextTs,
+  {
     rules: {
-        "react/no-unescaped-entities": "off",
-        "@typescript-eslint/no-explicit-any": "warn",
+      "react/no-unescaped-entities": "off",
+      "@typescript-eslint/no-explicit-any": "warn",
     },
-}]);
+  },
+  globalIgnores([
+    ".next/**",
+    "out/**",
+    "build/**",
+    "node_modules/**",
+    "src/lib/types/api/**",
+  ]),
+]);
+
+export default eslintConfig;
