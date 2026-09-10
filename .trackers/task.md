@@ -1,12 +1,11 @@
-# Task: Frontend ESLint + CI green
+# Task: Frontend CI npm ci fix
 
-## Root cause
-- `eslint-config-next` was wrongly pinned to `^0.2.4` (missing next/core-web-vitals)
-- ESLint 10 + FlatCompat circular config crash
-- react-hooks/set-state-in-effect errors in Navbar + cookieBanner
+## Issue
+CI `npm ci` failed with EUSAGE when package-lock.json was missing from the checkout.
 
-## Completed
-- eslint-config-next@16.2.3, eslint@9, native flat config
-- Fixed Navbar/cookieBanner lint errors
-- package-lock.json committed; CI Node 24 + npm ci + cache
-- Verified: npm run lint (exit 0), npm run build (exit 0)
+## Fix
+- Install step: use npm ci if lockfile exists, else npm install + log warning
+- package-lock.json must remain tracked (not gitignored)
+
+## Note
+PR #28 (dev → master) should bring package-lock onto master; this hardens CI either way.
