@@ -1,7 +1,7 @@
 # Rollback
 
-- Previous known-good: tip of `dev` before `feat/dashboard-shell-profile`
-- Revert or close the PR that introduces the dashboard shell
-- Schema change is additive (`UserRead` extra fields); clients that ignore unknown fields remain compatible
-- No migrations, no data changes, no infra changes
-- Frontend-only rollback is sufficient if backend expansion is reverted together
+- Previous known-good before this feature: commit before `b1e4462` / PR #35
+- To roll back: revert merge commit `7d50c35` (or the feature commits) on `dev`
+- Schema change is additive (`UserRead` extra fields); older clients remain compatible
+- No migrations, no data changes, no infra / k3s changes
+- Frontend + backend schema should be reverted together for consistency

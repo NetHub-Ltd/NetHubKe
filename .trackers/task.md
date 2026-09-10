@@ -17,24 +17,28 @@ Replace the sparse `/dashboard` page with a real authenticated app shell:
 - Verify: `npm run lint`, `npm run build`
 - PR target: `dev`
 
+## Status
+**COMPLETE** — merged to `dev` as PR #35 (`7d50c35`).
+
 ## Completed
 - [x] Expanded `UserRead` (backend schema + frontend Zod/types)
-- [x] `/users/me` + sync + PATCH return enriched payload; lookup by `keycloak_id`
+- [x] `/users/me` + sync + PATCH return enriched payload; lookup by `keycloak_id` / tenant load
 - [x] `AppChrome` hides public Navbar/Footer on `/dashboard*`
 - [x] Dashboard shell: collapsible Sidebar, TopNav, DashboardShell
 - [x] `/dashboard` → redirect `/dashboard/profile`
 - [x] Profile page: display enriched fields, edit full_name via PATCH
 - [x] `npm run lint` → 0 errors
 - [x] `npm run build` → success
+- [x] PR #35 merged into `dev`
 
 ## Remaining
-- (none for this PR)
+- (none for this task)
 
 ## Active follow-ups
-- Settings / Billing pages
+- Settings / Billing pages (sidebar placeholders)
 - Edit phone_number (requires UserUpdate expansion)
 - Full OpenAPI regenerate when backend is running in CI
-- Pre-existing: `/me` previously used primary-key `get` with Keycloak sub (fixed in this PR as required for Profile)
+- Optional: richer tenant / subscription cards on Profile
 
 ## Decisions
 - Data richness: A (expand UserRead)
@@ -45,8 +49,4 @@ Replace the sparse `/dashboard` page with a real authenticated app shell:
 ## Risks
 - Layout isolation must not break public pages — AppChrome pathname gate
 - Additive schema only
-- Rollback: revert PR
-
-## Verification
-- npm run lint: 0 errors (pre-existing warnings only)
-- npm run build: success; routes include /dashboard and /dashboard/profile
+- Rollback: revert PR #35 if needed
