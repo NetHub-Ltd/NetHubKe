@@ -1,11 +1,13 @@
-# Task: Fix master frontend build (Navbar JSX + services parse)
+# Task: Fix Frontend CI install (npm ci → npm install)
 
-## Cause
-- Navbar.tsx: broken JSX (unclosed motion.div / mismatched Link/span), missing scrolled state
-- services/page.tsx: corrupted metadata object (parse error)
-- contact: Math.random during render (purity)
-- mpesa page: // comment as JSX text node
+## Problem
+- `.github/workflows/frontend-ci.yml` used `npm ci` when lockfile present
+- Install step fails with `npm error code EUSAGE` on every recent run
+- Root `package.json` declares workspaces but there is no root lockfile; running `npm ci` inside `apps/frontend` under Node 24 / npm 11 fails even though `package-lock.json` exists
+
+## Change
+- Replace conditional `npm ci` / `npm install` with plain `npm install`
+- Keep cache + working-directory unchanged
 
 ## Verified
-- npm run lint → 0 errors
-- npm run build → success
+- Workflow YAML updated; will be validated by CI on PR

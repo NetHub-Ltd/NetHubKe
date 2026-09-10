@@ -48,13 +48,11 @@ jobs:
           set -euo pipefail
           echo "Working directory: $(pwd)"
           ls -la package.json package-lock.json 2>&1 || true
-          if [ -f package-lock.json ]; then
-            echo "Using npm ci (lockfile present)"
-            npm ci
-          else
-            echo "WARNING: package-lock.json missing — falling back to npm install"
-            npm install
-          fi
+          # Use npm install (not npm ci): root package.json declares workspaces
+          # but there is no root lockfile; npm ci inside apps/frontend fails with
+          # EUSAGE under Node 24 / npm 11 even when package-lock.json exists.
+          echo "Using npm install"
+          npm install
 
       - name: Lint
         run: npm run lint

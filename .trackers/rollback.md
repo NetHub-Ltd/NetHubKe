@@ -1,4 +1,4 @@
 # Rollback
 
-- Revert or close PR that adds `.github/workflows/frontend-ci.yml`
-- No runtime or data impact; CI-only
+- Revert the commit that changes `.github/workflows/frontend-ci.yml` install step, or close the PR
+- No runtime or data impact; CI-only change
