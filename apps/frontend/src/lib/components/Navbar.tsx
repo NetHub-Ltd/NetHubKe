@@ -6,7 +6,9 @@ import { usePathname } from "next/navigation";
 import { Menu, X, ArrowRight, Zap } from "lucide-react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-// import { LoginButton } from "./loginButton";
+import { useSession } from "next-auth/react";
+import { keycloakLogin, keycloakRegister } from "@/lib/utils/authClient";
+import { federatedLogout } from "@/lib/actions/logout";
 
 const navLinks = [
   { name: "Home", href: "/" },
@@ -15,19 +17,97 @@ const navLinks = [
   { name: "Contact", href: "/contact" },
 ];
 
+function AuthControls({ mobile = false }: { mobile?: boolean }) {
+  const { data: session, status } = useSession();
+
+  if (status === "loading") {
+    return (
+      <span className={`text-sm text-muted ${mobile ? "py-2" : ""}`}>…</span>
+    );
+  }
+
+  if (status === "authenticated" && session) {
+    const label = session.user?.email || session.user?.name || "Account";
+    return (
+      <div
+        className={
+          mobile
+            ? "flex flex-col gap-3 w-full"
+            : "flex items-center gap-3"
+        }
+      >
+        <Link
+          href="/dashboard"
+          className={
+            mobile
+              ? "w-full bg-brand-primary text-white py-4 rounded-2xl font-bold text-center"
+              : "text-sm font-bold text-foreground hover:text-brand-primary transition-colors max-w-[12rem] truncate"
+          }
+          title={label}
+        >
+          {mobile ? "Dashboard" : label}
+        </Link>
+        <button
+          type="button"
+          onClick={async () => {
+            const url = await federatedLogout();
+            if (url) window.location.href = url;
+          }}
+          className={
+            mobile
+              ? "w-full border border-border py-4 rounded-2xl font-bold text-center"
+              : "text-sm font-semibold text-muted hover:text-red-600 transition-colors"
+          }
+        >
+          Sign out
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={
+        mobile ? "flex flex-col gap-3 w-full" : "flex items-center gap-3"
+      }
+    >
+      <button
+        type="button"
+        onClick={() => keycloakLogin("/dashboard")}
+        className={
+          mobile
+            ? "w-full border border-border py-4 rounded-2xl font-bold text-center"
+            : "text-sm font-bold text-foreground hover:text-brand-primary px-3 py-2"
+        }
+      >
+        Log in
+      </button>
+      <button
+        type="button"
+        onClick={() => keycloakRegister()}
+        className={
+          mobile
+            ? "w-full bg-brand-primary text-white py-4 rounded-2xl font-bold text-center"
+            : "bg-brand-primary text-white px-5 py-2.5 rounded-2xl font-bold text-sm shadow-glow hover:opacity-95 active:scale-95 transition-all"
+        }
+      >
+        Create account
+      </button>
+    </div>
+  );
+}
+
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
 
-  // Handle scroll state for glassmorphism toggle
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Close mobile menu on route change
   useEffect(() => setIsOpen(false), [pathname]);
 
   return (
@@ -39,7 +119,6 @@ const Navbar = () => {
       }`}
     >
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-        {/* Logo with Hover Animation */}
         <Link href="/" className="group flex gap-2 items-center">
           <motion.div
             whileHover={{ rotate: 12 }}
@@ -50,7 +129,7 @@ const Navbar = () => {
               alt="NetHub Logo"
               width={40}
               height={40}
-              priority // Tells Next.js to load this immediately without waiting for other assets
+              priority
               className="shrink-0 text-gradient"
             />
           </motion.div>
@@ -63,7 +142,6 @@ const Navbar = () => {
           </span>
         </Link>
 
-        {/* Desktop Links with Active Indicator */}
         <div className="hidden md:flex gap-10 items-center">
           <div className="flex gap-8 items-center">
             {navLinks.map((link) => {
@@ -72,7 +150,7 @@ const Navbar = () => {
                 <Link
                   key={link.name}
                   href={link.href}
-                  className={`relative font-bold  tracking-widest transition-all hover:text-brand-primary ${
+                  className={`relative font-bold tracking-widest transition-all hover:text-brand-primary ${
                     isActive ? "text-brand-primary" : "text-foreground"
                   }`}
                 >
@@ -87,31 +165,9 @@ const Navbar = () => {
               );
             })}
           </div>
-
-          {/* <LoginButton /> */}
-
-          {/* Premium CTA */}
-          <Link
-            href="/dashboard"
-            className="relative overflow-hidden bg-brand-primary text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 group shadow-glow hover:shadow-brand-primary/40 transition-all active:scale-95"
-          >
-            <span className="relative z-10 flex items-center gap-2">
-              Start Project
-              <ArrowRight
-                size={18}
-                className="group-hover:translate-x-1 transition-transform"
-              />
-            </span>
-            <motion.div
-              initial={{ x: "-100%" }}
-              whileHover={{ x: "100%" }}
-              transition={{ duration: 0.5 }}
-              className="absolute inset-0 bg-linear-to-r from-transparent via-white/20 to-transparent z-0"
-            />
-          </Link>
+          <AuthControls />
         </div>
 
-        {/* Mobile Menu Toggle */}
         <button
           onClick={() => setIsOpen(!isOpen)}
           className="md:hidden p-2 text-foreground focus:outline-none"
@@ -121,7 +177,6 @@ const Navbar = () => {
         </button>
       </div>
 
-      {/* Mobile Menu Overlay */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -163,12 +218,7 @@ const Navbar = () => {
                   />
                   Nairobi&apos;s Fintech Engineering Partner
                 </p>
-                <Link
-                  href="/contact"
-                  className="w-full bg-foreground text-background py-6 rounded-3xl font-black text-xl text-center flex items-center justify-center gap-3 active:scale-[0.98] transition-transform"
-                >
-                  Get a Free Quote <ArrowRight />
-                </Link>
+                <AuthControls mobile />
               </div>
             </div>
           </motion.div>
