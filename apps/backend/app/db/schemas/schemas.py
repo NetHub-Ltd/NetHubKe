@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Any
 from typing import List
 from typing import Optional
@@ -71,11 +72,23 @@ class UserUpdate(BaseModel):
 
 
 class UserRead(BaseModel):
+    """Public profile payload returned by /users/me and sync.
+
+    Additive expansion for the dashboard Profile view. Optional fields remain
+    null-safe so older clients and partial records continue to work.
+    """
     id: UUID
     email: str
     full_name: str
+    username: str = ""
+    phone_number: Optional[str] = None
     is_active: bool
-    tenant_id: UUID
+    tenant_id: Optional[UUID] = None
+    tenant_name: Optional[str] = None
+    tenant_tier: Optional[str] = None
+    created_at: Optional[datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 # TENANTS
