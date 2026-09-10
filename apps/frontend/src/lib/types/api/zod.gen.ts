@@ -69,8 +69,13 @@ export const zUserRead = z.object({
     id: z.uuid(),
     email: z.string(),
     full_name: z.string(),
+    username: z.string().optional().default(''),
+    phone_number: z.string().nullish(),
     is_active: z.boolean(),
-    tenant_id: z.uuid()
+    tenant_id: z.uuid().nullish(),
+    tenant_name: z.string().nullish(),
+    tenant_tier: z.string().nullish(),
+    created_at: z.union([z.string(), z.null()]).optional()
 });
 
 /**

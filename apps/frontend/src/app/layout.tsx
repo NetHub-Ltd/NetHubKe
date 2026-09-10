@@ -1,8 +1,6 @@
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/lib/components/Navbar";
-import Footer from "@/lib/components/Footer";
-import CookieBanner from "@/lib/components/cookieBanner";
+import AppChrome from "@/lib/components/AppChrome";
 import { Providers } from "@/lib/components/providers";
 import { metadataConfig, viewportConfig, jsonLd } from "@/lib/seo";
 // Platform SDK stubs per AI Studio web migration guidelines
@@ -60,13 +58,7 @@ export default function RootLayout({
         </a>
 
         <Providers>
-          <Navbar />
-          {/* Main content wrapper with top padding for fixed header */}
-          <main id="main-content" className="grow outline-none pt-16" tabIndex={-1}>
-            {children}
-          </main>
-          <Footer />
-          <CookieBanner />
+          <AppChrome>{children}</AppChrome>
         </Providers>
         <Analytics />
         <SpeedInsights />

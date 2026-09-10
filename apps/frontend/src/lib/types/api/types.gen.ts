@@ -152,13 +152,33 @@ export type UserRead = {
      */
     full_name: string;
     /**
+     * Username
+     */
+    username?: string;
+    /**
+     * Phone Number
+     */
+    phone_number?: string | null;
+    /**
      * Is Active
      */
     is_active: boolean;
     /**
      * Tenant Id
      */
-    tenant_id: string;
+    tenant_id?: string | null;
+    /**
+     * Tenant Name
+     */
+    tenant_name?: string | null;
+    /**
+     * Tenant Tier
+     */
+    tenant_tier?: string | null;
+    /**
+     * Created At
+     */
+    created_at?: string | null;
 };
 
 /**
