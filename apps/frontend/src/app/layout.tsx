@@ -5,8 +5,9 @@ import Footer from "@/lib/components/Footer";
 import CookieBanner from "@/lib/components/cookieBanner";
 import { Providers } from "@/lib/components/providers";
 import { metadataConfig, viewportConfig, jsonLd } from "@/lib/seo";
-import { Analytics } from "@vercel/analytics/next";
-import { SpeedInsights } from "@vercel/speed-insights/next";
+// Platform SDK stubs per AI Studio web migration guidelines
+const Analytics = () => null;
+const SpeedInsights = () => null;
 
 // 1. Optimization: Use display: "swap" and preload for LCP/CLS stability
 const inter = Inter({
@@ -36,25 +37,32 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
+        {/* Google Fonts Preconnect and Material Symbols Outlined */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+          rel="stylesheet"
+        />
         {/* JSON-LD for Organization/Website Schema at Root Level */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className="font-sans antialiased min-h-screen flex flex-col selection:bg-primary/20">
+      <body className="bg-surface font-body-md text-body-md text-on-surface antialiased min-h-screen flex flex-col selection:bg-brand-cobalt-light selection:text-primary">
         {/* Skip to Content Link for A11y (WCAG 2.4.1) */}
         <a
           href="#main-content"
-          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 bg-brand-primary px-4 py-2 z-100 border shadow-lg"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 bg-primary text-on-primary px-4 py-2 z-100 rounded shadow-lg"
         >
           Skip to content
         </a>
 
         <Providers>
           <Navbar />
-          {/* Ensure main-content is the direct child for landmark focus */}
-          <main id="main-content" className="grow outline-none" tabIndex={-1}>
+          {/* Main content wrapper with top padding for fixed header */}
+          <main id="main-content" className="grow outline-none pt-16" tabIndex={-1}>
             {children}
           </main>
           <Footer />

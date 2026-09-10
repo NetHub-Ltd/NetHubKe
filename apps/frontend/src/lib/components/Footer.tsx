@@ -1,358 +1,175 @@
-// import Link from "next/link";
-// import {
-//   Mail,
-//   Phone,
-//   MapPin,
-//   Twitter,
-//   Github,
-//   Linkedin,
-//   MessageSquare,
-// } from "lucide-react";
-
-// const Footer = () => {
-//   const currentYear = new Date().getFullYear();
-
-//   return (
-//     <footer className="bg-card border-t border-border pt-20 pb-10">
-//       <div className="max-w-7xl mx-auto px-6">
-//         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
-//           {/* Brand Column */}
-//           <div className="space-y-6">
-//             <Link
-//               href="/"
-//               className="text-2xl font-bold tracking-tighter text-brand-primary"
-//             >
-//               NetHub<span className="text-foreground">.co.ke</span>
-//             </Link>
-//             <p className="text-foreground/60 text-sm leading-relaxed">
-//               Empowering Kenyan businesses with world-class M-Pesa integrations,
-//               custom software, and digital growth strategies.
-//             </p>
-//             <div className="flex gap-4">
-//               <Link
-//                 href="#"
-//                 className="p-2 bg-background border border-border rounded-lg hover:text-brand-primary transition-colors"
-//               >
-//                 <Twitter size={18} />
-//               </Link>
-//               <Link
-//                 href="#"
-//                 className="p-2 bg-background border border-border rounded-lg hover:text-brand-primary transition-colors"
-//               >
-//                 <Linkedin size={18} />
-//               </Link>
-//               <Link
-//                 href="#"
-//                 className="p-2 bg-background border border-border rounded-lg hover:text-brand-primary transition-colors"
-//               >
-//                 <Github size={18} />
-//               </Link>
-//             </div>
-//           </div>
-
-//           {/* Quick Links */}
-//           <div>
-//             <h4 className="font-bold mb-6 text-sm uppercase tracking-widest">
-//               Company
-//             </h4>
-//             <ul className="space-y-4 text-sm text-foreground/70">
-//               <li>
-//                 <Link
-//                   href="/about"
-//                   className="hover:text-brand-primary transition-colors"
-//                 >
-//                   About Us
-//                 </Link>
-//               </li>
-//               <li>
-//                 <Link
-//                   href="/services"
-//                   className="hover:text-brand-primary transition-colors"
-//                 >
-//                   Our Services
-//                 </Link>
-//               </li>
-//               <li>
-//                 <Link
-//                   href="/contact"
-//                   className="hover:text-brand-primary transition-colors"
-//                 >
-//                   Contact
-//                 </Link>
-//               </li>
-//               <li>
-//                 <Link
-//                   href="/privacy-policy"
-//                   className="hover:text-brand-primary transition-colors"
-//                 >
-//                   Privacy Policy
-//                 </Link>
-//               </li>
-//             </ul>
-//           </div>
-
-//           {/* Services Quick Access */}
-//           <div>
-//             <h4 className="font-bold mb-6 text-sm uppercase tracking-widest">
-//               Solutions
-//             </h4>
-//             <ul className="space-y-4 text-sm text-foreground/70">
-//               <li>
-//                 <Link
-//                   href="/service/mpesa-integration"
-//                   className="hover:text-brand-primary transition-colors"
-//                 >
-//                   M-Pesa Integration
-//                 </Link>
-//               </li>
-//               <li>
-//                 <Link
-//                   href="/service/app-development"
-//                   className="hover:text-brand-primary transition-colors"
-//                 >
-//                   Custom App Dev
-//                 </Link>
-//               </li>
-//               <li>
-//                 <Link
-//                   href="/service/seo-optimization"
-//                   className="hover:text-brand-primary transition-colors"
-//                 >
-//                   SEO Services
-//                 </Link>
-//               </li>
-//               <li>
-//                 <Link
-//                   href="/service/digital-shelves"
-//                   className="hover:text-brand-primary transition-colors"
-//                 >
-//                   Digital Shelves
-//                 </Link>
-//               </li>
-//             </ul>
-//           </div>
-
-//           {/* Contact Info */}
-//           <div>
-//             <h4 className="font-bold mb-6 text-sm uppercase tracking-widest">
-//               Get in Touch
-//             </h4>
-//             <div className="space-y-4 text-sm text-foreground/70">
-//               <div className="flex items-center gap-3">
-//                 <Mail size={16} className="text-brand-primary" />
-//                 <span>support@nethub.co.ke</span>
-//               </div>
-//               <div className="flex items-center gap-3">
-//                 <Phone size={16} className="text-brand-primary" />
-//                 <span>+254 83 202 527</span>
-//               </div>
-//               <div className="flex items-center gap-3">
-//                 <MapPin size={16} className="text-brand-primary" />
-//                 <span>Nairobi, Kenya</span>
-//               </div>
-//               <Link
-//                 href="/contact"
-//                 className="inline-flex items-center gap-2 mt-2 bg-brand-primary/10 text-brand-primary px-4 py-2 rounded-lg font-bold hover:bg-brand-primary hover:text-white transition-all"
-//               >
-//                 <MessageSquare size={16} /> Free Consultation
-//               </Link>
-//             </div>
-//           </div>
-//         </div>
-
-//         {/* Bottom Bar */}
-//         <div className="pt-10 border-t border-border flex flex-col md:row justify-between items-center gap-4 text-xs text-foreground/50">
-//           <p>© {currentYear} NetHub Kenya. All rights reserved.</p>
-//           <div className="flex gap-6">
-//             <Link href="/terms-of-service" className="hover:underline">
-//               Terms of Service
-//             </Link>
-//             {/* <Link href="#" className="hover:underline">
-//               Cookie Policy
-//             </Link> */}
-//           </div>
-//         </div>
-//       </div>
-//     </footer>
-//   );
-// };
-
-// export default Footer;
-
-
+import React from "react";
 import Link from "next/link";
-import {
-  Mail,
-  Phone,
-  MapPin,
-  Twitter,
-  Github,
-  Linkedin,
-  MessageSquare,
-  ArrowUpRight,
-} from "lucide-react";
 
 const Footer = () => {
-  const currentYear = new Date().getFullYear();
-
   return (
-    <footer className="bg-card border-t border-border pt-24 pb-12">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16 mb-20">
-          {/* 1. Brand Identity & Global Mission */}
-          <div className="space-y-8">
-            <Link
-              href="/"
-              className="text-2xl font-black tracking-tighter text-brand-primary flex items-center gap-1"
-            >
-              NetHub<span className="text-foreground">.co.ke</span>
-            </Link>
-            <p className="text-muted-foreground text-sm leading-relaxed max-w-xs">
-              Architecting resilient digital infrastructure for the East African
-              enterprise. Specializing in high-throughput payment gateways and
-              performance-engineered software.
+    <footer className="w-full bg-inverse-surface text-inverse-on-surface pt-space-3xl pb-space-2xl border-t border-slate-800">
+      <div className="max-w-container-max mx-auto px-gutter-mobile lg:px-gutter-desktop">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-space-2xl pb-space-2xl">
+          {/* Brand and Description */}
+          <div className="lg:col-span-2 flex flex-col gap-space-md">
+            <div className="flex items-center gap-space-xs">
+              <img
+                alt="NetHub Kenya Logo"
+                className="h-7 w-auto object-contain"
+                src="/logo.svg"
+              />
+              <span className="font-headline-md text-headline-md text-surface-canvas font-bold">
+                NetHub Kenya
+              </span>
+              <span className="font-label-sm text-label-sm text-primary-fixed bg-primary/20 px-space-xs py-space-2xs rounded-full uppercase font-bold tracking-wider">
+                Enterprise
+              </span>
+            </div>
+            <p className="font-body-md text-body-md text-slate-text-muted max-w-md">
+              East Africa&apos;s premier enterprise software and fintech engineering
+              authority. We build resilient cloud foundations, high-throughput
+              financial rails, and sub-second scale systems powering market leaders
+              across the African continent.
             </p>
-            <div className="flex gap-3">
-              {[
-                { icon: <Twitter size={18} />, href: "#" },
-                { icon: <Linkedin size={18} />, href: "#" },
-                { icon: <Github size={18} />, href: "#" },
-              ].map((social, i) => (
-                <Link
-                  key={i}
-                  href={social.href}
-                  className="w-10 h-10 flex items-center justify-center bg-background border border-border rounded-xl hover:border-brand-primary hover:text-brand-primary transition-all duration-300"
+            <div className="flex flex-col gap-space-xs text-slate-text-muted font-body-sm text-body-sm">
+              <div className="flex items-center gap-space-xs">
+                <span className="material-symbols-outlined text-[18px] text-primary-fixed-dim">
+                  location_on
+                </span>
+                <span>Westlands Nairobi, Kenya</span>
+              </div>
+              <div className="flex items-center gap-space-xs">
+                <span className="material-symbols-outlined text-[18px] text-primary-fixed-dim">
+                  call
+                </span>
+                <a
+                  className="hover:text-surface-canvas transition-colors"
+                  href="tel:+254783202527"
                 >
-                  {social.icon}
-                </Link>
-              ))}
+                  +254 783 202 527
+                </a>
+              </div>
+              <div className="flex items-center gap-space-xs">
+                <span className="material-symbols-outlined text-[18px] text-primary-fixed-dim">
+                  mail
+                </span>
+                <a
+                  className="hover:text-surface-canvas transition-colors"
+                  href="mailto:support@nethub.co.ke"
+                >
+                  support@nethub.co.ke
+                </a>
+              </div>
             </div>
           </div>
 
-          {/* 2. Company Hierarchy */}
-          <div className="lg:pl-8">
-            <h4 className="font-black mb-8 text-[10px] uppercase tracking-[0.2em] text-brand-secondary">
+          {/* Corporate Links */}
+          <div className="flex flex-col gap-space-md">
+            <span className="font-label-md text-label-md text-surface-canvas uppercase font-bold tracking-wider">
               Corporate
-            </h4>
-            <ul className="space-y-4 text-sm font-medium">
-              {[
-                { name: "Our Expertise", href: "/about" },
-                { name: "Service Catalog", href: "/services" },
-                { name: "Project Intake", href: "/contact" },
-                { name: "Privacy Policy", href: "/privacy-policy" },
-              ].map((link) => (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="text-muted-foreground hover:text-brand-primary flex items-center gap-2 group transition-colors"
-                  >
-                    {link.name}
-                    <ArrowUpRight
-                      size={12}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity"
-                    />
-                  </Link>
-                </li>
-              ))}
+            </span>
+            <ul className="flex flex-col gap-space-xs font-body-sm text-body-sm text-slate-text-muted">
+              <li className="hover:text-surface-canvas transition-colors">
+                <Link href="/about">About Us</Link>
+              </li>
+              <li className="hover:text-surface-canvas transition-colors">
+                <Link href="/services">Service Catalog</Link>
+              </li>
+              <li className="hover:text-surface-canvas transition-colors">
+                <Link href="/contact">Project Intake</Link>
+              </li>
+              <li className="hover:text-surface-canvas transition-colors">
+                <Link href="/privacy-policy">Privacy Policy</Link>
+              </li>
             </ul>
           </div>
 
-          {/* 3. Deep-Link Solutions (SEO Link Equity) */}
-          <div>
-            <h4 className="font-black mb-8 text-[10px] uppercase tracking-[0.2em] text-brand-secondary">
+          {/* Specialized Solutions */}
+          <div className="flex flex-col gap-space-md">
+            <span className="font-label-md text-label-md text-surface-canvas uppercase font-bold tracking-wider">
               Specialized Solutions
-            </h4>
-            <ul className="space-y-4 text-sm font-medium text-muted-foreground">
-              <li>
-                <Link
-                  href="/service/mpesa-integration"
-                  className="hover:text-brand-primary transition-colors"
-                >
+            </span>
+            <ul className="flex flex-col gap-space-xs font-body-sm text-body-sm text-slate-text-muted">
+              <li className="hover:text-surface-canvas transition-colors">
+                <Link href="/service/mpesa-integration">
                   M-Pesa Daraja 3.0 API
                 </Link>
               </li>
-              <li>
-                <Link
-                  href="/service/app-development"
-                  className="hover:text-brand-primary transition-colors"
-                >
-                  Next.js Cloud Systems
-                </Link>
+              <li className="hover:text-surface-canvas transition-colors">
+                <Link href="/services">Next.js Cloud Systems</Link>
               </li>
-              <li>
-                <Link
-                  href="/service/seo-optimization"
-                  className="hover:text-brand-primary transition-colors"
-                >
-                  Technical SEO Audit
-                </Link>
+              <li className="hover:text-surface-canvas transition-colors">
+                <Link href="/services">Technical SEO Audit</Link>
               </li>
-              <li>
-                <Link
-                  href="/service/digital-shelves"
-                  className="hover:text-brand-primary transition-colors"
-                >
-                  E-Commerce Middleware
-                </Link>
+              <li className="hover:text-surface-canvas transition-colors">
+                <Link href="/services">E-Commerce Middleware</Link>
               </li>
             </ul>
           </div>
 
-          {/* 4. Support & Trust Anchor */}
-          <div className="space-y-8">
-            <div>
-              <h4 className="font-black mb-8 text-[10px] uppercase tracking-[0.2em] text-brand-secondary">
-                Direct Channel
-              </h4>
-              <div className="space-y-4 text-sm font-bold">
-                <div className="flex items-center gap-3 text-foreground">
-                  <Mail size={16} className="text-brand-primary" />
-                  <span>support@nethub.co.ke</span>
+          {/* Trust Badges */}
+          <div className="flex flex-col gap-space-md">
+            <span className="font-label-md text-label-md text-surface-canvas uppercase font-bold tracking-wider">
+              Trust Badges
+            </span>
+            <div className="flex flex-col gap-space-sm">
+              <div className="bg-on-surface/40 p-space-sm rounded-lg flex items-center gap-space-sm">
+                <span className="material-symbols-outlined text-success-emerald text-[24px]">
+                  verified_user
+                </span>
+                <div className="flex flex-col">
+                  <span className="font-label-sm text-label-sm text-surface-canvas font-bold">
+                    PCI-DSS Level 1
+                  </span>
+                  <span className="font-metric-mono text-metric-mono text-slate-text-muted">
+                    Verified Compliance
+                  </span>
                 </div>
-                <div className="flex items-center gap-3 text-foreground">
-                  <Phone size={16} className="text-brand-primary" />
-                  <span>+254 783 202 527</span>
+              </div>
+              <div className="bg-on-surface/40 p-space-sm rounded-lg flex items-center gap-space-sm">
+                <span className="material-symbols-outlined text-primary-fixed-dim text-[24px]">
+                  lock
+                </span>
+                <div className="flex flex-col">
+                  <span className="font-label-sm text-label-sm text-surface-canvas font-bold">
+                    ISO/IEC 27001
+                  </span>
+                  <span className="font-metric-mono text-metric-mono text-slate-text-muted">
+                    Information Security
+                  </span>
+                </div>
+              </div>
+              <div className="bg-on-surface/40 p-space-sm rounded-lg flex items-center gap-space-sm">
+                <span className="material-symbols-outlined text-tertiary-fixed text-[24px]">
+                  bolt
+                </span>
+                <div className="flex flex-col">
+                  <span className="font-label-sm text-label-sm text-surface-canvas font-bold">
+                    Safaricom Daraja 3.0
+                  </span>
+                  <span className="font-metric-mono text-metric-mono text-slate-text-muted">
+                    Certified Partner Node
+                  </span>
                 </div>
               </div>
             </div>
-
-            <Link
-              href="/contact"
-              className="flex items-center justify-between w-full bg-foreground text-background px-5 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-brand-primary transition-all duration-300 group"
-            >
-              Start Consultation
-              <MessageSquare
-                size={16}
-                className="group-hover:rotate-12 transition-transform"
-              />
-            </Link>
           </div>
         </div>
 
-        {/* Bottom Bar: Metadata & Status */}
-        <div className="pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-6 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50">
-            <p>© {currentYear} NetHub Kenya</p>
-            <div className="hidden md:flex items-center gap-2">
-              <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-              <span>All Systems Operational</span>
-            </div>
+        {/* Bottom copyright and links */}
+        <div className="pt-space-xl border-t border-slate-700/50 flex flex-col md:flex-row items-center justify-between gap-space-md text-slate-text-muted font-body-sm text-body-sm">
+          <div className="flex items-center gap-space-sm">
+            <span>© 2026 NetHub Kenya. All Systems Operational.</span>
           </div>
-
-          <div className="flex gap-8 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50">
+          <div className="flex items-center gap-space-lg">
             <Link
-              href="/terms-of-service"
-              className="hover:text-foreground transition-colors"
-            >
-              Terms
-            </Link>
-            <Link
+              className="hover:text-surface-canvas transition-colors"
               href="/privacy-policy"
-              className="hover:text-foreground transition-colors"
             >
-              Security
+              Privacy Policy
             </Link>
-            <span className="hidden md:inline">Nairobi • 00100</span>
+            <Link
+              className="hover:text-surface-canvas transition-colors"
+              href="/contact"
+            >
+              Contact
+            </Link>
           </div>
         </div>
       </div>

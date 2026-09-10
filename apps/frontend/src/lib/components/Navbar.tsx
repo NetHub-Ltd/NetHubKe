@@ -99,14 +99,11 @@ function AuthControls({ mobile = false }: { mobile?: boolean }) {
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+    setIsOpen(false);
+  }, [pathname]);
 
   return (
     <nav
@@ -130,12 +127,20 @@ const Navbar = () => {
               priority
               className="shrink-0 text-gradient"
             />
-          </motion.div>
-          <span className="text-2xl text-gradient font-bold tracking-tighter">
-            NetHub
-            <span className="text-brand-primary group-hover:text-brand-secondary transition-colors">
-              {" "}
-              Kenya
+            <span className="font-headline-sm text-headline-sm text-on-surface tracking-tight font-bold">
+              NetHub
+            </span>
+            <span className="font-label-sm text-label-sm text-primary uppercase font-bold tracking-wider">
+              KE
+            </span>
+          </Link>
+          <div className="hidden xl:flex items-center gap-space-xs bg-success-emerald-bg px-space-sm py-space-2xs rounded-full shadow-[0_1px_3px_0_rgba(15,23,42,0.04)]">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success-emerald opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-success-emerald"></span>
+            </span>
+            <span className="font-metric-mono text-metric-mono text-tertiary font-bold">
+              All Systems Nominal
             </span>
           </span>
         </Link>
