@@ -1,5 +1,8 @@
 import axiosClient from "./axiosClient";
-export const fetchData = async (url: string, params?: Record<string, any>) => {
+export const fetchData = async (
+  url: string,
+  params?: Record<string, unknown>,
+) => {
   const res = await axiosClient.get(url, { params });
 
   if (res.status !== 200) {

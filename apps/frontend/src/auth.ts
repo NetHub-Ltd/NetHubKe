@@ -1,5 +1,6 @@
 import NextAuth from "next-auth";
 import Keycloak from "next-auth/providers/keycloak";
+import type { JWT } from "next-auth/jwt";
 import { zUserRead } from "./lib/types/api/zod.gen";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -72,9 +73,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async session({ session, token }) {
       // Pass all our custom data to the client-side session object
       if (token) {
+        const jwtUser = token.user as
+          | { id: string; tenantId?: string; isActive: boolean }
+          | undefined;
         session.user = {
           ...session.user,
-          ...(token.user as any),
+          ...(jwtUser ?? {}),
         };
         session.accessToken = token.accessToken as string;
         session.idToken = token.idToken as string; // Available for federatedLogout action
@@ -85,7 +89,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
 });
 
-async function refreshAccessToken(token: any) {
+async function refreshAccessToken(token: JWT) {
   console.log("Attempting token refresh...");
   try {
     const response = await fetch(
@@ -97,7 +101,7 @@ async function refreshAccessToken(token: any) {
           client_id: process.env.KEYCLOAK_CLIENT_ID!,
           client_secret: process.env.KEYCLOAK_CLIENT_SECRET!,
           grant_type: "refresh_token",
-          refresh_token: token.refreshToken,
+          refresh_token: token.refreshToken!,
         }),
       },
     );
