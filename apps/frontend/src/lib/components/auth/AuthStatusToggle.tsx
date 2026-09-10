@@ -11,6 +11,7 @@ export function AuthButton() {
 
   return status === "authenticated" ? (
     <button
+      type="button"
       className="btn-secondary"
       onClick={async () => {
         const url = await federatedLogout();
@@ -20,7 +21,11 @@ export function AuthButton() {
       Sign Out ({session?.user?.email})
     </button>
   ) : (
-    <button className="bg-brand-primary" onClick={keycloakLogin}>
+    <button
+      type="button"
+      className="bg-brand-primary"
+      onClick={() => keycloakLogin("/dashboard")}
+    >
       Login
     </button>
   );
