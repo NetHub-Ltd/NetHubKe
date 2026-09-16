@@ -44,6 +44,22 @@ class Settings(BaseSettings):
     jwks_cache_ttl: int = 3600  # seconds; PyJWKClient lifespan uses its own cache
     allowed_origins: str
 
+    # Tawala hard-session exchange (ecosystem auth M2). Default OFF.
+    tawala_exchange_enabled: bool = False
+    # PEM-encoded RSA private key (PKCS8) used to sign aud=tawala-api tokens.
+    tawala_jwt_private_key: str = ""
+    tawala_jwt_issuer: str = "https://api.nethub.local"
+    tawala_jwt_audience: str = "tawala-api"
+    tawala_jwt_ttl_sec: int = 28800  # 8 hours
+    # If true, tenant must have active subscription to service slug "tawala".
+    tawala_exchange_require_subscription: bool = False
+
+    # Redis (N2+) — JWKS and signing-key metadata cache
+    redis_url: str = "redis://localhost:6379/0"
+    jwks_redis_ttl_sec: int = 120
+
+
+
 
     @property
     def async_db_url(self) -> str:

@@ -5,6 +5,8 @@ from typing import List, Optional, Any
 from pydantic import ConfigDict, model_validator
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import Field, Column, JSON, Relationship
+from sqlalchemy import Text, DateTime as SADateTime
+import sqlalchemy as sa
 
 from app.db.models.base import BaseMixin
 from app.db.schemas.enums import ServiceIcon, ServicePricing, ServiceFAQ, TenantTier
@@ -18,6 +20,12 @@ class Tenant(BaseMixin, table=True):
         default=TenantTier.FREE,
         index=True,
         description="The subscription tier governing resource limits."
+    )
+    # Link to TawalaKE organizations.id for hard-session org_id claim (nullable until linked).
+    tawala_organization_id: Optional[uuid.UUID] = Field(
+        default=None,
+        index=True,
+        description="Tawala Organization UUID used as org_id in exchanged tokens.",
     )
     # Relationship: One Tenant has Many Users
     users: List["User"] = Relationship(back_populates="tenant")
@@ -100,3 +108,24 @@ class Plan(BaseMixin, table=True):
 
     # Use JSONB to store limits: {"max_projects": 5, "api_calls_limit": 1000}
     features_config: dict = Field(default_factory=dict, sa_column=Column(JSONB))
+
+
+class SigningKey(BaseMixin, table=True):
+    """
+    RSA keys for product access tokens (NetHubKe as AS).
+
+    status: active (sign new tokens) | retiring (still in JWKS) | retired (hidden)
+    Private PEM stored only on NetHubKe. Public material also in public_jwk for JWKS.
+    """
+    __tablename__ = "signing_keys"
+
+    kid: str = Field(max_length=64, unique=True, index=True)
+    status: str = Field(max_length=16, index=True, default="active")
+    algorithm: str = Field(max_length=16, default="RS256")
+    private_pem: str = Field(sa_column=Column(sa.Text, nullable=False))
+    public_jwk: dict = Field(default_factory=dict, sa_column=Column(JSONB))
+    retire_after: Optional[datetime] = Field(
+        default=None,
+        sa_type=SADateTime(timezone=True),
+        sa_column_kwargs={"nullable": True},
+    )

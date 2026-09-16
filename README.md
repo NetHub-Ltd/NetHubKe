@@ -1,5 +1,12 @@
 # NetHubKe Monorepo
 
+[![Backend CI](https://github.com/NetHub-Ltd/NetHubKe/actions/workflows/backend-ci.yml/badge.svg?branch=master)](https://github.com/NetHub-Ltd/NetHubKe/actions/workflows/backend-ci.yml)
+[![Frontend CI](https://github.com/NetHub-Ltd/NetHubKe/actions/workflows/frontend-ci.yml/badge.svg?branch=master)](https://github.com/NetHub-Ltd/NetHubKe/actions/workflows/frontend-ci.yml)
+[![codecov](https://codecov.io/gh/NetHub-Ltd/NetHubKe/branch/master/graph/badge.svg)](https://codecov.io/gh/NetHub-Ltd/NetHubKe)
+[![Issues](https://img.shields.io/github/issues/NetHub-Ltd/NetHubKe)](https://github.com/NetHub-Ltd/NetHubKe/issues)
+[![PRs](https://img.shields.io/github/issues-pr/NetHub-Ltd/NetHubKe)](https://github.com/NetHub-Ltd/NetHubKe/pulls)
+[![License](https://img.shields.io/github/license/NetHub-Ltd/NetHubKe)](https://github.com/NetHub-Ltd/NetHubKe)
+
 This monorepo contains the full scaffold for **NetHubKe**, a centralized Authorization Server and parent platform for your ecosystem of microservices. It integrates **Keycloak** for authentication and **FastAPI** for authorization, with a **Next.js frontend** for administration and user management.
 
 ---

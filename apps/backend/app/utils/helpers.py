@@ -34,8 +34,8 @@ def validate_and_format_kenyan_phone(phone: str, format: bool = False) -> Option
     # Remove whitespace, dashes, parentheses, etc.
     cleaned = re.sub(r"[\s\-\_\(\)]", "", phone.strip())
 
-    # Pattern: optional +254 / 0 prefix + exactly 9 digits starting with 7 or 1
-    pattern = r"^(\+254|0)?(7[0-9]{8}|1[0-9]{8})$"
+    # Pattern: optional +254 / 254 / 0 prefix + exactly 9 digits starting with 7 or 1
+    pattern = r"^(\+?254|0)?(7[0-9]{8}|1[0-9]{8})$"
 
     match = re.match(pattern, cleaned)
     if not match:
