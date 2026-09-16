@@ -1,14 +1,11 @@
-# Task — Startup DB/Redis hard-ready + signing key bootstrap
+# Task — N6 Console IA: Home + My services
 
-## Goal
-Empty JWKS fixed by bootstrap on start and JWKS path; hard-stop if DB/Redis not ready.
-
-## Root cause
-Keys only bootstrapped on mint when exchange enabled; env PEM off → JWKS empty.
+## Milestone
+**N6** — #51 #52
 
 ## Completed
-- [x] ensure_redis_ready (PING)
-- [x] lifespan: DB SELECT 1 + signing_keys, Redis PING, bootstrap key
-- [x] ensure_signing_keys_ready + JWKS path bootstrap
-- [x] GET /ready for k3s readinessProbe
-- [x] unit tests
+- [x] /dashboard Home (no longer profile-only redirect)
+- [x] /dashboard/services + sidebar Home + My services
+- [x] GET /api/v1/services/my-status (connected | trial | not_connected)
+- [x] Auth test for my-status
+- [ ] lint/build verification in CI / local if available
