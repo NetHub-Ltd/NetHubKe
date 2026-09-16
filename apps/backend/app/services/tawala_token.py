@@ -11,6 +11,7 @@ import base64
 import json
 import time
 import uuid
+from datetime import datetime, timedelta, timezone
 from typing import Any, Optional, Tuple
 from uuid import UUID
 
@@ -79,6 +80,80 @@ async def invalidate_jwks_cache() -> None:
     await redis_delete(JWKS_CACHE_KEY, ACTIVE_KID_CACHE_KEY)
 
 
+async def rotate_signing_key(
+    db: AsyncSession,
+    *,
+    retire_after_hours: int = 24,
+) -> dict[str, Any]:
+    """
+    N5: Create a new active signing key; mark previous active key(s) as retiring.
+
+    JWKS continues to publish active + retiring until retire_after, then keys
+    should be marked retired (see prune_expired_retiring_keys).
+    Redis JWKS / active-kid caches are purged immediately.
+    """
+    hours = max(1, int(retire_after_hours))
+    retire_at = datetime.now(timezone.utc) + timedelta(hours=hours)
+
+    active_rows = list(
+        await db.exec(
+            select(SigningKey).where(
+                SigningKey.status == "active",
+                SigningKey.deleted_at.is_(None),
+            )
+        )
+    )
+    for row in active_rows:
+        row.status = "retiring"
+        row.retire_after = retire_at
+        db.add(row)
+
+    kid, pem, jwk, _ = _generate_rsa_keypair()
+    new_row = SigningKey(
+        kid=kid,
+        status="active",
+        algorithm="RS256",
+        private_pem=pem,
+        public_jwk=jwk,
+    )
+    db.add(new_row)
+    await db.commit()
+    await db.refresh(new_row)
+    await invalidate_jwks_cache()
+    logger.info(
+        f"Rotated signing key new_kid={kid} retiring={[r.kid for r in active_rows]} retire_after={retire_at.isoformat()}"
+    )
+    return {
+        "new_kid": kid,
+        "retiring_kids": [r.kid for r in active_rows],
+        "retire_after": retire_at.isoformat(),
+    }
+
+
+async def prune_expired_retiring_keys(db: AsyncSession) -> int:
+    """Mark retiring keys past retire_after as retired; purge JWKS cache if any changed."""
+    now = datetime.now(timezone.utc)
+    rows = list(
+        await db.exec(
+            select(SigningKey).where(
+                SigningKey.status == "retiring",
+                SigningKey.deleted_at.is_(None),
+            )
+        )
+    )
+    changed = 0
+    for row in rows:
+        if row.retire_after is not None and row.retire_after <= now:
+            row.status = "retired"
+            db.add(row)
+            changed += 1
+    if changed:
+        await db.commit()
+        await invalidate_jwks_cache()
+        logger.info(f"Pruned {changed} retiring signing keys to retired")
+    return changed
+
+
 async def bootstrap_signing_key(db: AsyncSession) -> SigningKey:
     """Create first active key if none exist. Prefer env PEM material if set."""
     env_key = _load_env_private_key()
@@ -143,7 +218,10 @@ async def build_jwks_document(db: AsyncSession) -> dict[str, Any]:
     )
     rows = list(await db.exec(stmt))
     keys = []
+    now = datetime.now(timezone.utc)
     for row in rows:
+        if row.status == "retiring" and row.retire_after is not None and row.retire_after <= now:
+            continue  # treat as retired for JWKS until prune job runs
         jwk = row.public_jwk or {}
         if jwk:
             keys.append(jwk)
