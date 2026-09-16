@@ -55,3 +55,15 @@ Default policy:
 
 Do **not** put private keys in k3s env. Leave `TAWALA_JWT_PRIVATE_KEY` empty.
 Set max age only; the AS generates and rotates public keys automatically.
+
+## Startup bootstrap
+
+On application start the lifespan **hard-stops** unless:
+
+1. Postgres answers `SELECT 1` and `signing_keys` is queryable (migrations applied)
+2. Redis answers `PING`
+3. At least one **active** signing key exists (generated into Postgres if the table was empty)
+
+JWKS (`GET /api/v1/auth/jwks.json`) also bootstraps if the key table is empty, so `{"keys":[]}` should not persist after a healthy start.
+
+k3s: use `/ready` for readinessProbe and `/health` for livenessProbe.
