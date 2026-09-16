@@ -86,8 +86,8 @@ def test_decode_scope_list(rsa_key):
     token = _token(rsa_key, scope=["openid", "profile"])
     with _patch_jwks(pub):
         data = security_mod._decode_token(token)
-    assert "openid" in data.scopes
     assert "profile" in data.scopes
+    assert "openid" not in data.scopes  # filtered as OIDC noise by TokenData
 
 
 def test_decode_permissions_fallback(rsa_key):

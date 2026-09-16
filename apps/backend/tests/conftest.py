@@ -188,4 +188,7 @@ def patch_kc_decode(rsa_keys, monkeypatch):
         )
 
     monkeypatch.setattr(security_mod, "_decode_token", _decode)
+    # deps imported _decode_token by name at module load — patch there too
+    from app.api import deps as deps_mod
+    monkeypatch.setattr(deps_mod, "_decode_token", _decode)
     return _decode

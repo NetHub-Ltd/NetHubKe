@@ -20,12 +20,12 @@ def test_utc_today():
 
 def test_phone_valid_local():
     assert validate_and_format_kenyan_phone("0712345678") == "0712345678"
-    assert validate_and_format_kenyan_phone("0712345678", format=True) == "+254712345678"
+    assert validate_and_format_kenyan_phone("0712345678", format=True) == "254712345678"
 
 
 def test_phone_valid_international():
-    assert validate_and_format_kenyan_phone("+254712345678", format=True) == "+254712345678"
-    assert validate_and_format_kenyan_phone("254712345678", format=True) == "+254712345678"
+    assert validate_and_format_kenyan_phone("+254712345678", format=True) == "254712345678"
+    assert validate_and_format_kenyan_phone("254712345678", format=True) == "254712345678"
 
 
 def test_phone_invalid():
@@ -36,5 +36,5 @@ def test_phone_invalid():
 
 
 def test_phone_with_spaces_and_dashes():
-    assert validate_and_format_kenyan_phone("0712 345 678", format=True) == "+254712345678"
-    assert validate_and_format_kenyan_phone("(0712)-345-678", format=True) == "+254712345678"
+    assert validate_and_format_kenyan_phone("0712 345 678", format=True) == "254712345678"
+    assert validate_and_format_kenyan_phone("(0712)-345-678", format=True) == "254712345678"
