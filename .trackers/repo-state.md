@@ -1,4 +1,4 @@
 # Repository State
-- Branch: feat/n4-product-links-entitlements
+- Branch: feat/n5-signing-key-rotation
 - PR target: dev
-- Milestone: N4 (#48 #49)
+- Milestone: N5 (#50)

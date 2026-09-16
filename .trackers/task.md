@@ -1,22 +1,18 @@
-# Task — N4 Product links & entitlements
+# Task — N5 Signing key rotation
 
 ## Milestone
-**N4** — #48 #49
+**N5** — #50
 
 ## Goal
-product_links table; exchange org_id from link; owner can set link; entitlement Redis cache fail-closed when require_subscription.
+Rotate creates new active key; previous retiring; JWKS dual publish until retire_after; ops endpoint; Redis purge.
 
 ## Completed
-- [x] product_links model + migration f9a0b1c2d3e4
-- [x] resolve_org_id + check_entitled (Redis)
-- [x] PUT/GET /users/me/product-links (owner/admin)
-- [x] Exchange uses entitlement + link org_id
-- [x] Docs + unit tests
+- [x] rotate_signing_key + prune_expired_retiring_keys
+- [x] JWKS skips expired retiring
+- [x] POST /ops/signing-keys/rotate|prune + jwks-preview
+- [x] Docs SIGNING_KEY_ROTATION.md
+- [x] Tests
 - [ ] CI green
 
-## Out of scope
-- N5 key rotation, N6 console IA, billing
-
 ## Verification
-- pytest unit entitlements + auth exchange
-- alembic upgrade head
+- pytest unit + ops auth tests
