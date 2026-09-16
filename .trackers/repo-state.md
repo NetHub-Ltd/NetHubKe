@@ -1,4 +1,3 @@
 # Repository State
-- Branch: feat/n5-signing-key-rotation
+- Branch: feat/signing-key-max-age-7d
 - PR target: dev
-- Milestone: N5 (#50)

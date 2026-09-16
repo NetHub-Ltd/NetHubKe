@@ -42,3 +42,16 @@ Schedule this as a cron/job if desired; rotate alone is enough for dual publish 
 
 - Private PEMs never leave NetHubKe / this database.
 - Rotation requires elevated Keycloak roles (`admin`, `super_admin`, or `ops`) plus `user:write` scope.
+
+## Auto-rotation (max age)
+
+Default policy:
+
+| Setting | Default | Meaning |
+|---------|---------|---------|
+| `SIGNING_KEY_MAX_AGE_HOURS` | **168** (7 days) | Active key older than this is rotated on next JWKS or mint |
+| `SIGNING_KEY_RETIRE_OVERLAP_HOURS` | 24 | Previous key stays in JWKS as `retiring` |
+| `TAWALA_JWT_ALLOW_ENV_PEM` | **false** | Env PEM ignored; backend generates keys in Postgres |
+
+Do **not** put private keys in k3s env. Leave `TAWALA_JWT_PRIVATE_KEY` empty.
+Set max age only; the AS generates and rotates public keys automatically.
