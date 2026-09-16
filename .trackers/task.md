@@ -1,26 +1,37 @@
-# Task — README badges + Codecov (default branch signal)
+# Task — N3 Generic multi-product token exchange
 
 ## Goal
-Surface CI status, coverage, issues, and license on the README; upload backend coverage to Codecov so the badge updates after merges to `master` / runs on `dev`.
+POST /auth/exchange with product parameter + products registry; keep /exchange/tawala alias; document tawala claim profile.
+
+## Milestone
+**N3** — issues #46 #47
 
 ## Approved scope
-- README badges (Backend CI, Frontend CI, Codecov, issues, PRs, license) pointed at `master`
-- `codecov/codecov-action@v5` in `backend-ci.yml` (non-blocking without token)
-- Docs: `apps/backend/docs/CODECOV.md` for `CODECOV_TOKEN` setup
-- PR to `dev`
-
-## Out of scope
-- Frontend coverage (no jest/vitest gate yet)
-- Changing coverage fail-under threshold
-- N3+ SSO work
+- products table + migration (seed tawala)
+- POST /api/v1/auth/exchange { "product": "..." }
+- Alias POST /exchange/tawala
+- Flag default off (TAWALA_EXCHANGE_ENABLED)
+- Docs: PRODUCT_CLAIM_PROFILES.md
+- Tests: disabled-by-default, generic body, unknown product
 
 ## Completed
-- [x] README badges
-- [x] Codecov upload step
-- [x] CODECOV.md setup notes
-- [ ] User adds `CODECOV_TOKEN` secret (manual)
-- [ ] First successful upload after merge (badge turns numeric)
+- [x] Product model + migration e8f9a0b1c2d3
+- [x] Generic exchange + alias
+- [x] mint_product_access_token
+- [x] Claim profile docs
+- [x] API/unit tests
+- [ ] CI green on PR
+
+## Out of scope
+- N4 product_links / entitlements
+- N5 key rotation
+- Frontend launch hop
+
+## Risks
+- Additive migration only
+- Existing /exchange/tawala clients keep working
+- Exchange remains disabled until configured
 
 ## Verification
-- Workflow still runs pytest + ≥70% gate
-- Codecov step does not fail CI if secret missing
+- pytest auth exchange tests
+- alembic upgrade head (products table)
