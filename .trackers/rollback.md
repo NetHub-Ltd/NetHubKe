@@ -1,7 +1,10 @@
 # Rollback
 
-- Previous known-good: tip of `dev` before `feat/dashboard-shell-profile`
-- Revert or close the PR that introduces the dashboard shell
-- Schema change is additive (`UserRead` extra fields); clients that ignore unknown fields remain compatible
-- No migrations, no data changes, no infra changes
-- Frontend-only rollback is sufficient if backend expansion is reverted together
+## Program docs (N0)
+- Revert PR that added AGENTS.md / tracker lock if needed
+- Board and milestones remain on GitHub (manual cleanup if required)
+
+## Feature work (N1+)
+- Feature flags default **off** — disable flag before revert if needed
+- Prefer revert of topic-branch PR on `dev`
+- Signing keys: do not delete active key until replacement published in JWKS

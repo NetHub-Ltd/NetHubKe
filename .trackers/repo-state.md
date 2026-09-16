@@ -1,9 +1,10 @@
 # Repository State
 
-- **Repository URL:** https://github.com/NetHub-Ltd/NetHubKe.git
-- **Default branch:** master
-- **Working / PR target:** dev
-- **Current branch:** feat/dashboard-shell-profile
-- **Deployment:** k3s
-- **Session:** Dashboard shell + Profile implemented; ready for PR to dev
-- **Verification:** frontend lint 0 errors; build success
+- Default branch: master (historical); **working branch / PR target: `dev`**
+- Program: NetHubKe SSO Platform — Project https://github.com/orgs/NetHub-Ltd/projects/4
+- Umbrella issue: #57
+- Side branch (not yet default): `feat/tawala-token-exchange` (M2 exchange + JWKS)
+- AGENTS.md: mandatory SSO progress check until #57 closed
+- DB: Postgres only
+- Frontend: Next.js console (Profile live; Home/Services/Billing/Settings pending N6–N9)
+- Backend: users/services live; AS exchange on feature branch
