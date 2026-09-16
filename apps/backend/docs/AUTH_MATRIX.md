@@ -47,3 +47,16 @@ Admin router is not mounted.
 - Valid token, user not provisioned (non-sync routes) → 404
 - Valid token, `is_active=false` → 403
 - Valid token, missing required scope → 403
+
+## Tawala hard-session exchange (M2)
+
+| Method | Path | Auth | Notes |
+|--------|------|------|-------|
+| GET | `/api/v1/auth/jwks.json` | None | Public JWKS for Tawala `AUTH_HARD_JWKS_URL` |
+| POST | `/api/v1/auth/exchange/tawala` | Keycloak Bearer | Mints `aud=tawala-api` RS256 token |
+
+**Flags (default off):** `TAWALA_EXCHANGE_ENABLED`, requires `TAWALA_JWT_PRIVATE_KEY` (PEM).
+
+**Claims issued:** `sub` (Keycloak id), `org_id` (`tenant.tawala_organization_id` or `tenant.id`), `principal` (`owner`\|`terminal`), `iss`, `aud`, `exp`, `iat`, optional `email`.
+
+No cashier rows are created in NetHub.

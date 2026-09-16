@@ -1,10 +1,6 @@
 # Repository State
-
-- Default branch: master (historical); **working branch / PR target: `dev`**
-- Program: NetHubKe SSO Platform — Project https://github.com/orgs/NetHub-Ltd/projects/4
-- Umbrella issue: #57
-- Side branch (not yet default): `feat/tawala-token-exchange` (M2 exchange + JWKS)
-- AGENTS.md: mandatory SSO progress check until #57 closed
-- DB: Postgres only
-- Frontend: Next.js console (Profile live; Home/Services/Billing/Settings pending N6–N9)
-- Backend: users/services live; AS exchange on feature branch
+- PR target: **dev**
+- Branch: feat/n1-merge-exchange-and-env-examples
+- Exchange routes: POST /api/v1/auth/exchange/tawala, GET /api/v1/auth/jwks.json (flag off by default)
+- Program board: https://github.com/orgs/NetHub-Ltd/projects/4
+- Umbrella: #57
