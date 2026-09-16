@@ -54,6 +54,11 @@ class Settings(BaseSettings):
     # If true, tenant must have active subscription to service slug "tawala".
     tawala_exchange_require_subscription: bool = False
 
+    # Redis (N2+) — JWKS and signing-key metadata cache
+    redis_url: str = "redis://localhost:6379/0"
+    jwks_redis_ttl_sec: int = 120
+
+
 
 
     @property
