@@ -97,3 +97,16 @@ jobs:
         with:
           name: backend-coverage
           path: apps/backend/coverage.xml
+
+      # Requires repo secret CODECOV_TOKEN (https://app.codecov.io → repo → token).
+      # Badge and PR comments stay accurate after uploads from master/dev (and PRs).
+      - name: Upload coverage to Codecov
+        if: always()
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: apps/backend/coverage.xml
+          flags: backend
+          name: backend
+          fail_ci_if_error: false
+          verbose: true

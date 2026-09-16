@@ -1,32 +1,26 @@
-# Task — PR #61 Backend test foundation
+# Task — README badges + Codecov (default branch signal)
 
 ## Goal
-Green backend CI: pytest + coverage ≥70%, no zero-coverage app modules, GitGuardian clean.
+Surface CI status, coverage, issues, and license on the README; upload backend coverage to Codecov so the badge updates after merges to `master` / runs on `dev`.
 
 ## Approved scope
-- Fix broken imports / test assertions that prevented a green ≥70% run
-- Keep PR target `dev`
-- No N3+ scope expansion
+- README badges (Backend CI, Frontend CI, Codecov, issues, PRs, license) pointed at `master`
+- `codecov/codecov-action@v5` in `backend-ci.yml` (non-blocking without token)
+- Docs: `apps/backend/docs/CODECOV.md` for `CODECOV_TOKEN` setup
+- PR to `dev`
+
+## Out of scope
+- Frontend coverage (no jest/vitest gate yet)
+- Changing coverage fail-under threshold
+- N3+ SSO work
 
 ## Completed
-- [x] tenants.py import fix
-- [x] Expanded unit/CRUD/API tests
-- [x] GitGuardian green (history cleaned of hardcoded CI passwords)
-- [x] Coverage 78.52% (≥70%) — 79 passed
-- [x] Fix phone helper: accept bare `254…` international form
-- [x] Fix `test_decode_scope_list` to match TokenData OIDC noise filtering
-- [x] Force test env issuer so CI KEYCLOAK_ISSUER_URL cannot drift from tokens
-- [x] `get_current_user` keeps Keycloak `sub` (routes lookup by keycloak_id)
-- [x] CI green on tip `148da71`
-
-## Active follow-ups
-- Coordinate N2 (#60) if still mixed into this branch
-- Stale PRs #33 / #38 triage
-- Further coverage on routes/tawala once this lands
-
-## Risks
-- `get_current_user` sub behaviour change is a correctness fix for /me lookups
+- [x] README badges
+- [x] Codecov upload step
+- [x] CODECOV.md setup notes
+- [ ] User adds `CODECOV_TOKEN` secret (manual)
+- [ ] First successful upload after merge (badge turns numeric)
 
 ## Verification
-- CI run: https://github.com/NetHub-Ltd/NetHubKe/actions/runs/35097484270
-- TOTAL coverage 78.52%, 79 passed, GitGuardian success
+- Workflow still runs pytest + ≥70% gate
+- Codecov step does not fail CI if secret missing
