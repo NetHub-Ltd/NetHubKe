@@ -1,21 +1,13 @@
-# Task — NetHubKe SSO Platform Program
+# Task — SSO Platform
 
-## Mandatory
-Every agent session: check Project board + report status (see AGENTS.md §2).
+Board: https://github.com/orgs/NetHub-Ltd/projects/4 · Umbrella #57
 
-| Item | URL |
-|------|-----|
-| **Board** | https://github.com/orgs/NetHub-Ltd/projects/4 |
-| **Umbrella** | https://github.com/NetHub-Ltd/NetHubKe/issues/57 |
+## Current: N2
+Managed signing_keys + JWKS from DB + Redis cache (#44 #45)
 
-## Current milestone: **N1**
-- Merge/harden Tawala exchange branch
-- env.example for backend + frontend (dev deploy)
-- Issues: #42 #43
+## Done
+- N0 AGENTS/trackers
+- N1 exchange + env.example on dev
 
-## Target
-Keycloak = IdP · NetHubKe = multi-product token AS + console · Postgres only · Redis for later AS caches
-
-## Constraints
-- `TAWALA_EXCHANGE_ENABLED` default **false** until keys configured
-- PRs to `dev`; cite N# + issue
+## Next after merge
+N3 generic multi-product exchange (#46 #47)

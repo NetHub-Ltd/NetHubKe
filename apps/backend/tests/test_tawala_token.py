@@ -1,4 +1,4 @@
-"""Unit tests for Tawala token minting (M2)."""
+"""Unit tests for signing helpers (N2) — no DB/Redis required for pure crypto paths."""
 from __future__ import annotations
 
 import time
@@ -24,55 +24,45 @@ def rsa_pem():
     return pem, key
 
 
-def _settings(pem: str, **over):
-    m = MagicMock()
-    m.tawala_exchange_enabled = True
-    m.tawala_jwt_private_key = pem
-    m.tawala_jwt_issuer = "https://api.nethub.test"
-    m.tawala_jwt_audience = "tawala-api"
-    m.tawala_jwt_ttl_sec = 3600
-    for k, v in over.items():
-        setattr(m, k, v)
-    return m
-
-
-def test_jwks_contains_rsa(rsa_pem):
-    pem, _ = rsa_pem
-    with patch.object(tt, "settings", _settings(pem)):
-        jwks = tt.get_jwks()
-    assert len(jwks["keys"]) == 1
-    assert jwks["keys"][0]["kty"] == "RSA"
-    assert jwks["keys"][0]["kid"] == "nethub-tawala-1"
-
-
-def test_mint_and_verify(rsa_pem):
+def test_public_jwk_from_private(rsa_pem):
     pem, key = rsa_pem
-    org = uuid4()
-    with patch.object(tt, "settings", _settings(pem)):
-        token, exp = tt.mint_tawala_access_token(
-            sub="kc-sub",
-            org_id=org,
-            principal="owner",
-            email="a@b.com",
-        )
-    assert exp > int(time.time())
-    payload = jwt.decode(
-        token,
-        key.public_key(),
-        algorithms=["RS256"],
-        audience="tawala-api",
-        issuer="https://api.nethub.test",
-    )
-    assert payload["org_id"] == str(org)
-    assert payload["principal"] == "owner"
-    assert payload["sub"] == "kc-sub"
-    assert payload["email"] == "a@b.com"
+    jwk = tt.public_jwk_from_private(key, "kid-1")
+    assert jwk["kty"] == "RSA"
+    assert jwk["kid"] == "kid-1"
+    assert jwk["alg"] == "RS256"
+    assert "n" in jwk and "e" in jwk
 
 
-def test_mint_disabled(rsa_pem):
-    pem, _ = rsa_pem
-    with patch.object(tt, "settings", _settings(pem, tawala_exchange_enabled=False)):
-        with pytest.raises(Exception):
-            tt.mint_tawala_access_token(
-                sub="x", org_id=uuid4(), principal="terminal"
-            )
+def test_get_jwks_env_fallback(rsa_pem):
+    pem, key = rsa_pem
+    settings = MagicMock()
+    settings.tawala_jwt_private_key = pem
+    with patch.object(tt, "settings", settings):
+        doc = tt.get_jwks()
+    assert len(doc["keys"]) == 1
+    assert doc["keys"][0]["kid"] == "nethub-env-bootstrap"
+
+
+def test_get_jwks_empty_without_env():
+    settings = MagicMock()
+    settings.tawala_jwt_private_key = ""
+    with patch.object(tt, "settings", settings):
+        assert tt.get_jwks() == {"keys": []}
+
+
+def test_generate_rsa_keypair_roundtrip():
+    kid, pem, jwk, key = tt._generate_rsa_keypair()
+    assert kid.startswith("nethub-")
+    assert "BEGIN PRIVATE KEY" in pem
+    assert jwk["kid"] == kid
+    # sign/verify
+    token = jwt.encode({"sub": "x", "exp": int(time.time()) + 60}, key, algorithm="RS256", headers={"kid": kid})
+    payload = jwt.decode(token, key.public_key(), algorithms=["RS256"])
+    assert payload["sub"] == "x"
+
+
+def test_exchange_enabled_flag():
+    with patch.object(tt, "settings", MagicMock(tawala_exchange_enabled=True)):
+        assert tt.exchange_enabled() is True
+    with patch.object(tt, "settings", MagicMock(tawala_exchange_enabled=False)):
+        assert tt.exchange_enabled() is False

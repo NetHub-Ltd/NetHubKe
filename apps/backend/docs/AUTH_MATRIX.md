@@ -60,3 +60,10 @@ Admin router is not mounted.
 **Claims issued:** `sub` (Keycloak id), `org_id` (`tenant.tawala_organization_id` or `tenant.id`), `principal` (`owner`\|`terminal`), `iss`, `aud`, `exp`, `iat`, optional `email`.
 
 No cashier rows are created in NetHub.
+
+## Signing keys (N2)
+
+- Table `signing_keys`: active | retiring | retired
+- JWKS from DB (active+retiring), cached in Redis `nethub:as:jwks`
+- First enable of exchange can bootstrap an RSA key into Postgres (or import env PEM once)
+- Private keys never leave NetHubKe

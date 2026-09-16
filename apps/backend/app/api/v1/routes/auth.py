@@ -13,7 +13,7 @@ from app.api.deps import SessionDep, get_token_data
 from app.core.config import settings
 from app.core.security import TokenData
 from app.db.models.models import Service, Subscription, User
-from app.services.tawala_token import exchange_enabled, get_jwks, mint_tawala_access_token
+from app.services.tawala_token import exchange_enabled, build_jwks_document, mint_tawala_access_token
 from app.utils.logging import logger
 
 router = APIRouter()
@@ -66,13 +66,14 @@ async def _tenant_entitled_to_tawala(db, tenant_id: UUID) -> bool:
 
 
 @router.get("/jwks.json")
-async def tawala_jwks():
+async def tawala_jwks(db: SessionDep):
     """
     Public JWKS for Tawala AUTH_HARD_JWKS_URL.
 
+    Serves active + retiring keys from signing_keys (Redis-cached).
     Safe to expose; contains only public key material.
     """
-    return get_jwks()
+    return await build_jwks_document(db)
 
 
 @router.post("/exchange/tawala", response_model=TawalaExchangeResponse)
@@ -148,7 +149,8 @@ async def exchange_tawala_token(
     # Keycloak subject for Tawala sub claim (stable IdP id)
     kc_sub = str(user.keycloak_id)
 
-    access_token, exp = mint_tawala_access_token(
+    access_token, exp = await mint_tawala_access_token(
+        db,
         sub=kc_sub,
         org_id=org_id,
         principal=principal,
