@@ -1,15 +1,14 @@
-# Task — Signing key max-age 7d + no env PEM by default
+# Task — Startup DB/Redis hard-ready + signing key bootstrap
 
 ## Goal
-Backend generates RSA keys; auto-rotate after 7 days; dual JWKS during overlap; env PEM opt-in only.
+Empty JWKS fixed by bootstrap on start and JWKS path; hard-stop if DB/Redis not ready.
+
+## Root cause
+Keys only bootstrapped on mint when exchange enabled; env PEM off → JWKS empty.
 
 ## Completed
-- [x] SIGNING_KEY_MAX_AGE_HOURS=168, RETIRE_OVERLAP=24, ALLOW_ENV_PEM=false
-- [x] ensure_fresh_signing_key on mint + JWKS
-- [x] Env PEM gated + non-PEM safe (from #67)
-- [x] Docs + .env.example + tests
-- [ ] CI green
-
-## Verification
-- pytest unit env key + max age
-- JWKS does not 500 on hex env
+- [x] ensure_redis_ready (PING)
+- [x] lifespan: DB SELECT 1 + signing_keys, Redis PING, bootstrap key
+- [x] ensure_signing_keys_ready + JWKS path bootstrap
+- [x] GET /ready for k3s readinessProbe
+- [x] unit tests

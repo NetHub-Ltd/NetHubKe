@@ -215,6 +215,28 @@ async def ensure_fresh_signing_key(db: AsyncSession) -> None:
         await rotate_signing_key(db, retire_after_hours=overlap_h)
 
 
+
+async def ensure_signing_keys_ready(db: AsyncSession) -> SigningKey:
+    """
+    Ensure at least one active signing key exists (backend-generated).
+
+    Not gated on exchange flag — JWKS must publish keys so product apps can
+    configure trust before the first exchange. Generates RSA in Postgres if empty.
+    """
+    await ensure_fresh_signing_key(db)
+    row = (
+        await db.exec(
+            select(SigningKey).where(
+                SigningKey.status == "active",
+                SigningKey.deleted_at.is_(None),
+            )
+        )
+    ).first()
+    if row is not None:
+        return row
+    return await bootstrap_signing_key(db)
+
+
 async def bootstrap_signing_key(db: AsyncSession) -> SigningKey:
     """Create first active key if none exist. Prefer env PEM material if set."""
     env_key = _load_env_private_key()
@@ -252,12 +274,7 @@ async def get_active_signing_key(db: AsyncSession) -> Tuple[Any, str]:
     )
     row = (await db.exec(stmt)).first()
     if row is None:
-        if not exchange_enabled():
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Tawala token exchange is not enabled",
-            )
-        row = await bootstrap_signing_key(db)
+        row = await ensure_signing_keys_ready(db)
 
     private_key = serialization.load_pem_private_key(
         row.private_pem.encode("utf-8"), password=None
@@ -290,7 +307,18 @@ async def build_jwks_document(db: AsyncSession) -> dict[str, Any]:
         if jwk:
             keys.append(jwk)
 
-    # Fallback: env-only until first bootstrap
+    # Backend bootstrap: never leave JWKS empty if we can generate a key
+    if not keys:
+        await ensure_signing_keys_ready(db)
+        rows = list(await db.exec(stmt))
+        for row in rows:
+            if row.status == "retiring" and row.retire_after is not None and row.retire_after <= now:
+                continue
+            jwk = row.public_jwk or {}
+            if jwk:
+                keys.append(jwk)
+
+    # Opt-in env PEM only (TAWALA_JWT_ALLOW_ENV_PEM=true)
     if not keys:
         env_key = _load_env_private_key()
         if env_key is not None:
