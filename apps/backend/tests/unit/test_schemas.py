@@ -8,7 +8,7 @@ def test_token_data_scopes_filter_oidc_noise():
     td = TokenData.model_validate(
         {
             "sub": str(uuid4()),
-            "email": "x@y.com",
+            "email": "x@example.com",
             "preferred_username": "x",
             "name": "X",
             "email_verified": True,
@@ -21,7 +21,7 @@ def test_token_data_scopes_filter_oidc_noise():
 
 
 def test_user_create():
-    u = UserCreate(username="u", email="u@test.com", full_name="U")
+    u = UserCreate(username="u", email="u@example.com", full_name="U")
     assert u.username == "u"
 
 

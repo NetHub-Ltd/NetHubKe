@@ -4,13 +4,14 @@ from __future__ import annotations
 import os
 import time
 import uuid
-from typing import Any, AsyncGenerator, Dict, Generator
+from typing import Any, AsyncGenerator, Dict
 from unittest.mock import MagicMock, patch
 
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
+from sqlalchemy.pool import NullPool
 from sqlmodel import SQLModel
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -41,7 +42,6 @@ _TEST_ENV = {
 for k, v in _TEST_ENV.items():
     os.environ.setdefault(k, v)
 
-# Clear cached settings if any
 from app.core import config as config_module
 
 config_module.get_settings.cache_clear()
@@ -56,19 +56,16 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "integration: requires Postgres")
 
 
-@pytest.fixture(scope="session")
-def event_loop() -> Generator:
-    import asyncio
-
-    loop = asyncio.new_event_loop()
-    yield loop
-    loop.close()
-
-
-@pytest.fixture(scope="session")
-def test_engine() -> AsyncEngine:
-    engine = create_async_engine(settings.async_db_url, pool_pre_ping=True, echo=False)
-    return engine
+@pytest_asyncio.fixture(scope="function")
+async def test_engine() -> AsyncGenerator[AsyncEngine, None]:
+    """Function-scoped engine + NullPool avoids cross-loop Future errors."""
+    engine = create_async_engine(
+        settings.async_db_url,
+        poolclass=NullPool,
+        echo=False,
+    )
+    yield engine
+    await engine.dispose()
 
 
 @pytest_asyncio.fixture(scope="function")
@@ -91,8 +88,6 @@ async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
         yield db_session
 
     app.dependency_overrides[get_session] = _override
-
-    # Avoid lifespan hitting a second connection failure path mid-test
     transport = ASGITransport(app=app, raise_app_exceptions=False)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
@@ -118,12 +113,12 @@ def make_kc_token(rsa_keys):
     """Build a Keycloak-shaped JWT; pair with patch_decode or mock JWKS."""
     import jwt as pyjwt
 
-    key, private_pem, _ = rsa_keys
+    key, _, _ = rsa_keys
 
     def _make(
         *,
         sub: str | None = None,
-        email: str = "user@test.local",
+        email: str = "user@example.com",
         scopes: str = "openid profile email user:read user:write",
         roles: list | None = None,
         aud: str = "nethub-backend",

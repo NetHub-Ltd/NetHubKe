@@ -23,7 +23,7 @@ def _token(key, **overrides):
     now = int(time.time())
     payload = {
         "sub": str(uuid.uuid4()),
-        "email": "a@b.com",
+        "email": "user@example.com",
         "preferred_username": "a",
         "name": "A",
         "email_verified": True,
@@ -51,7 +51,7 @@ def test_decode_valid(rsa_key):
     token = _token(rsa_key)
     with _patch_jwks(pub):
         data = security_mod._decode_token(token)
-    assert data.email == "a@b.com"
+    assert data.email == "user@example.com"
     assert "user:read" in data.scopes
     assert "user" in data.roles
 

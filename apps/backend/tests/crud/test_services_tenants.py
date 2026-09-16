@@ -24,7 +24,7 @@ async def test_tenant_crud_create_get(db_session):
     # Tenant model requires email + name
     from app.db.models.models import Tenant
 
-    t = Tenant(name="Acme", email=f"acme-{uuid.uuid4().hex[:8]}@test.local")
+    t = Tenant(name="Acme", email=f"acme-{uuid.uuid4().hex[:8]}@example.com")
     db_session.add(t)
     await db_session.commit()
     await db_session.refresh(t)

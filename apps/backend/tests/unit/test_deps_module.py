@@ -19,7 +19,7 @@ def test_deps_exports():
 def _user(scopes: str) -> TokenData:
     return TokenData(
         sub=uuid.uuid4(),
-        email="a@b.com",
+        email="user@example.com",
         preferred_username="a",
         name="A",
         email_verified=True,

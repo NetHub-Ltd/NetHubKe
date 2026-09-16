@@ -20,7 +20,7 @@ async def test_get_or_create_idempotent(db_session):
     td = TokenData.model_validate(
         {
             "sub": str(sub),
-            "email": "alice@test.local",
+            "email": "alice@example.com",
             "preferred_username": "alice",
             "name": "Alice",
             "email_verified": True,
@@ -29,7 +29,7 @@ async def test_get_or_create_idempotent(db_session):
         }
     )
     user = await user_crud.get_or_create(db_session, obj_in=td)
-    assert user.email == "alice@test.local"
+    assert user.email == "alice@example.com"
     assert user.keycloak_id == sub
     again = await user_crud.get_or_create(db_session, obj_in=td)
     assert again.id == user.id
