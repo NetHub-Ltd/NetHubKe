@@ -1,37 +1,22 @@
-# Task — N3 Generic multi-product token exchange
-
-## Goal
-POST /auth/exchange with product parameter + products registry; keep /exchange/tawala alias; document tawala claim profile.
+# Task — N4 Product links & entitlements
 
 ## Milestone
-**N3** — issues #46 #47
+**N4** — #48 #49
 
-## Approved scope
-- products table + migration (seed tawala)
-- POST /api/v1/auth/exchange { "product": "..." }
-- Alias POST /exchange/tawala
-- Flag default off (TAWALA_EXCHANGE_ENABLED)
-- Docs: PRODUCT_CLAIM_PROFILES.md
-- Tests: disabled-by-default, generic body, unknown product
+## Goal
+product_links table; exchange org_id from link; owner can set link; entitlement Redis cache fail-closed when require_subscription.
 
 ## Completed
-- [x] Product model + migration e8f9a0b1c2d3
-- [x] Generic exchange + alias
-- [x] mint_product_access_token
-- [x] Claim profile docs
-- [x] API/unit tests
-- [ ] CI green on PR
+- [x] product_links model + migration f9a0b1c2d3e4
+- [x] resolve_org_id + check_entitled (Redis)
+- [x] PUT/GET /users/me/product-links (owner/admin)
+- [x] Exchange uses entitlement + link org_id
+- [x] Docs + unit tests
+- [ ] CI green
 
 ## Out of scope
-- N4 product_links / entitlements
-- N5 key rotation
-- Frontend launch hop
-
-## Risks
-- Additive migration only
-- Existing /exchange/tawala clients keep working
-- Exchange remains disabled until configured
+- N5 key rotation, N6 console IA, billing
 
 ## Verification
-- pytest auth exchange tests
-- alembic upgrade head (products table)
+- pytest unit entitlements + auth exchange
+- alembic upgrade head

@@ -149,3 +149,17 @@ class Product(BaseMixin, table=True):
     # Optional external org claim field name guidance (docs); not enforced in N3
     notes: Optional[str] = Field(default=None, sa_column=Column(sa.Text, nullable=True))
 
+
+class ProductLink(BaseMixin, table=True):
+    """
+    Links a NetHub tenant to an external product organization (N4).
+
+    external_org_id is used as org_id in exchanged product tokens when set.
+    """
+    __tablename__ = "product_links"
+
+    tenant_id: uuid.UUID = Field(foreign_key="tenants.id", index=True)
+    product_id: uuid.UUID = Field(foreign_key="products.id", index=True)
+    external_org_id: uuid.UUID = Field(index=True)
+    is_active: bool = Field(default=True, index=True)
+
