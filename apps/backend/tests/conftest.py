@@ -1,98 +1,196 @@
-import asyncio
-from typing import AsyncGenerator, Generator
+"""Pytest fixtures: env → app import → Postgres session → HTTP client → auth helpers."""
+from __future__ import annotations
+
+import os
+import time
+import uuid
+from typing import Any, AsyncGenerator, Dict, Generator
+from unittest.mock import MagicMock, patch
 
 import pytest
 import pytest_asyncio
-from httpx import AsyncClient, ASGITransport
-from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine, async_sessionmaker
-from sqlalchemy.pool import StaticPool
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
 from sqlmodel import SQLModel
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.main import app
-from app.api.deps import get_session
-# from app.lib.db.models import User, Order, Service, BlogPost, Authors  # noqa: F401
-from app.db.models.models import User, Service
+# ---------------------------------------------------------------------------
+# Env MUST be set before importing app.core.config / app.main
+# ---------------------------------------------------------------------------
+_TEST_ENV = {
+    "APP_NAME": "NetHubKe-Test",
+    "APP_VERSION": "0.0.0",
+    "IMAGE_TAG": "test",
+    "STARTUP_TEST": "false",
+    "ENVIRONMENT": "development",
+    "FASTAPI_DB_USER": os.environ.get("FASTAPI_DB_USER", "nethub_ci"),
+    "FASTAPI_DB_PASSWORD": os.environ.get("FASTAPI_DB_PASSWORD") or "",
+    "FASTAPI_DB_NAME": os.environ.get("FASTAPI_DB_NAME", "nethub_ci"),
+    "FASTAPI_DB_HOST": os.environ.get("FASTAPI_DB_HOST", "localhost"),
+    "FASTAPI_DB_PORT": os.environ.get("FASTAPI_DB_PORT", "5432"),
+    "KEYCLOAK_ISSUER_URL": "https://idp.test/realms/nethub",
+    "KEYCLOAK_JWKS": "https://idp.test/realms/nethub/protocol/openid-connect/certs",
+    "AUDIENCE": "nethub-backend",
+    "ALLOWED_ORIGINS": "http://localhost:3000,http://test",
+    "REDIS_URL": os.environ.get("REDIS_URL", "redis://localhost:6379/0"),
+    "TAWALA_EXCHANGE_ENABLED": "false",
+    "TAWALA_JWT_ISSUER": "http://localhost:8000",
+    "TAWALA_JWT_AUDIENCE": "tawala-api",
+    "JWKS_REDIS_TTL_SEC": "60",
+}
+for k, v in _TEST_ENV.items():
+    os.environ.setdefault(k, v)
 
-# ---------------------------------------------------------
-# Test Database Configuration
-# ---------------------------------------------------------
-# Using sqlite+aiosqlite with StaticPool ensures the in-memory
-# database persists for the duration of the connection.
-TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
+# Clear cached settings if any
+from app.core import config as config_module
 
-engine: AsyncEngine = create_async_engine(
-    TEST_DATABASE_URL,
-    connect_args={"check_same_thread": False},
-    poolclass=StaticPool,
-)
+config_module.get_settings.cache_clear()
+from app.core.config import settings  # noqa: E402
 
-TestingSessionLocal = async_sessionmaker(
-    bind=engine,
-    class_=AsyncSession,
-    expire_on_commit=False,
-    autoflush=False,
-)
+from app.api.deps import get_session  # noqa: E402
+from app.db.models import models as _models  # noqa: F401, E402
+from app.main import app  # noqa: E402
 
 
-# ---------------------------------------------------------
-# Async Event Loop Setup
-# ---------------------------------------------------------
+def pytest_configure(config):
+    config.addinivalue_line("markers", "integration: requires Postgres")
+
+
 @pytest.fixture(scope="session")
-def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
-    """
-    Creates an instance of the default event loop for the test session.
-    """
-    loop = asyncio.get_event_loop_policy().new_event_loop()
+def event_loop() -> Generator:
+    import asyncio
+
+    loop = asyncio.new_event_loop()
     yield loop
     loop.close()
 
 
-# ---------------------------------------------------------
-# Database Lifecycle & Session Fixtures
-# ---------------------------------------------------------
-@pytest_asyncio.fixture(scope="function", autouse=True)
-async def init_db():
-    """
-    Ensures a clean database schema for every single test.
-    """
-    async with engine.begin() as conn:
-        await conn.run_sync(SQLModel.metadata.create_all)
-    yield
-    async with engine.begin() as conn:
+@pytest.fixture(scope="session")
+def test_engine() -> AsyncEngine:
+    engine = create_async_engine(settings.async_db_url, pool_pre_ping=True, echo=False)
+    return engine
+
+
+@pytest_asyncio.fixture(scope="function")
+async def db_session(test_engine: AsyncEngine) -> AsyncGenerator[AsyncSession, None]:
+    async with test_engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.drop_all)
+        await conn.run_sync(SQLModel.metadata.create_all)
 
-
-@pytest_asyncio.fixture
-async def db_session() -> AsyncGenerator[AsyncSession, None]:
-    """
-    Provides a clean async session for CRUD-level integration tests.
-    """
-    async with TestingSessionLocal() as session:
+    Session = async_sessionmaker(
+        bind=test_engine, class_=AsyncSession, expire_on_commit=False, autoflush=False
+    )
+    async with Session() as session:
         yield session
+        await session.rollback()
 
 
-# ---------------------------------------------------------
-# FastAPI Client & Dependency Injection
-# ---------------------------------------------------------
 @pytest_asyncio.fixture
 async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
-    """
-    Provides an AsyncClient for endpoint testing with
-    the get_session dependency overridden.
-    """
-
-    async def _get_test_db():
+    async def _override():
         yield db_session
 
-    app.dependency_overrides[get_session] = _get_test_db
+    app.dependency_overrides[get_session] = _override
 
-    # Use ASGITransport for testing the app directly without a network port
-    transport = ASGITransport(
-        app=app,
-        raise_app_exceptions=False,  # 👈 THIS IS THE KEY
-    )
+    # Avoid lifespan hitting a second connection failure path mid-test
+    transport = ASGITransport(app=app, raise_app_exceptions=False)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
-
     app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def rsa_keys():
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric import rsa
+
+    key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    private_pem = key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption(),
+    )
+    return key, private_pem, key.public_key()
+
+
+@pytest.fixture
+def make_kc_token(rsa_keys):
+    """Build a Keycloak-shaped JWT; pair with patch_decode or mock JWKS."""
+    import jwt as pyjwt
+
+    key, private_pem, _ = rsa_keys
+
+    def _make(
+        *,
+        sub: str | None = None,
+        email: str = "user@test.local",
+        scopes: str = "openid profile email user:read user:write",
+        roles: list | None = None,
+        aud: str = "nethub-backend",
+        iss: str = "https://idp.test/realms/nethub",
+        expired: bool = False,
+    ) -> str:
+        now = int(time.time())
+        payload: Dict[str, Any] = {
+            "sub": sub or str(uuid.uuid4()),
+            "email": email,
+            "preferred_username": email.split("@")[0],
+            "name": "Test User",
+            "email_verified": True,
+            "scope": scopes,
+            "realm_access": {"roles": roles or ["user"]},
+            "iss": iss,
+            "aud": aud,
+            "iat": now - 10,
+            "exp": now - 100 if expired else now + 3600,
+        }
+        return pyjwt.encode(payload, key, algorithm="RS256", headers={"kid": "test"})
+
+    return _make
+
+
+@pytest.fixture
+def patch_kc_decode(rsa_keys, monkeypatch):
+    """Patch security._decode_token path to use local RSA instead of network JWKS."""
+    import jwt as pyjwt
+    from app.core import security as security_mod
+    from app.db.schemas.schemas import TokenData
+
+    key, _, pub = rsa_keys
+
+    def _decode(token: str) -> TokenData:
+        try:
+            payload = pyjwt.decode(
+                token,
+                pub,
+                algorithms=["RS256"],
+                audience=settings.audience,
+                issuer=settings.keycloak_issuer_url,
+                leeway=10,
+            )
+        except pyjwt.ExpiredSignatureError:
+            from fastapi import HTTPException
+
+            raise HTTPException(status_code=401, detail="Token has expired")
+        except Exception as exc:
+            from fastapi import HTTPException
+
+            raise HTTPException(status_code=401, detail="Invalid token") from exc
+
+        raw_scope = payload.get("scope") or ""
+        if isinstance(raw_scope, list):
+            raw_scope = " ".join(raw_scope)
+        realm_access = payload.get("realm_access") or {}
+        roles = list(realm_access.get("roles") or [])
+        return TokenData(
+            sub=payload.get("sub"),
+            email=payload.get("email"),
+            preferred_username=payload.get("preferred_username"),
+            name=payload.get("name"),
+            email_verified=payload.get("email_verified", False),
+            roles=roles,
+            scope=raw_scope,
+        )
+
+    monkeypatch.setattr(security_mod, "_decode_token", _decode)
+    return _decode

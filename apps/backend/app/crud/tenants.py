@@ -1,12 +1,13 @@
 from typing import Type
 
 from app.crud.base import BaseCRUD
-from app.db.schemas.user import TenantCreate, TenantUpdate
-from app.db.models.user import Tenant
+from app.db.models.models import Tenant
+from app.db.schemas.schemas import TenantCreate, TenantUpdate
 
-class UserCRUD(BaseCRUD[Tenant, TenantCreate, TenantUpdate]):
+
+class TenantCRUD(BaseCRUD[Tenant, TenantCreate, TenantUpdate]):
     def __init__(self, model: Type[Tenant]):
         super().__init__(model)
 
 
-tenant_crud = UserCRUD(Tenant)
+tenant_crud = TenantCRUD(Tenant)

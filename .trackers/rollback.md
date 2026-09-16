@@ -1,3 +1,6 @@
 # Rollback
-- N1: revert merge PR or set TAWALA_EXCHANGE_ENABLED=false
-- Do not publish private key in git; only .env.example placeholders
+
+- Revert or close PR #61
+- Force-push recovery: previous tip was 2fbb0e3 on origin/feat/backend-test-foundation
+- No production data/migrations beyond what N2 already introduced on this branch
+- CI-only passwords were never real secrets; tip already used trust auth
