@@ -19,6 +19,12 @@ class Tenant(BaseMixin, table=True):
         index=True,
         description="The subscription tier governing resource limits."
     )
+    # Link to TawalaKE organizations.id for hard-session org_id claim (nullable until linked).
+    tawala_organization_id: Optional[uuid.UUID] = Field(
+        default=None,
+        index=True,
+        description="Tawala Organization UUID used as org_id in exchanged tokens.",
+    )
     # Relationship: One Tenant has Many Users
     users: List["User"] = Relationship(back_populates="tenant")
 
