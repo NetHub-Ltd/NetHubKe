@@ -1,4 +1,4 @@
-"""Auth routes: Tawala hard-session token exchange (M2)."""
+"""Auth routes: product token exchange (N3) + JWKS."""
 from __future__ import annotations
 
 from typing import Optional
@@ -11,16 +11,37 @@ from sqlalchemy.orm import selectinload
 
 from app.api.deps import SessionDep, get_token_data
 from app.core.config import settings
-from app.core.security import TokenData
-from app.db.models.models import Service, Subscription, User
-from app.services.tawala_token import exchange_enabled, build_jwks_document, mint_tawala_access_token
+from app.db.schemas.schemas import TokenData
+from app.db.models.models import Service, User
+from app.services.tawala_token import (
+    exchange_enabled,
+    build_jwks_document,
+    mint_product_access_token,
+    get_product_by_slug,
+    ensure_tawala_product,
+)
 from app.utils.logging import logger
 
 router = APIRouter()
 
 
+class ExchangeRequest(BaseModel):
+    """Generic multi-product exchange body (N3)."""
+
+    product: str = Field(
+        ...,
+        description="Product slug registered in products table, e.g. tawala",
+        min_length=1,
+        max_length=64,
+    )
+    principal: Optional[str] = Field(
+        default=None,
+        description="Force principal owner|terminal; default inferred from roles.",
+    )
+
+
 class TawalaExchangeRequest(BaseModel):
-    """Optional body; Keycloak access token is taken from Authorization header."""
+    """Optional body for /exchange/tawala alias."""
 
     principal: Optional[str] = Field(
         default=None,
@@ -28,26 +49,35 @@ class TawalaExchangeRequest(BaseModel):
     )
 
 
-class TawalaExchangeResponse(BaseModel):
+class ExchangeResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     expires_at: int
     org_id: UUID
     principal: str
     audience: str
+    product: str
+
+
+# Backward-compatible alias name
+TawalaExchangeResponse = ExchangeResponse
 
 
 def _infer_principal(token_data: TokenData, user: User) -> str:
     roles = {str(r).lower() for r in (token_data.roles or [])}
     if roles & {"owner", "org_owner", "tenant_owner", "admin", "super_admin"}:
         return "owner"
-    # Default shared-terminal session after org login
     return "terminal"
 
 
-async def _tenant_entitled_to_tawala(db, tenant_id: UUID) -> bool:
-    """Subscription gate (optional). When require flag is off, always allow."""
-    if not getattr(settings, "tawala_exchange_require_subscription", False):
+async def _tenant_entitled_to_product(db, tenant_id: UUID, product_slug: str) -> bool:
+    """Optional subscription gate. When require flag is off, always allow."""
+    if product_slug == "tawala" and not getattr(
+        settings, "tawala_exchange_require_subscription", False
+    ):
+        return True
+    if product_slug != "tawala":
+        # N4 will enforce product_links / entitlements; N3 allows active products only
         return True
     svc = (
         await db.exec(
@@ -60,45 +90,41 @@ async def _tenant_entitled_to_tawala(db, tenant_id: UUID) -> bool:
     if not svc:
         logger.warning("tawala service slug not in catalog; allowing exchange")
         return True
-    # Future: join tenant subscriptions / plans. For M2, flag-on without catalog still allows.
     _ = tenant_id
     return True
 
 
 @router.get("/jwks.json")
-async def tawala_jwks(db: SessionDep):
+async def product_jwks(db: SessionDep):
     """
-    Public JWKS for Tawala AUTH_HARD_JWKS_URL.
+    Public JWKS for product resource servers (AUTH_HARD_JWKS_URL).
 
     Serves active + retiring keys from signing_keys (Redis-cached).
-    Safe to expose; contains only public key material.
     """
     return await build_jwks_document(db)
 
 
-@router.post("/exchange/tawala", response_model=TawalaExchangeResponse)
-async def exchange_tawala_token(
-    db: SessionDep,
-    token_data: TokenData = Depends(get_token_data),
-    body: Optional[TawalaExchangeRequest] = None,
-):
-    """
-    Exchange a valid Keycloak access token for a Tawala hard-session JWT.
-
-    - Does **not** create cashier rows in NetHub
-    - Requires local User synced (POST /users/sync) and linked tenant
-    - org_id claim uses tenant.tawala_organization_id when set, else tenant.id
-    """
+async def _run_exchange(
+    db,
+    token_data: TokenData,
+    *,
+    product_slug: str,
+    principal_override: Optional[str],
+) -> ExchangeResponse:
     if not exchange_enabled():
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Tawala token exchange is not enabled",
+            detail="Token exchange is not enabled",
         )
 
-    # token_data.sub may already be remapped in get_current_user; get_token_data keeps Keycloak sub
     from app.crud.user import user_crud
 
-    # Prefer Keycloak sub lookup — TokenData.sub from get_token_data is Keycloak sub
+    # Ensure default tawala row exists in fresh DBs (migration seeds; this is belt-and-suspenders)
+    if product_slug.strip().lower() == "tawala":
+        await ensure_tawala_product(db)
+
+    product = await get_product_by_slug(db, product_slug)
+
     user = await user_crud.get_by_sub(db, token_data.sub)
     if not user:
         raise HTTPException(
@@ -129,16 +155,19 @@ async def exchange_tawala_token(
             detail="Tenant not found for user",
         )
 
-    if not await _tenant_entitled_to_tawala(db, tenant.id):
+    if not await _tenant_entitled_to_product(db, tenant.id, product.slug):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Tenant is not entitled to Tawala",
+            detail=f"Tenant is not entitled to {product.slug}",
         )
 
-    org_id = tenant.tawala_organization_id or tenant.id
-    principal = (body.principal if body and body.principal else None) or _infer_principal(
-        token_data, user
-    )
+    # Tawala claim profile: org_id from linked org or tenant id
+    if product.claim_profile == "tawala":
+        org_id = tenant.tawala_organization_id or tenant.id
+    else:
+        org_id = tenant.id
+
+    principal = principal_override or _infer_principal(token_data, user)
     principal = str(principal).strip().lower()
     if principal not in ("owner", "terminal"):
         raise HTTPException(
@@ -146,23 +175,65 @@ async def exchange_tawala_token(
             detail="principal must be owner or terminal",
         )
 
-    # Keycloak subject for Tawala sub claim (stable IdP id)
     kc_sub = str(user.keycloak_id)
+    # Prefer settings audience for tawala so env overrides seed row
+    audience = product.audience
+    if product.slug == "tawala":
+        audience = getattr(settings, "tawala_jwt_audience", None) or product.audience
 
-    access_token, exp = await mint_tawala_access_token(
+    access_token, exp = await mint_product_access_token(
         db,
+        product_slug=product.slug,
+        audience=audience,
         sub=kc_sub,
         org_id=org_id,
         principal=principal,
         email=user.email,
     )
     logger.info(
-        f"Tawala exchange ok user={user.id} org_id={org_id} principal={principal}"
+        f"Exchange ok product={product.slug} user={user.id} org_id={org_id} principal={principal}"
     )
-    return TawalaExchangeResponse(
+    return ExchangeResponse(
         access_token=access_token,
         expires_at=exp,
         org_id=org_id,
         principal=principal,
-        audience=settings.tawala_jwt_audience,
+        audience=audience,
+        product=product.slug,
+    )
+
+
+@router.post("/exchange", response_model=ExchangeResponse)
+async def exchange_product_token(
+    db: SessionDep,
+    body: ExchangeRequest,
+    token_data: TokenData = Depends(get_token_data),
+):
+    """
+    Exchange a valid Keycloak access token for a product access JWT (N3).
+
+    Body: ``{"product": "tawala", "principal": "owner"|"terminal"|null}``
+    """
+    return await _run_exchange(
+        db,
+        token_data,
+        product_slug=body.product,
+        principal_override=body.principal,
+    )
+
+
+@router.post("/exchange/tawala", response_model=ExchangeResponse)
+async def exchange_tawala_token(
+    db: SessionDep,
+    token_data: TokenData = Depends(get_token_data),
+    body: Optional[TawalaExchangeRequest] = None,
+):
+    """
+    Alias for ``POST /exchange`` with product=tawala (kept for existing clients).
+    """
+    return await _run_exchange(
+        db,
+        token_data,
+        product_slug="tawala",
+        principal_override=body.principal if body else None,
     )

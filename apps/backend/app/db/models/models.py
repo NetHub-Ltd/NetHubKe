@@ -129,3 +129,23 @@ class SigningKey(BaseMixin, table=True):
         sa_type=SADateTime(timezone=True),
         sa_column_kwargs={"nullable": True},
     )
+
+
+class Product(BaseMixin, table=True):
+    """
+    Registered product apps that may receive exchanged access tokens (N3+).
+
+    slug: stable product id used in POST /auth/exchange {"product": "..."}.
+    audience: JWT aud claim for that product.
+    claim_profile: named profile documented in docs/PRODUCT_CLAIM_PROFILES.md
+    """
+    __tablename__ = "products"
+
+    slug: str = Field(max_length=64, unique=True, index=True)
+    name: str = Field(max_length=128)
+    audience: str = Field(max_length=256)
+    is_active: bool = Field(default=True, index=True)
+    claim_profile: str = Field(max_length=64, default="tawala")
+    # Optional external org claim field name guidance (docs); not enforced in N3
+    notes: Optional[str] = Field(default=None, sa_column=Column(sa.Text, nullable=True))
+

@@ -1,4 +1,4 @@
 # Rollback
-- Revert PR or remove Codecov step + README badge lines
-- Removing CODECOV_TOKEN secret only stops uploads; CI remains green
-- No migrations / no production runtime impact
+- Revert N3 PR or `alembic downgrade d7e8f9a0b1c2` (drops products)
+- /exchange/tawala behavior restored by revert
+- No data migration beyond seed row

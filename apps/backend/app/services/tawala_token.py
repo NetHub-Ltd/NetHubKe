@@ -176,10 +176,89 @@ async def mint_tawala_access_token(
     principal: str,
     email: Optional[str] = None,
 ) -> tuple[str, int]:
+    """Backward-compatible Tawala mint; delegates to product mint."""
+    return await mint_product_access_token(
+        db,
+        product_slug="tawala",
+        audience=getattr(settings, "tawala_jwt_audience", "tawala-api") or "tawala-api",
+        sub=sub,
+        org_id=org_id,
+        principal=principal,
+        email=email,
+    )
+
+
+async def get_product_by_slug(db: AsyncSession, slug: str):
+    """Load active product by slug or raise 404/400."""
+    from app.db.models.models import Product
+    from sqlmodel import select
+
+    normalized = (slug or "").strip().lower()
+    if not normalized:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="product is required",
+        )
+    row = (
+        await db.exec(
+            select(Product).where(
+                Product.slug == normalized,
+                Product.deleted_at.is_(None),  # type: ignore[union-attr]
+            )
+        )
+    ).first()
+    if not row:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Unknown product: {normalized}",
+        )
+    if not row.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Product is not active: {normalized}",
+        )
+    return row
+
+
+async def ensure_tawala_product(db: AsyncSession):
+    """Idempotent seed of tawala product from settings (dev convenience)."""
+    from app.db.models.models import Product
+    from sqlmodel import select
+
+    existing = (
+        await db.exec(select(Product).where(Product.slug == "tawala"))
+    ).first()
+    if existing:
+        return existing
+    row = Product(
+        slug="tawala",
+        name="Tawala",
+        audience=getattr(settings, "tawala_jwt_audience", "tawala-api") or "tawala-api",
+        is_active=True,
+        claim_profile="tawala",
+        notes="Hard-session exchange; org_id + principal owner|terminal",
+    )
+    db.add(row)
+    await db.commit()
+    await db.refresh(row)
+    return row
+
+
+async def mint_product_access_token(
+    db: AsyncSession,
+    *,
+    product_slug: str,
+    audience: str,
+    sub: str,
+    org_id: UUID,
+    principal: str,
+    email: Optional[str] = None,
+) -> tuple[str, int]:
+    """Mint RS256 product access token using managed signing key."""
     if not exchange_enabled():
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Tawala token exchange is not enabled",
+            detail="Token exchange is not enabled",
         )
     if principal not in ("owner", "terminal"):
         raise HTTPException(
@@ -195,8 +274,9 @@ async def mint_tawala_access_token(
         "sub": str(sub),
         "org_id": str(org_id),
         "principal": principal,
+        "product": product_slug,
         "iss": settings.tawala_jwt_issuer,
-        "aud": settings.tawala_jwt_audience,
+        "aud": audience,
         "iat": now,
         "exp": exp,
     }
@@ -210,3 +290,4 @@ async def mint_tawala_access_token(
         headers={"kid": kid},
     )
     return token, exp
+

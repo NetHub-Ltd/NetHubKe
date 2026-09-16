@@ -1,3 +1,6 @@
+"""Auth exchange + JWKS (N3 generic product parameter)."""
+from __future__ import annotations
+
 import pytest
 from httpx import AsyncClient
 
@@ -11,10 +14,59 @@ async def test_jwks_endpoint(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_exchange_disabled_by_default(client: AsyncClient, make_kc_token, patch_kc_decode):
+async def test_exchange_tawala_disabled_by_default(
+    client: AsyncClient, make_kc_token, patch_kc_decode
+):
     token = make_kc_token()
     r = await client.post(
         "/api/v1/auth/exchange/tawala",
         headers={"Authorization": f"Bearer {token}"},
     )
     assert r.status_code in (503, 401, 404)
+
+
+@pytest.mark.asyncio
+async def test_exchange_generic_disabled_by_default(
+    client: AsyncClient, make_kc_token, patch_kc_decode
+):
+    token = make_kc_token()
+    r = await client.post(
+        "/api/v1/auth/exchange",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"product": "tawala"},
+    )
+    assert r.status_code in (503, 401, 404)
+
+
+@pytest.mark.asyncio
+async def test_exchange_generic_requires_product_body(
+    client: AsyncClient, make_kc_token, patch_kc_decode
+):
+    token = make_kc_token()
+    r = await client.post(
+        "/api/v1/auth/exchange",
+        headers={"Authorization": f"Bearer {token}"},
+        json={},
+    )
+    # Validation error when product missing
+    assert r.status_code in (422, 400, 503)
+
+
+@pytest.mark.asyncio
+async def test_exchange_unknown_product_when_enabled(
+    client: AsyncClient, make_kc_token, patch_kc_decode, monkeypatch
+):
+    from app.core import config as config_module
+    from app.services import tawala_token as tt
+
+    monkeypatch.setattr(tt, "exchange_enabled", lambda: True)
+    monkeypatch.setattr(config_module.settings, "tawala_exchange_enabled", True)
+
+    token = make_kc_token()
+    r = await client.post(
+        "/api/v1/auth/exchange",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"product": "does-not-exist-xyz"},
+    )
+    # May 404 product, or 404 user not synced first depending on order
+    assert r.status_code in (404, 403, 503)
