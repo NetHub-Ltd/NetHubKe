@@ -12,7 +12,7 @@ from sqlalchemy.orm import selectinload
 from app.api.deps import SessionDep, get_token_data
 from app.core.config import settings
 from app.db.schemas.schemas import TokenData
-from app.db.models.models import Service, User
+from app.db.models.models import User
 from app.services.tawala_token import (
     exchange_enabled,
     build_jwks_document,
@@ -20,6 +20,7 @@ from app.services.tawala_token import (
     get_product_by_slug,
     ensure_tawala_product,
 )
+from app.services.entitlements import check_entitled, resolve_org_id
 from app.utils.logging import logger
 
 router = APIRouter()
@@ -68,30 +69,6 @@ def _infer_principal(token_data: TokenData, user: User) -> str:
     if roles & {"owner", "org_owner", "tenant_owner", "admin", "super_admin"}:
         return "owner"
     return "terminal"
-
-
-async def _tenant_entitled_to_product(db, tenant_id: UUID, product_slug: str) -> bool:
-    """Optional subscription gate. When require flag is off, always allow."""
-    if product_slug == "tawala" and not getattr(
-        settings, "tawala_exchange_require_subscription", False
-    ):
-        return True
-    if product_slug != "tawala":
-        # N4 will enforce product_links / entitlements; N3 allows active products only
-        return True
-    svc = (
-        await db.exec(
-            select(Service).where(
-                Service.slug == "tawala",
-                Service.is_active == True,  # noqa: E712
-            )
-        )
-    ).first()
-    if not svc:
-        logger.warning("tawala service slug not in catalog; allowing exchange")
-        return True
-    _ = tenant_id
-    return True
 
 
 @router.get("/jwks.json")
@@ -155,17 +132,19 @@ async def _run_exchange(
             detail="Tenant not found for user",
         )
 
-    if not await _tenant_entitled_to_product(db, tenant.id, product.slug):
+    if not await check_entitled(db, tenant_id=tenant.id, product_slug=product.slug):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=f"Tenant is not entitled to {product.slug}",
         )
 
-    # Tawala claim profile: org_id from linked org or tenant id
-    if product.claim_profile == "tawala":
-        org_id = tenant.tawala_organization_id or tenant.id
-    else:
-        org_id = tenant.id
+    org_id = await resolve_org_id(
+        db,
+        tenant_id=tenant.id,
+        product=product,
+        tenant_tawala_org_id=tenant.tawala_organization_id,
+        tenant_id_fallback=tenant.id,
+    )
 
     principal = principal_override or _infer_principal(token_data, user)
     principal = str(principal).strip().lower()

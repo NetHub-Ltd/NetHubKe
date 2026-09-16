@@ -37,3 +37,17 @@ Both require `Authorization: Bearer <Keycloak access token>` and a synced local 
 1. Insert `products` row (`slug`, `audience`, `claim_profile`, `is_active`).
 2. Document a new profile section here (required claims).
 3. N4+ may add `product_links` / entitlement checks before mint.
+
+## N4: product_links
+
+`org_id` resolution order on exchange:
+
+1. Active `product_links` row for `(tenant, product)` → `external_org_id`
+2. Else for Tawala: `tenant.tawala_organization_id` (legacy)
+3. Else `tenant.id`
+
+Owners/admins set links via `PUT /api/v1/users/me/product-links`  
+`{"product":"tawala","external_org_id":"<uuid>"}`.
+
+Entitlement cache key: `nethub:as:entitle:{tenant_id}:{product_slug}` (TTL 120s).  
+When `TAWALA_EXCHANGE_REQUIRE_SUBSCRIPTION=true`, missing entitlement **fails closed**.

@@ -70,3 +70,9 @@ async def test_exchange_unknown_product_when_enabled(
     )
     # May 404 product, or 404 user not synced first depending on order
     assert r.status_code in (404, 403, 503)
+
+
+@pytest.mark.asyncio
+async def test_product_links_requires_auth(client: AsyncClient):
+    r = await client.get("/api/v1/users/me/product-links")
+    assert r.status_code in (401, 403)
