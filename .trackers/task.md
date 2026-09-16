@@ -1,18 +1,15 @@
-# Task — N5 Signing key rotation
-
-## Milestone
-**N5** — #50
+# Task — Fix JWKS 500 on malformed TAWALA_JWT_PRIVATE_KEY
 
 ## Goal
-Rotate creates new active key; previous retiring; JWKS dual publish until retire_after; ops endpoint; Redis purge.
+GET /api/v1/auth/jwks.json must not 500 when env private key is not PEM (e.g. hex secret).
 
-## Completed
-- [x] rotate_signing_key + prune_expired_retiring_keys
-- [x] JWKS skips expired retiring
-- [x] POST /ops/signing-keys/rotate|prune + jwks-preview
-- [x] Docs SIGNING_KEY_ROTATION.md
-- [x] Tests
-- [ ] CI green
+## Root cause
+_load_env_private_key called cryptography.load_pem_private_key on non-PEM values without guard.
+
+## Fix
+- Reject non-PEM (no BEGIN) and catch parse errors → None + warning log
+- Negative unit + API tests (hex secret, garbage, malformed PEM)
 
 ## Verification
-- pytest unit + ops auth tests
+- pytest tests/unit/test_env_private_key.py
+- pytest tests/api/test_auth_exchange.py::test_jwks_with_malformed_env_pem_still_200

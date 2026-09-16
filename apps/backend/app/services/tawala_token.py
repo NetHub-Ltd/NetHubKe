@@ -57,12 +57,29 @@ def public_jwk_from_private(private_key, kid: str) -> dict[str, Any]:
 
 
 def _load_env_private_key():
+    """
+    Load optional env PEM for emergency/dev bootstrap.
+
+    Returns None if unset, empty, or **not a valid PEM** (never raises).
+    Misconfigured secrets (hex tokens, JWT strings, etc.) must not 500 JWKS.
+    """
     pem = (getattr(settings, "tawala_jwt_private_key", None) or "").strip()
     if not pem:
         return None
     pem = pem.replace("\\n", "\n")
-    return serialization.load_pem_private_key(pem.encode("utf-8"), password=None)
-
+    # Quick reject of clearly non-PEM material (common misconfig: hex secret / password)
+    if "BEGIN" not in pem.upper():
+        logger.warning(
+            "TAWALA_JWT_PRIVATE_KEY is set but is not PEM (missing BEGIN); ignoring env key"
+        )
+        return None
+    try:
+        return serialization.load_pem_private_key(pem.encode("utf-8"), password=None)
+    except Exception as exp:  # noqa: BLE001
+        logger.warning(
+            f"TAWALA_JWT_PRIVATE_KEY is set but failed to parse as PEM; ignoring env key: {exp}"
+        )
+        return None
 
 def _generate_rsa_keypair():
     key = rsa.generate_private_key(public_exponent=65537, key_size=2048)

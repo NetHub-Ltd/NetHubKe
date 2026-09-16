@@ -76,3 +76,35 @@ async def test_exchange_unknown_product_when_enabled(
 async def test_product_links_requires_auth(client: AsyncClient):
     r = await client.get("/api/v1/users/me/product-links")
     assert r.status_code in (401, 403)
+
+
+@pytest.mark.asyncio
+async def test_jwks_with_malformed_env_pem_still_200(
+    client: AsyncClient, monkeypatch
+):
+    """Regression: non-PEM TAWALA_JWT_PRIVATE_KEY must not 500 JWKS."""
+    from app.core import config as config_module
+    from app.services import tawala_token as tt
+
+    monkeypatch.setattr(
+        config_module.settings,
+        "tawala_jwt_private_key",
+        "ddc480aba4241bea319777294689ffab",
+    )
+    monkeypatch.setattr(
+        tt.settings,
+        "tawala_jwt_private_key",
+        "ddc480aba4241bea319777294689ffab",
+    )
+    # Ensure cache miss path hits env fallback
+    async def _no_cache(_key):
+        return None
+
+    monkeypatch.setattr(tt, "redis_get", _no_cache)
+
+    r = await client.get("/api/v1/auth/jwks.json")
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert "keys" in body
+    assert isinstance(body["keys"], list)
+
