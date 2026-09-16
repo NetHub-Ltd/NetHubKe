@@ -1,6 +1,5 @@
 # Rollback
-
-- Revert or close PR #61
-- Force-push recovery: previous tip was 2fbb0e3 on origin/feat/backend-test-foundation
-- No production data/migrations beyond what N2 already introduced on this branch
-- CI-only passwords were never real secrets; tip already used trust auth
+- Revert commits on feat/backend-test-foundation or close PR #61
+- `get_current_user` change: restore previous model_copy(sub=user.id) if needed (would re-break /me keycloak_id lookup)
+- Phone helper: prior pattern rejected bare 254 prefix
+- No migrations, no data changes

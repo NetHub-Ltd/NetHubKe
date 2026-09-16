@@ -94,11 +94,12 @@ async def get_current_user(
             detail="Account is disabled. Please contact NetHub support."
         )
 
-    # 5. Localization & Return
-    # Cast user.id to string to ensure Pydantic doesn't complain about UUID vs Str
-    logger.info(f"Auth Success | sub: {user.id} | scopes: {token_data.scopes}")
+    # 5. Return token data with Keycloak sub unchanged.
+    # Routes (e.g. /users/me) look up User by keycloak_id == token_data.sub.
+    # Replacing sub with the internal UUID previously broke those lookups.
+    logger.info(f"Auth Success | keycloak_sub: {token_data.sub} | user_id: {user.id} | scopes: {token_data.scopes}")
 
-    return token_data.model_copy(update={"sub": str(user.id)})
+    return token_data
 
 
 def require_scopes(required_scopes: List[str], all_required: bool = True):

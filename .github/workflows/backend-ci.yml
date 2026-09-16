@@ -56,8 +56,8 @@ jobs:
       FASTAPI_DB_NAME: nethub_ci
       FASTAPI_DB_HOST: localhost
       FASTAPI_DB_PORT: "5432"
-      KEYCLOAK_ISSUER_URL: https://idp.example.test/realms/nethub
-      KEYCLOAK_JWKS: https://idp.example.test/realms/nethub/protocol/openid-connect/certs
+      KEYCLOAK_ISSUER_URL: https://idp.test/realms/nethub
+      KEYCLOAK_JWKS: https://idp.test/realms/nethub/protocol/openid-connect/certs
       AUDIENCE: nethub-backend
       ALLOWED_ORIGINS: http://localhost:3000
       REDIS_URL: redis://localhost:6379/0

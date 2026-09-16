@@ -39,8 +39,9 @@ _TEST_ENV = {
     "TAWALA_JWT_AUDIENCE": "tawala-api",
     "JWKS_REDIS_TTL_SEC": "60",
 }
+# Force test values so CI env (different KEYCLOAK_ISSUER_URL etc.) cannot drift tokens.
 for k, v in _TEST_ENV.items():
-    os.environ.setdefault(k, v)
+    os.environ[k] = v
 
 from app.core import config as config_module
 
@@ -122,7 +123,7 @@ def make_kc_token(rsa_keys):
         scopes: str = "openid profile email user:read user:write",
         roles: list | None = None,
         aud: str = "nethub-backend",
-        iss: str = "https://idp.test/realms/nethub",
+        iss: str | None = None,
         expired: bool = False,
     ) -> str:
         now = int(time.time())
@@ -134,7 +135,7 @@ def make_kc_token(rsa_keys):
             "email_verified": True,
             "scope": scopes,
             "realm_access": {"roles": roles or ["user"]},
-            "iss": iss,
+            "iss": iss or settings.keycloak_issuer_url,
             "aud": aud,
             "iat": now - 10,
             "exp": now - 100 if expired else now + 3600,
