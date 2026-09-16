@@ -37,7 +37,7 @@ def test_public_jwk(rsa_pem):
 
 def test_get_jwks_env(rsa_pem):
     pem, _ = rsa_pem
-    s = MagicMock(tawala_jwt_private_key=pem)
+    s = MagicMock(tawala_jwt_private_key=pem, tawala_jwt_allow_env_pem=True)
     with patch.object(tt, "settings", s):
         doc = tt.get_jwks()
     assert len(doc["keys"]) == 1
@@ -68,15 +68,31 @@ def test_exchange_enabled_true():
 
 
 def test_load_env_private_key_empty():
-    with patch.object(tt, "settings", MagicMock(tawala_jwt_private_key="")):
+    with patch.object(
+        tt, "settings", MagicMock(tawala_jwt_private_key="", tawala_jwt_allow_env_pem=True)
+    ):
         assert tt._load_env_private_key() is None
 
 
 def test_load_env_private_key_valid(rsa_pem):
     pem, _ = rsa_pem
-    with patch.object(tt, "settings", MagicMock(tawala_jwt_private_key=pem)):
+    with patch.object(
+        tt,
+        "settings",
+        MagicMock(tawala_jwt_private_key=pem, tawala_jwt_allow_env_pem=True),
+    ):
         key = tt._load_env_private_key()
     assert key is not None
+
+
+def test_load_env_private_key_blocked_without_allow(rsa_pem):
+    pem, _ = rsa_pem
+    with patch.object(
+        tt,
+        "settings",
+        MagicMock(tawala_jwt_private_key=pem, tawala_jwt_allow_env_pem=False),
+    ):
+        assert tt._load_env_private_key() is None
 
 
 @pytest.mark.asyncio
@@ -112,8 +128,9 @@ async def test_mint_bad_principal():
 async def test_build_jwks_from_cache():
     db = AsyncMock()
     cached = json.dumps({"keys": [{"kid": "c"}]})
-    with patch.object(tt, "redis_get", new_callable=AsyncMock, return_value=cached):
-        doc = await tt.build_jwks_document(db)
+    with patch.object(tt, "ensure_fresh_signing_key", new_callable=AsyncMock):
+        with patch.object(tt, "redis_get", new_callable=AsyncMock, return_value=cached):
+            doc = await tt.build_jwks_document(db)
     assert doc["keys"][0]["kid"] == "c"
 
 
@@ -121,12 +138,82 @@ async def test_build_jwks_from_cache():
 async def test_build_jwks_empty_db_env_fallback(rsa_pem):
     pem, _ = rsa_pem
     db = AsyncMock()
-    # exec returns empty list
     result = MagicMock()
     result.__iter__ = lambda self: iter([])
+    result.first = MagicMock(return_value=None)
     db.exec = AsyncMock(return_value=result)
-    with patch.object(tt, "redis_get", new_callable=AsyncMock, return_value=None):
-        with patch.object(tt, "redis_set", new_callable=AsyncMock):
-            with patch.object(tt, "settings", MagicMock(tawala_jwt_private_key=pem, jwks_redis_ttl_sec=60)):
-                doc = await tt.build_jwks_document(db)
+    with patch.object(tt, "ensure_fresh_signing_key", new_callable=AsyncMock):
+        with patch.object(tt, "redis_get", new_callable=AsyncMock, return_value=None):
+            with patch.object(tt, "redis_set", new_callable=AsyncMock):
+                with patch.object(
+                    tt,
+                    "settings",
+                    MagicMock(
+                        tawala_jwt_private_key=pem,
+                        tawala_jwt_allow_env_pem=True,
+                        jwks_redis_ttl_sec=60,
+                    ),
+                ):
+                    doc = await tt.build_jwks_document(db)
     assert len(doc["keys"]) == 1
+
+
+@pytest.mark.asyncio
+async def test_build_jwks_from_db_rows():
+    db = AsyncMock()
+    row = MagicMock()
+    row.status = "active"
+    row.retire_after = None
+    row.public_jwk = {"kid": "db-kid", "kty": "RSA"}
+    result = MagicMock()
+    result.__iter__ = lambda self: iter([row])
+    result.first = MagicMock(return_value=None)
+    db.exec = AsyncMock(return_value=result)
+    with patch.object(tt, "ensure_fresh_signing_key", new_callable=AsyncMock):
+        with patch.object(tt, "redis_get", new_callable=AsyncMock, return_value=None):
+            with patch.object(tt, "redis_set", new_callable=AsyncMock):
+                doc = await tt.build_jwks_document(db)
+    assert doc["keys"][0]["kid"] == "db-kid"
+
+
+@pytest.mark.asyncio
+async def test_get_active_signing_key_from_row(rsa_pem):
+    pem, key = rsa_pem
+    db = AsyncMock()
+    row = MagicMock()
+    row.kid = "active-1"
+    row.private_pem = pem
+    result = MagicMock()
+    result.first = MagicMock(return_value=row)
+    db.exec = AsyncMock(return_value=result)
+    with patch.object(tt, "ensure_fresh_signing_key", new_callable=AsyncMock):
+        with patch.object(tt, "redis_set", new_callable=AsyncMock):
+            priv, kid = await tt.get_active_signing_key(db)
+    assert kid == "active-1"
+    assert priv is not None
+
+
+@pytest.mark.asyncio
+async def test_mint_product_success(rsa_pem):
+    pem, key = rsa_pem
+    db = AsyncMock()
+    with patch.object(tt, "exchange_enabled", return_value=True):
+        with patch.object(
+            tt, "get_active_signing_key", new_callable=AsyncMock, return_value=(key, "kid-1")
+        ):
+            with patch.object(
+                tt,
+                "settings",
+                MagicMock(tawala_jwt_issuer="http://iss", tawala_jwt_ttl_sec=60),
+            ):
+                token, exp = await tt.mint_product_access_token(
+                    db,
+                    product_slug="tawala",
+                    audience="tawala-api",
+                    sub="sub-1",
+                    org_id=uuid.uuid4(),
+                    principal="owner",
+                    email="a@example.com",
+                )
+    assert isinstance(token, str) and len(token) > 20
+    assert exp > int(time.time())

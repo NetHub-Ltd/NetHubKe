@@ -58,6 +58,12 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379/0"
     jwks_redis_ttl_sec: int = 120
 
+    # Managed signing keys: backend generates RSA; rotate when active key age exceeds max.
+    # Env PEM is opt-in only (TAWALA_JWT_ALLOW_ENV_PEM=true) — avoid PEM-in-env in k3s.
+    signing_key_max_age_hours: int = 168  # 7 days
+    signing_key_retire_overlap_hours: int = 24  # dual JWKS window after rotate
+    tawala_jwt_allow_env_pem: bool = False
+
 
 
 

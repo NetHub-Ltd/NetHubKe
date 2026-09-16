@@ -57,12 +57,32 @@ def public_jwk_from_private(private_key, kid: str) -> dict[str, Any]:
 
 
 def _load_env_private_key():
+    """
+    Load optional env PEM for emergency/dev bootstrap.
+
+    Returns None if unset, empty, or **not a valid PEM** (never raises).
+    Misconfigured secrets (hex tokens, JWT strings, etc.) must not 500 JWKS.
+    """
+    # Env PEM disabled by default — keys are generated and stored in Postgres.
+    if not bool(getattr(settings, "tawala_jwt_allow_env_pem", False)):
+        return None
     pem = (getattr(settings, "tawala_jwt_private_key", None) or "").strip()
     if not pem:
         return None
     pem = pem.replace("\\n", "\n")
-    return serialization.load_pem_private_key(pem.encode("utf-8"), password=None)
-
+    # Quick reject of clearly non-PEM material (common misconfig: hex secret / password)
+    if "BEGIN" not in pem.upper():
+        logger.warning(
+            "TAWALA_JWT_PRIVATE_KEY is set but is not PEM (missing BEGIN); ignoring env key"
+        )
+        return None
+    try:
+        return serialization.load_pem_private_key(pem.encode("utf-8"), password=None)
+    except Exception as exp:  # noqa: BLE001
+        logger.warning(
+            f"TAWALA_JWT_PRIVATE_KEY is set but failed to parse as PEM; ignoring env key: {exp}"
+        )
+        return None
 
 def _generate_rsa_keypair():
     key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
@@ -154,6 +174,47 @@ async def prune_expired_retiring_keys(db: AsyncSession) -> int:
     return changed
 
 
+
+async def ensure_fresh_signing_key(db: AsyncSession) -> None:
+    """
+    Auto-rotate when the active key is older than SIGNING_KEY_MAX_AGE_HOURS (default 7d).
+
+    Called from JWKS and mint paths so rotation happens without a separate cron.
+    Also prunes retiring keys past retire_after.
+    """
+    await prune_expired_retiring_keys(db)
+    max_age_h = int(getattr(settings, "signing_key_max_age_hours", 168) or 168)
+    overlap_h = int(getattr(settings, "signing_key_retire_overlap_hours", 24) or 24)
+    if max_age_h <= 0:
+        return
+
+    result = await db.exec(
+        select(SigningKey).where(
+            SigningKey.status == "active",
+            SigningKey.deleted_at.is_(None),
+        )
+    )
+    first_fn = getattr(result, "first", None)
+    row = first_fn() if callable(first_fn) else None
+    # SQLAlchemy/SQLModel result is sync; AsyncMock tests may yield a coroutine
+    if hasattr(row, "__await__"):
+        row = await row  # type: ignore[misc]
+    if row is None:
+        return  # bootstrap happens on mint when exchange enabled
+
+    created = getattr(row, "created_at", None)
+    if created is not None and getattr(created, "tzinfo", "missing") is None:
+        created = created.replace(tzinfo=timezone.utc)
+    if not isinstance(created, datetime):
+        return
+    age = datetime.now(timezone.utc) - created
+    if age >= timedelta(hours=max_age_h):
+        logger.info(
+            f"Active signing key kid={getattr(row, 'kid', '?')} age={age} >= max_age={max_age_h}h; rotating"
+        )
+        await rotate_signing_key(db, retire_after_hours=overlap_h)
+
+
 async def bootstrap_signing_key(db: AsyncSession) -> SigningKey:
     """Create first active key if none exist. Prefer env PEM material if set."""
     env_key = _load_env_private_key()
@@ -182,7 +243,9 @@ async def bootstrap_signing_key(db: AsyncSession) -> SigningKey:
 async def get_active_signing_key(db: AsyncSession) -> Tuple[Any, str]:
     """
     Return (private_key object, kid) for minting.
+    Auto-rotates when active key exceeds SIGNING_KEY_MAX_AGE_HOURS.
     """
+    await ensure_fresh_signing_key(db)
     stmt = select(SigningKey).where(
         SigningKey.status == "active",
         SigningKey.deleted_at.is_(None),
@@ -204,7 +267,8 @@ async def get_active_signing_key(db: AsyncSession) -> Tuple[Any, str]:
 
 
 async def build_jwks_document(db: AsyncSession) -> dict[str, Any]:
-    """JWKS for active + retiring keys (not retired)."""
+    """JWKS for active + retiring keys (not retired). Auto-rotates by max age."""
+    await ensure_fresh_signing_key(db)
     cached = await redis_get(JWKS_CACHE_KEY)
     if cached:
         try:
