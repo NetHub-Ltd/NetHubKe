@@ -13,6 +13,7 @@ import { useUser } from "@/lib/hooks/useauth";
 import { federatedLogout } from "@/lib/actions/logout";
 import DashboardShell from "@/lib/components/dashboard/DashboardShell";
 import { useSession } from "next-auth/react";
+import LaunchButton from "@/lib/components/dashboard/LaunchButton";
 
 type ProductStatus = "connected" | "trial" | "not_connected";
 
@@ -216,12 +217,26 @@ export default function DashboardServicesPage() {
                     {item.audience ? ` · aud ${item.audience}` : ""}
                   </p>
                 </div>
-                <span
-                  className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${meta.className}`}
-                >
-                  <Icon className="h-3.5 w-3.5" aria-hidden />
-                  {meta.label}
-                </span>
+                <div className="flex shrink-0 flex-col items-end gap-2 sm:flex-row sm:items-center">
+                  <span
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${meta.className}`}
+                  >
+                    <Icon className="h-3.5 w-3.5" aria-hidden />
+                    {meta.label}
+                  </span>
+                  <LaunchButton
+                    productSlug={item.slug}
+                    productName={item.name}
+                    accessToken={
+                      (session as { accessToken?: string } | null)?.accessToken
+                    }
+                    disabledReason={
+                      item.status === "not_connected"
+                        ? "Connect this product before launching"
+                        : null
+                    }
+                  />
+                </div>
               </li>
             );
           })}
