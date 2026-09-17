@@ -1,6 +1,7 @@
 /**
- * N7 launch hop: exchange Keycloak session for product token, then redirect.
+ * N7 launch hop: exchange via Next BFF, then redirect to product.
  * Feature-flagged via NEXT_PUBLIC_LAUNCH_HOP_ENABLED.
+ * Never calls BACKEND_URL from the browser.
  */
 
 export type ExchangeResponse = {
@@ -18,22 +19,13 @@ export function isLaunchHopEnabled(): boolean {
   return v === "true" || v === "1" || v === "yes";
 }
 
-/** Product app hard-session entry URL (no token). */
+/** Product app hard-session entry URL (no NetHub API URL). */
 export function productLaunchBaseUrl(slug: string): string | null {
   if (slug === "tawala") {
     const u = process.env.NEXT_PUBLIC_TAWALA_LAUNCH_URL || "";
     return u.trim() || null;
   }
   return null;
-}
-
-export function backendApiBase(): string {
-  return (
-    process.env.NEXT_PUBLIC_BACKEND_URL ||
-    process.env.NEXT_PUBLIC_API_URL ||
-    process.env.BACKEND_URL ||
-    ""
-  ).replace(/\/$/, "");
 }
 
 /**
@@ -57,22 +49,23 @@ export function buildProductRedirectUrl(
   return url.toString();
 }
 
+/**
+ * Exchange via same-origin BFF (session cookie / NextAuth on server).
+ * Does not require the client to hold or send the Keycloak token explicitly
+ * when the BFF reads the session — still accepts optional token for tests.
+ */
 export async function exchangeForProduct(
   product: string,
-  accessToken: string,
+  _accessToken?: string,
   principal?: "owner" | "terminal"
 ): Promise<ExchangeResponse> {
-  const base = backendApiBase();
-  if (!base) {
-    throw new Error("Backend URL is not configured (NEXT_PUBLIC_BACKEND_URL)");
-  }
-  const res = await fetch(`${base}/api/v1/auth/exchange`, {
+  const res = await fetch("/api/nethub/auth/exchange", {
     method: "POST",
     headers: {
       Accept: "application/json",
       "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
     },
+    credentials: "include",
     body: JSON.stringify({
       product,
       ...(principal ? { principal } : {}),

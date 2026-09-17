@@ -58,7 +58,7 @@ export default function LaunchButton({
     setBusy(true);
     setError(null);
     try {
-      const exchanged = await exchangeForProduct(productSlug, accessToken);
+      const exchanged = await exchangeForProduct(productSlug);
       const target = buildProductRedirectUrl(launchBase, exchanged);
       window.location.assign(target);
     } catch (e) {

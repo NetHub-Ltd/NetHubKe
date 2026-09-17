@@ -57,17 +57,9 @@ export default function DashboardServicesPage() {
   const [error, setError] = useState<string | null>(null);
 
   const fetchStatus = useCallback(async (signal?: AbortSignal) => {
-    const token = (session as { accessToken?: string } | null)?.accessToken;
-    const base =
-      process.env.NEXT_PUBLIC_BACKEND_URL ||
-      process.env.BACKEND_URL ||
-      "";
-    const url = `${base.replace(/\/$/, "")}/api/v1/services/my-status`;
-    const res = await fetch(url, {
-      headers: {
-        Accept: "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
+    // Same-origin BFF — never call FastAPI URL from the browser
+    const res = await fetch("/api/nethub/services/my-status", {
+      headers: { Accept: "application/json" },
       credentials: "include",
       signal,
     });
@@ -77,7 +69,7 @@ export default function DashboardServicesPage() {
     }
     const data = (await res.json()) as TenantProductStatus[];
     return Array.isArray(data) ? data : [];
-  }, [session]);
+  }, []);
 
   // Load when authenticated — setState only after await (no sync setState in effect)
   useEffect(() => {
