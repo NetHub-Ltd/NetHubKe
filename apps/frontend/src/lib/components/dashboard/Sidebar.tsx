@@ -9,6 +9,8 @@ import {
   ChevronLeft,
   ChevronRight,
   LayoutDashboard,
+  Home,
+  Boxes,
 } from "lucide-react";
 
 export type SidebarItem = {
@@ -19,6 +21,8 @@ export type SidebarItem = {
 };
 
 const NAV_ITEMS: SidebarItem[] = [
+  { name: "Home", href: "/dashboard", icon: Home, enabled: true },
+  { name: "My services", href: "/dashboard/services", icon: Boxes, enabled: true },
   { name: "Profile", href: "/dashboard/profile", icon: User, enabled: true },
   { name: "Settings", href: "/dashboard/settings", icon: Settings, enabled: false },
   { name: "Billing", href: "/dashboard/billing", icon: CreditCard, enabled: false },
@@ -48,7 +52,9 @@ export default function Sidebar({
       {NAV_ITEMS.map((item) => {
         const active =
           item.enabled &&
-          (pathname === item.href || pathname.startsWith(item.href + "/"));
+          (item.href === "/dashboard"
+            ? pathname === "/dashboard"
+            : pathname === item.href || pathname.startsWith(item.href + "/"));
         const Icon = item.icon;
         const base =
           "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors";
