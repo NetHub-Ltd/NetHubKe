@@ -55,42 +55,74 @@ export default function DashboardServicesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
+  const fetchStatus = useCallback(async (signal?: AbortSignal) => {
+    const token = (session as { accessToken?: string } | null)?.accessToken;
+    const base =
+      process.env.NEXT_PUBLIC_BACKEND_URL ||
+      process.env.BACKEND_URL ||
+      "";
+    const url = `${base.replace(/\/$/, "")}/api/v1/services/my-status`;
+    const res = await fetch(url, {
+      headers: {
+        Accept: "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      credentials: "include",
+      signal,
+    });
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(body || `HTTP ${res.status}`);
+    }
+    const data = (await res.json()) as TenantProductStatus[];
+    return Array.isArray(data) ? data : [];
+  }, [session]);
+
+  // Load when authenticated — setState only after await (no sync setState in effect)
+  useEffect(() => {
+    if (authStatus !== "authenticated") {
+      return;
+    }
+    const ac = new AbortController();
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await fetchStatus(ac.signal);
+        if (cancelled) return;
+        setItems(data);
+        setError(null);
+      } catch (e) {
+        if (cancelled || (e instanceof DOMException && e.name === "AbortError")) {
+          return;
+        }
+        setError(e instanceof Error ? e.message : "Failed to load services");
+        setItems([]);
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+      ac.abort();
+    };
+  }, [authStatus, fetchStatus]);
+
+  const refresh = async () => {
     setLoading(true);
     setError(null);
     try {
-      const token = (session as { accessToken?: string } | null)?.accessToken;
-      const base =
-        process.env.NEXT_PUBLIC_BACKEND_URL ||
-        process.env.BACKEND_URL ||
-        "";
-      const url = `${base.replace(/\/$/, "")}/api/v1/services/my-status`;
-      const res = await fetch(url, {
-        headers: {
-          Accept: "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        credentials: "include",
-      });
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text || `HTTP ${res.status}`);
-      }
-      const data = (await res.json()) as TenantProductStatus[];
-      setItems(Array.isArray(data) ? data : []);
+      const data = await fetchStatus();
+      setItems(data);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load services");
       setItems([]);
     } finally {
       setLoading(false);
     }
-  }, [session]);
+  };
 
-  useEffect(() => {
-    if (authStatus === "authenticated") {
-      void load();
-    }
-  }, [authStatus, load]);
 
   if (authStatus === "loading") {
     return (
@@ -136,7 +168,7 @@ export default function DashboardServicesPage() {
           </div>
           <button
             type="button"
-            onClick={() => void load()}
+            onClick={() => void refresh()}
             className="inline-flex items-center gap-2 rounded-lg border border-outline-variant px-3 py-2 text-sm font-medium text-on-surface hover:bg-surface-container-high"
             disabled={loading}
           >
