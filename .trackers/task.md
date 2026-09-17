@@ -1,13 +1,10 @@
-# Task — N7 Launch hop
+# Task — BFF only: no client-exposed FastAPI URL
 
 ## Goal
-Feature-flagged Launch UI: exchange then redirect; error states.
+All browser data/exchange calls go through /api/nethub/*; BACKEND_URL server-only.
 
 ## Completed
-- [x] Close issues #46–#52 and milestones N3–N6
-- [x] launchHop helper + LaunchButton
-- [x] My services Launch control
-- [x] NEXT_PUBLIC_LAUNCH_HOP_ENABLED + TAWALA_LAUNCH_URL
-- [x] Docs
-
-Closes #53
+- [x] GET /api/nethub/services/my-status
+- [x] POST /api/nethub/auth/exchange
+- [x] services page + launchHop use BFF
+- [x] docs / env.example / axios deprecation
