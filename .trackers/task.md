@@ -1,11 +1,13 @@
-# Task — N6 Console IA: Home + My services
+# Task — N7 Launch hop
 
-## Milestone
-**N6** — #51 #52
+## Goal
+Feature-flagged Launch UI: exchange then redirect; error states.
 
 ## Completed
-- [x] /dashboard Home (no longer profile-only redirect)
-- [x] /dashboard/services + sidebar Home + My services
-- [x] GET /api/v1/services/my-status (connected | trial | not_connected)
-- [x] Auth test for my-status
-- [ ] lint/build verification in CI / local if available
+- [x] Close issues #46–#52 and milestones N3–N6
+- [x] launchHop helper + LaunchButton
+- [x] My services Launch control
+- [x] NEXT_PUBLIC_LAUNCH_HOP_ENABLED + TAWALA_LAUNCH_URL
+- [x] Docs
+
+Closes #53
