@@ -12,5 +12,6 @@
 | `GET/PATCH /api/nethub/users/me` | `/api/v1/users/me` |
 | `GET /api/nethub/services/my-status` | `/api/v1/services/my-status` |
 | `POST /api/nethub/auth/exchange` | `/api/v1/auth/exchange` |
+| `GET /api/nethub/billing/summary` | `/api/v1/billing/summary` |
 
 Product launch URLs (e.g. `NEXT_PUBLIC_TAWALA_LAUNCH_URL`) are **product** origins, not the NetHub API.

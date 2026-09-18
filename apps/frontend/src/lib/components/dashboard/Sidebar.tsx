@@ -25,7 +25,7 @@ const NAV_ITEMS: SidebarItem[] = [
   { name: "My services", href: "/dashboard/services", icon: Boxes, enabled: true },
   { name: "Profile", href: "/dashboard/profile", icon: User, enabled: true },
   { name: "Settings", href: "/dashboard/settings", icon: Settings, enabled: false },
-  { name: "Billing", href: "/dashboard/billing", icon: CreditCard, enabled: false },
+  { name: "Billing", href: "/dashboard/billing", icon: CreditCard, enabled: true },
 ];
 
 type SidebarProps = {

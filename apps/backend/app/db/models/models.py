@@ -110,6 +110,30 @@ class Plan(BaseMixin, table=True):
     features_config: dict = Field(default_factory=dict, sa_column=Column(JSONB))
 
 
+
+class Invoice(BaseMixin, table=True):
+    """
+    Billing invoice — NetHub is system of record (N8 read APIs).
+    status: draft | open | paid | void | uncollectible
+    """
+    __tablename__ = "invoices"
+
+    tenant_id: uuid.UUID = Field(foreign_key="tenants.id", index=True)
+    subscription_id: Optional[uuid.UUID] = Field(
+        default=None, foreign_key="subscriptions.id", index=True
+    )
+    amount: float = Field(default=0.0)
+    currency: str = Field(default="KES", max_length=8)
+    status: str = Field(default="open", max_length=32, index=True)
+    period_start: Optional[datetime] = Field(default=None)
+    period_end: Optional[datetime] = Field(default=None)
+    issued_at: Optional[datetime] = Field(default=None)
+    paid_at: Optional[datetime] = Field(default=None)
+    external_invoice_id: Optional[str] = Field(default=None, max_length=128)
+    line_items: list = Field(default_factory=list, sa_column=Column(JSONB))
+    description: Optional[str] = Field(default=None, max_length=512)
+
+
 class SigningKey(BaseMixin, table=True):
     """
     RSA keys for product access tokens (NetHubKe as AS).
