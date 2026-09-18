@@ -115,6 +115,15 @@ export default function ProfilePage() {
 
   return (
     <DashboardShell title="Profile" user={user}>
+      <div className="mx-auto max-w-3xl mb-4 flex flex-wrap items-center justify-between gap-2">
+        <p className="text-sm text-on-surface-variant">
+          Manage your identity and tenant details. Console preferences live under{" "}
+          <a href="/dashboard/settings" className="font-medium text-primary underline-offset-2 hover:underline">
+            Settings
+          </a>
+          .
+        </p>
+      </div>
       <div className="mx-auto max-w-4xl space-y-6">
         <div>
           <h2 className="text-2xl font-bold text-on-surface">Your profile</h2>

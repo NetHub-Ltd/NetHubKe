@@ -8,6 +8,7 @@ import {
   isLaunchHopEnabled,
   productLaunchBaseUrl,
 } from "@/lib/launch/launchHop";
+import { loadPreferences } from "@/lib/settings/preferences";
 
 type LaunchButtonProps = {
   productSlug: string;
@@ -58,7 +59,9 @@ export default function LaunchButton({
     setBusy(true);
     setError(null);
     try {
-      const exchanged = await exchangeForProduct(productSlug);
+      const prefs = loadPreferences();
+      const principal = prefs.sharedDeviceMode ? "terminal" : undefined;
+      const exchanged = await exchangeForProduct(productSlug, undefined, principal);
       const target = buildProductRedirectUrl(launchBase, exchanged);
       window.location.assign(target);
     } catch (e) {
