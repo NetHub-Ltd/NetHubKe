@@ -24,7 +24,7 @@ const NAV_ITEMS: SidebarItem[] = [
   { name: "Home", href: "/dashboard", icon: Home, enabled: true },
   { name: "My services", href: "/dashboard/services", icon: Boxes, enabled: true },
   { name: "Profile", href: "/dashboard/profile", icon: User, enabled: true },
-  { name: "Settings", href: "/dashboard/settings", icon: Settings, enabled: false },
+  { name: "Settings", href: "/dashboard/settings", icon: Settings, enabled: true },
   { name: "Billing", href: "/dashboard/billing", icon: CreditCard, enabled: true },
 ];
 
