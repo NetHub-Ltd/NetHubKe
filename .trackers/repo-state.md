@@ -1,4 +1,4 @@
 # Repository State
-- Branch: feat/n7-launch-hop
-- Milestone: N7 (#53)
+- Branch: feat/n8-billing-read
+- Milestone: N8 (#54)
 - PR target: dev
