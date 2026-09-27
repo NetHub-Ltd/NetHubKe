@@ -1,15 +1,21 @@
 """JWT validation for the NetHubKe resource server (Keycloak as IdP only)."""
 
+from __future__ import annotations
+
 from fastapi import HTTPException
 from fastapi.security import HTTPBearer
 import jwt
 from jwt import PyJWKClient, exceptions
 
 from app.core.config import settings
+from app.core.scope_claims import merge_scope_claims
 from app.db.schemas.schemas import TokenData
 from app.utils.logging import logger
 
 bearer_scheme = HTTPBearer(auto_error=False)
+
+# Re-export for callers/tests
+__all__ = ["bearer_scheme", "_decode_token", "merge_scope_claims"]
 
 
 def _decode_token(token: str) -> TokenData:
@@ -43,12 +49,8 @@ def _decode_token(token: str) -> TokenData:
             leeway=10,
         )
 
-        # Keycloak: space-separated scopes in "scope"; some setups use "permissions"
-        raw_scope = payload.get("scope") or payload.get("permissions") or ""
-        if isinstance(raw_scope, list):
-            raw_scope = " ".join(raw_scope)
+        raw_scope = merge_scope_claims(payload)
 
-        # Roles: prefer realm roles; fall back to groups
         realm_access = payload.get("realm_access") or {}
         roles = list(realm_access.get("roles") or payload.get("groups") or [])
 
