@@ -2,15 +2,21 @@
 
 import { signIn } from "next-auth/react";
 
-/** Start Keycloak login; land on dashboard by default. */
-export const keycloakLogin = async (callbackUrl = "/dashboard") => {
-  await signIn("keycloak", { callbackUrl });
+/** Start OIDC login (IdP-agnostic; provider id "oidc"). */
+export const oidcLogin = async (callbackUrl = "/dashboard") => {
+  await signIn("oidc", { callbackUrl });
 };
 
+/** @deprecated Use oidcLogin */
+export const keycloakLogin = oidcLogin;
+
 /**
- * Keycloak registration entry (hosted UI).
- * Uses relative BFF so KEYCLOAK_ISSUER is not required in the browser.
+ * Signup is owned by the IdP (register in Zitadel first, then NetHub syncs).
+ * Hits BFF which redirects to IdP authorization endpoint.
  */
-export const keycloakRegister = () => {
+export const oidcRegister = () => {
   window.location.href = "/api/nethub/register";
 };
+
+/** @deprecated Use oidcRegister */
+export const keycloakRegister = oidcRegister;

@@ -1,50 +1,37 @@
-// "use server";
-
-// import { signOut } from "@/auth";
-
-// export async function federatedLogout() {
-//   const issuerUrl = process.env.KEYCLOAK_ISSUER;
-//   const clientId = process.env.KEYCLOAK_CLIENT_ID;
-//   const postLogoutRedirectUri = process.env.NEXTAUTH_URL;
-
-//   // Clear local session
-//   await signOut({ redirect: false });
-
-//   // Redirect to Keycloak Logout endpoint
-//   if (issuerUrl && clientId) {
-//     const logoutUrl = `${issuerUrl}/protocol/openid-connect/logout?client_id=${clientId}&post_logout_redirect_uri=${encodeURIComponent(postLogoutRedirectUri!)}`;
-//     return logoutUrl;
-//   }
-// }
-
 "use server";
 
 import { signOut, auth } from "@/auth";
+import { oidcClientId, oidcDiscovery, oidcIssuer } from "@/lib/server/oidcConfig";
 
-export async function federatedLogout() {
+/**
+ * Clear Auth.js session then redirect to IdP end_session (RP-initiated logout).
+ */
+export async function federatedLogout(): Promise<string | void> {
   const session = await auth();
-  const issuerUrl = process.env.KEYCLOAK_ISSUER;
-  const clientId = process.env.KEYCLOAK_CLIENT_ID;
+  const idToken = session?.idToken as string | undefined;
   const postLogoutRedirectUri =
-    process.env.NEXTAUTH_URL || "http://localhost:3000";
+    process.env.NEXTAUTH_URL || process.env.AUTH_URL || "https://nethub.co.ke";
 
-  // 1. Get the id_token if you stored it in the session earlier
-  const idToken = session?.idToken;
-
-  // 2. Clear local session (NextAuth cookies)
   await signOut({ redirect: false });
 
-  // 3. Build the OIDC Logout URL
-  if (issuerUrl && clientId) {
-    const url = new URL(`${issuerUrl}/protocol/openid-connect/logout`);
-    url.searchParams.append("client_id", clientId);
-    url.searchParams.append("post_logout_redirect_uri", postLogoutRedirectUri);
+  try {
+    const discovery = await oidcDiscovery();
+    const endSession =
+      discovery.end_session_endpoint ||
+      `${oidcIssuer()}/oidc/v1/end_session`;
 
-    // Adding the hint prevents the Keycloak "Confirm Logout" screen
+    const url = new URL(endSession);
+    url.searchParams.set("client_id", oidcClientId());
+    url.searchParams.set(
+      "post_logout_redirect_uri",
+      postLogoutRedirectUri,
+    );
     if (idToken) {
-      url.searchParams.append("id_token_hint", idToken);
+      url.searchParams.set("id_token_hint", idToken);
     }
-
     return url.toString();
+  } catch (e) {
+    console.error("OIDC logout discovery failed:", e);
+    return postLogoutRedirectUri;
   }
 }
