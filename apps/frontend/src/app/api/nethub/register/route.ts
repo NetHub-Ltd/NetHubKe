@@ -1,27 +1,23 @@
 import { NextResponse } from "next/server";
+import { oidcDiscovery, oidcIssuer } from "@/lib/server/oidcConfig";
 
 /**
- * Redirect to Keycloak registration (issuer stays server-side).
+ * Signup is owned by the IdP (register in Zitadel first, then NetHub syncs).
+ * Redirect to the IdP authorization endpoint; users without an account use
+ * the IdP's registration UI when enabled.
  */
-export async function GET(request: Request) {
-  const issuer = process.env.KEYCLOAK_ISSUER?.replace(/\/$/, "");
-  const clientId = process.env.KEYCLOAK_CLIENT_ID;
-  const appUrl =
-    process.env.NEXTAUTH_URL?.replace(/\/$/, "") ||
-    new URL(request.url).origin;
-
-  if (!issuer || !clientId) {
+export async function GET() {
+  try {
+    const discovery = await oidcDiscovery();
+    const authz =
+      discovery.authorization_endpoint ||
+      `${oidcIssuer()}/oauth/v2/authorize`;
+    return NextResponse.redirect(authz, 302);
+  } catch (e) {
+    console.error("Register redirect failed:", e);
     return NextResponse.json(
-      { detail: "Registration is not configured" },
+      { error: "IdP discovery unavailable" },
       { status: 503 },
     );
   }
-
-  const url = new URL(`${issuer}/protocol/openid-connect/registrations`);
-  url.searchParams.set("client_id", clientId);
-  url.searchParams.set("response_type", "code");
-  url.searchParams.set("scope", "openid profile email");
-  url.searchParams.set("redirect_uri", `${appUrl}/api/auth/callback/keycloak`);
-
-  return NextResponse.redirect(url.toString());
 }

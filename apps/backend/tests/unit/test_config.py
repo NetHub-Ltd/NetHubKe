@@ -4,8 +4,8 @@ from app.core.config import settings
 
 def test_settings_loaded():
     assert settings.app_name
-    assert settings.audience == "nethub-backend"
-    assert settings.keycloak_issuer_url.startswith("http")
+    assert settings.audience in ("nethub-backend", "nethub-api")
+    assert settings.idp_issuer.startswith("http")
 
 
 def test_cors_origins_list():

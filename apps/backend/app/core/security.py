@@ -1,4 +1,4 @@
-"""JWT validation for the NetHubKe resource server (Keycloak as IdP only)."""
+"""JWT validation for the NetHubKe resource server (OIDC IdP-agnostic)."""
 
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ import jwt
 from jwt import PyJWKClient, exceptions
 
 from app.core.config import settings
+from app.core.idp_claims import extract_roles
 from app.core.scope_claims import merge_scope_claims
 from app.db.schemas.schemas import TokenData
 from app.utils.logging import logger
@@ -15,20 +16,22 @@ from app.utils.logging import logger
 bearer_scheme = HTTPBearer(auto_error=False)
 
 # Re-export for callers/tests
-__all__ = ["bearer_scheme", "_decode_token", "merge_scope_claims"]
+__all__ = ["bearer_scheme", "_decode_token", "merge_scope_claims", "extract_roles"]
 
 
 def _decode_token(token: str) -> TokenData:
     """
-    Validate a bearer access token against Keycloak JWKS.
+    Validate a bearer access token against the configured IdP JWKS.
 
     Checks: signature (RS256), exp, issuer, audience (from settings).
     Does not load the local user row — callers use deps for that.
     """
     try:
-        logger.debug("Keycloak Issuer | {}", settings.keycloak_issuer_url)
+        issuer = settings.idp_issuer
+        jwks_url = settings.idp_jwks_url
+        logger.debug("OIDC Issuer | {} | JWKS | {}", issuer, jwks_url)
         jwks_client = PyJWKClient(
-            uri=settings.keycloak_jwks,
+            uri=jwks_url,
             cache_jwk_set=True,
             lifespan=min(600, settings.jwks_cache_ttl),
             cache_keys=True,
@@ -45,14 +48,12 @@ def _decode_token(token: str) -> TokenData:
             signing_key.key,
             algorithms=settings.algorithms,
             audience=settings.audience,
-            issuer=settings.keycloak_issuer_url,
+            issuer=issuer,
             leeway=10,
         )
 
         raw_scope = merge_scope_claims(payload)
-
-        realm_access = payload.get("realm_access") or {}
-        roles = list(realm_access.get("roles") or payload.get("groups") or [])
+        roles = extract_roles(payload)
 
         validate_data = {
             "sub": payload.get("sub"),

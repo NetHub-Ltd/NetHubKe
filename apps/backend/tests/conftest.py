@@ -135,7 +135,7 @@ def make_kc_token(rsa_keys):
             "email_verified": True,
             "scope": scopes,
             "realm_access": {"roles": roles or ["user"]},
-            "iss": iss or settings.keycloak_issuer_url,
+            "iss": iss or settings.idp_issuer,
             "aud": aud,
             "iat": now - 10,
             "exp": now - 100 if expired else now + 3600,
@@ -161,7 +161,7 @@ def patch_kc_decode(rsa_keys, monkeypatch):
                 pub,
                 algorithms=["RS256"],
                 audience=settings.audience,
-                issuer=settings.keycloak_issuer_url,
+                issuer=settings.idp_issuer,
                 leeway=10,
             )
         except pyjwt.ExpiredSignatureError:

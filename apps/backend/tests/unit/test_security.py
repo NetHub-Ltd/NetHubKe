@@ -29,7 +29,7 @@ def _token(key, **overrides):
         "email_verified": True,
         "scope": "openid user:read",
         "realm_access": {"roles": ["user"]},
-        "iss": settings.keycloak_issuer_url,
+        "iss": settings.idp_issuer,
         "aud": settings.audience,
         "iat": now,
         "exp": now + 3600,
@@ -119,3 +119,17 @@ def test_decode_invalid_signature(rsa_key):
 
 def test_bearer_scheme_exists():
     assert security_mod.bearer_scheme is not None
+
+
+def test_decode_zitadel_roles(rsa_key):
+    pub = rsa_key.public_key()
+    token = _token(
+        rsa_key,
+        realm_access=None,
+        groups=None,
+        **{"urn:zitadel:iam:org:project:roles": {"admin": {"x": True}, "user": {}}},
+    )
+    with _patch_jwks(pub):
+        data = security_mod._decode_token(token)
+    assert "admin" in data.roles
+    assert "user" in data.roles
