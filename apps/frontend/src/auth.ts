@@ -25,7 +25,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   ],
   callbacks: {
-    async jwt({ token, account, user }) {
+    async jwt({ token, account, user }): Promise<JWT | null> {
       // 1. INITIAL SIGN-IN
       if (account && user) {
         try {
@@ -43,16 +43,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           if (!parsed_data.is_active) {
             throw new Error("User account is inactive");
           }
-          return {
+          const next: JWT = {
+            ...token,
             accessToken: account.access_token,
             refreshToken: account.refresh_token,
             idToken: account.id_token,
             expiresAt: (account.expires_at ?? 0) * 1000,
             user: {
               id: parsed_data.id,
+              tenantId: parsed_data.tenant_id ?? "",
               isActive: parsed_data.is_active,
             },
+            error: undefined,
           };
+          return next;
         } catch (error) {
           console.error("Backend Sync Error:", error);
           return { ...token, error: "SyncError" };
@@ -69,7 +73,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
       const now = Date.now();
       const buffer = 60 * 1000;
-      if (now > (token.expiresAt as number) - buffer) {
+      if (token.expiresAt && now > token.expiresAt - buffer) {
         return await refreshAccessToken(token);
       }
 
@@ -78,23 +82,29 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
     async session({ session, token }) {
       if (token) {
-        session.accessToken = token.accessToken as string;
-        session.user = token.user as typeof session.user;
-        session.idToken = token.idToken as string;
-        session.error = token.error as string;
+        if (token.user) {
+          session.user = {
+            ...session.user,
+            id: token.user.id,
+            tenantId: token.user.tenantId,
+            isActive: token.user.isActive,
+          };
+        }
+        session.accessToken = token.accessToken;
+        session.idToken = token.idToken;
+        session.error = token.error;
       }
       return session;
     },
   },
 });
 
-async function refreshAccessToken(token: JWT) {
+async function refreshAccessToken(token: JWT): Promise<JWT> {
   console.log("Attempting token refresh...");
   try {
     const discovery = await oidcDiscovery();
     const tokenEndpoint =
-      discovery.token_endpoint ||
-      `${oidcIssuer()}/oauth/v2/token`;
+      discovery.token_endpoint || `${oidcIssuer()}/oauth/v2/token`;
 
     const body = new URLSearchParams({
       client_id: oidcClientId(),
