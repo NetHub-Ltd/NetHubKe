@@ -7,7 +7,7 @@ import { Menu, X, ArrowRight, Zap } from "lucide-react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
-import { keycloakLogin, keycloakRegister } from "@/lib/utils/authClient";
+import { oidcLogin, oidcRegister } from "@/lib/utils/authClient";
 import { federatedLogout } from "@/lib/actions/logout";
 
 const navLinks = [
@@ -38,8 +38,8 @@ function AuthControls({ mobile = false }: { mobile?: boolean }) {
           href="/dashboard"
           className={
             mobile
-              ? "w-full bg-brand-primary text-white py-4 rounded-2xl font-bold text-center"
-              : "text-sm font-bold text-foreground hover:text-brand-primary transition-colors max-w-[12rem] truncate"
+              ? "w-full bg-primary text-white py-4 rounded-2xl font-bold text-center"
+              : "text-sm font-bold text-foreground hover:text-primary transition-colors max-w-[12rem] truncate"
           }
           title={label}
         >
@@ -71,22 +71,22 @@ function AuthControls({ mobile = false }: { mobile?: boolean }) {
     >
       <button
         type="button"
-        onClick={() => keycloakLogin("/dashboard")}
+        onClick={() => oidcLogin("/dashboard")}
         className={
           mobile
-            ? "w-full border border-border py-4 rounded-2xl font-bold text-center"
-            : "text-sm font-bold text-foreground hover:text-brand-primary px-3 py-2"
+            ? "btn-secondary w-full py-space-md"
+            : "btn-ghost px-space-sm py-space-xs"
         }
       >
         Log in
       </button>
       <button
         type="button"
-        onClick={() => keycloakRegister()}
+        onClick={() => oidcRegister()}
         className={
           mobile
-            ? "w-full bg-brand-primary text-white py-4 rounded-2xl font-bold text-center"
-            : "bg-brand-primary text-white px-5 py-2.5 rounded-2xl font-bold text-sm shadow-glow hover:opacity-95 active:scale-95 transition-all"
+            ? "btn-primary w-full py-space-md"
+            : "btn-primary px-space-md py-space-xs"
         }
       >
         Create account
@@ -118,7 +118,7 @@ const Navbar = () => {
         <Link href="/" className="group flex gap-2 items-center">
           <motion.div
             whileHover={{ rotate: 12 }}
-            className="relative w-10 h-10 flex items-center justify-center bg-brand-primary/10 rounded-xl border border-brand-primary/20"
+            className="relative w-10 h-10 flex items-center justify-center bg-primary/10 rounded-xl border border-primary/20"
           >
             <Image
               src="/logo.svg"
@@ -131,7 +131,7 @@ const Navbar = () => {
           </motion.div>
           <span className="text-2xl text-gradient font-bold tracking-tighter">
             NetHub
-            <span className="text-brand-primary group-hover:text-brand-secondary transition-colors">
+            <span className="text-primary group-hover:text-primary-hover transition-colors">
               {" "}
               Kenya
             </span>
@@ -146,15 +146,15 @@ const Navbar = () => {
                 <Link
                   key={link.name}
                   href={link.href}
-                  className={`relative font-bold tracking-widest transition-all hover:text-brand-primary ${
-                    isActive ? "text-brand-primary" : "text-foreground"
+                  className={`relative font-bold tracking-widest transition-all hover:text-primary ${
+                    isActive ? "text-primary" : "text-foreground"
                   }`}
                 >
                   {link.name}
                   {isActive && (
                     <motion.div
                       layoutId="nav-underline"
-                      className="absolute -bottom-1 left-0 w-full h-0.5 bg-brand-primary rounded-full"
+                      className="absolute -bottom-1 left-0 w-full h-0.5 bg-primary rounded-full"
                     />
                   )}
                 </Link>
@@ -197,7 +197,7 @@ const Navbar = () => {
                       onClick={() => setIsOpen(false)}
                       className={`text-4xl font-black tracking-tighter flex items-center justify-between group ${
                         pathname === link.href
-                          ? "text-brand-primary"
+                          ? "text-primary"
                           : "text-foreground"
                       }`}
                     >
@@ -212,7 +212,7 @@ const Navbar = () => {
                 <p className="text-muted text-sm font-medium flex items-center gap-2 italic">
                   <Zap
                     size={16}
-                    className="text-brand-primary fill-brand-primary"
+                    className="text-primary fill-primary"
                   />
                   Nairobi&apos;s Fintech Engineering Partner
                 </p>

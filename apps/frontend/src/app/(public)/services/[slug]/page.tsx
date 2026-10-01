@@ -87,10 +87,10 @@ export default async function ServiceDetailPage({ params }: Props) {
         />
       )}
 
-      <article className="min-h-screen pb-24 selection:bg-brand-primary/20">
+      <article className="min-h-screen pb-24 selection:bg-primary/20">
         <header className="relative py-24 md:py-32 bg-surface/30 border-b border-border overflow-hidden">
           <div className="max-w-7xl mx-auto px-6 relative z-10">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-primary/10 text-brand-primary text-[10px] font-bold uppercase tracking-[0.2em] mb-8">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-[0.2em] mb-8">
               <Zap size={14} /> Performance • Security • Scale
             </div>
             <h1 className="text-h1 mb-4 text-gradient">{service.title}</h1>
@@ -105,7 +105,7 @@ export default async function ServiceDetailPage({ params }: Props) {
             <div className="lg:col-span-2 space-y-24">
               <section>
                 <div className="flex items-center gap-4 mb-10">
-                  <div className="w-10 h-10 rounded-xl bg-brand-primary/10 flex items-center justify-center text-brand-primary">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
                     <Activity size={20} />
                   </div>
                   <h2 className="text-3xl font-bold tracking-tight">
@@ -116,12 +116,12 @@ export default async function ServiceDetailPage({ params }: Props) {
                   {service.features.map((feature, i) => (
                     <div
                       key={i}
-                      className="group p-6 rounded-2xl bg-card border border-border hover:border-brand-primary/30 transition-all duration-300"
+                      className="group p-6 rounded-2xl bg-card border border-border hover:border-primary/30 transition-all duration-300"
                     >
                       <div className="flex items-center gap-3">
                         <CheckCircle
                           size={18}
-                          className="text-brand-primary shrink-0"
+                          className="text-primary shrink-0"
                         />
                         <span className="font-bold text-foreground tracking-tight">
                           {feature}
@@ -141,7 +141,7 @@ export default async function ServiceDetailPage({ params }: Props) {
                     <li key={i} className="flex items-start gap-3">
                       <CheckCircle
                         size={18}
-                        className="text-brand-primary mt-1 shrink-0"
+                        className="text-primary mt-1 shrink-0"
                       />
                       <span className="text-muted-foreground leading-relaxed">
                         {benefit}
@@ -151,8 +151,8 @@ export default async function ServiceDetailPage({ params }: Props) {
                 </ul>
               </section>
 
-              <section className="relative p-10 rounded-[2.5rem] bg-brand-primary/2 border border-brand-primary/10 overflow-hidden">
-                <div className="absolute top-0 right-0 p-8 text-brand-primary/5">
+              <section className="relative p-10 rounded-[2.5rem] bg-primary/2 border border-primary/10 overflow-hidden">
+                <div className="absolute top-0 right-0 p-8 text-primary/5">
                   <Shield size={120} />
                 </div>
                 <h2 className="text-3xl font-bold mb-10 relative z-10">
@@ -182,7 +182,7 @@ export default async function ServiceDetailPage({ params }: Props) {
                     },
                   ].map((p) => (
                     <div key={p.step} className="flex gap-6 group">
-                      <span className="text-sm font-bold text-brand-primary opacity-40 group-hover:opacity-100 transition-opacity uppercase tracking-widest">
+                      <span className="text-sm font-bold text-primary opacity-40 group-hover:opacity-100 transition-opacity uppercase tracking-widest">
                         {p.step}
                       </span>
                       <div>
@@ -230,7 +230,7 @@ export default async function ServiceDetailPage({ params }: Props) {
                     >
                       <div className="flex justify-between items-baseline gap-4">
                         <span className="font-semibold">{tier.label}</span>
-                        <span className="font-bold text-brand-primary whitespace-nowrap">
+                        <span className="font-bold text-primary whitespace-nowrap">
                           {tier.price}
                         </span>
                       </div>
@@ -244,7 +244,7 @@ export default async function ServiceDetailPage({ params }: Props) {
                 </ul>
                 <Link
                   href="/contact"
-                  className="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl bg-brand-primary text-white font-bold hover:opacity-90 transition-opacity"
+                  className="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl bg-primary text-white font-bold hover:opacity-90 transition-opacity"
                 >
                   Start a project
                   <ArrowRight size={18} />

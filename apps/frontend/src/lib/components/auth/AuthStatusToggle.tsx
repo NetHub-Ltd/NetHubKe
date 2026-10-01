@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { keycloakLogin } from "@/lib/utils/authClient";
+import { oidcLogin } from "@/lib/utils/authClient";
 import { federatedLogout } from "@/lib/actions/logout";
 
 export function AuthButton() {
@@ -23,8 +23,8 @@ export function AuthButton() {
   ) : (
     <button
       type="button"
-      className="bg-brand-primary"
-      onClick={() => keycloakLogin("/dashboard")}
+      className="bg-primary"
+      onClick={() => oidcLogin("/dashboard")}
     >
       Login
     </button>

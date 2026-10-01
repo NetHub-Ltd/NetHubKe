@@ -55,12 +55,12 @@
 export default function PrivacyPolicy() {
   return (
     <div className="bg-background min-h-screen">
-      <article className="max-w-4xl mx-auto px-6 py-24 prose prose-slate dark:prose-invert prose-headings:tracking-tight prose-a:text-brand-primary">
+      <article className="max-w-4xl mx-auto px-6 py-24 prose prose-slate dark:prose-invert prose-headings:tracking-tight prose-a:text-primary">
         {/* Header Section */}
         <header className="not-prose mb-16 border-b border-border pb-10">
           <div className="flex items-center gap-2 mb-4">
-            <div className="h-1 w-6 bg-brand-primary" />
-            <span className="text-xs font-bold uppercase tracking-widest text-brand-primary">
+            <div className="h-1 w-6 bg-primary" />
+            <span className="text-xs font-bold uppercase tracking-widest text-primary">
               Legal Framework
             </span>
           </div>
@@ -117,7 +117,7 @@ export default function PrivacyPolicy() {
         </section>
 
         {/* Section 3: Legal Compliance */}
-        <section className="bg-brand-primary/5 p-8 rounded-3xl border border-brand-primary/10 not-prose my-12">
+        <section className="bg-primary/5 p-8 rounded-3xl border border-primary/10 not-prose my-12">
           <h2 className="text-xl font-black mb-4 flex items-center gap-2">
             Compliance with Kenyan Law
           </h2>
@@ -182,7 +182,7 @@ export default function PrivacyPolicy() {
             request the deletion of your personal data. To exercise these
             rights, please contact our Data Protection Officer at:
           </p>
-          <p className="font-bold text-brand-primary">legal@nethub.co.ke</p>
+          <p className="font-bold text-primary">legal@nethub.co.ke</p>
         </section>
       </article>
     </div>

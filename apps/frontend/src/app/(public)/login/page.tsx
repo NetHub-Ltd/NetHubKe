@@ -3,71 +3,88 @@
 import React from "react";
 import { LoginButton } from "@/lib/components/loginButton";
 import { ShieldCheck, Cpu, Zap } from "lucide-react";
-import { keycloakRegister } from "@/lib/utils/authClient";
+import { oidcRegister } from "@/lib/utils/authClient";
 import Link from "next/link";
 
-const LoginPage = () => {
+const features = [
+  {
+    icon: ShieldCheck,
+    title: "Enterprise-grade security",
+    body: "OIDC sign-in with modern token hygiene and protected product access.",
+  },
+  {
+    icon: Cpu,
+    title: "Infrastructure you can trust",
+    body: "APIs, M-Pesa flows, and apps designed for Kenyan production workloads.",
+  },
+  {
+    icon: Zap,
+    title: "Fast, reliable access",
+    body: "One account to reach your NetHub console and connected products.",
+  },
+];
+
+export default function LoginPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center p-2">
-      <div className="w-full card-layered max-w-5xl rounded-none md:rounded-3xl overflow-hidden flex flex-col md:flex-row">
-        <div className="relative md:w-2/3 p-8 md:p-12 flex flex-col justify-center">
-          <div className="relative z-10 max-w-md">
-            <h1 className="text-h3 text-gradient leading-tight mb-4">
-              <span>NetHub Kenya</span>
+    <div className="container-page flex min-h-[calc(100vh-8rem)] items-center py-space-xl">
+      <div className="card-surface mx-auto grid w-full max-w-5xl gap-space-xl p-space-lg md:grid-cols-2 md:p-space-2xl">
+        <div className="flex flex-col justify-center gap-space-lg">
+          <div>
+            <p className="font-label-sm text-primary mb-space-xs">NetHub Kenya</p>
+            <h1 className="font-headline-lg text-on-surface mb-space-sm">
+              Secure access to your infrastructure
             </h1>
-
-            <div className="hidden md:block">
-              <p className="mb-8">
-                Secure, reliable access to your infrastructure and services —
-                built with performance and trust at its core.
-              </p>
-
-              <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <ShieldCheck className="w-5 h-5 text-brand-primary" />
-                  <span className="text-sm">Enterprise-grade security</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Cpu className="w-5 h-5 text-brand-primary" />
-                  <span className="text-sm">Optimized system performance</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Zap className="w-5 h-5 text-brand-primary" />
-                  <span className="text-sm">Fast, reliable access</span>
-                </div>
-              </div>
-            </div>
+            <p className="font-body-md text-on-surface-variant">
+              Sign in to manage services, launches, and account settings — built
+              for performance and trust.
+            </p>
           </div>
+          <ul className="flex flex-col gap-space-md">
+            {features.map(({ icon: Icon, title, body }) => (
+              <li key={title} className="flex gap-space-sm">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-muted text-primary">
+                  <Icon className="h-5 w-5" aria-hidden />
+                </span>
+                <div>
+                  <p className="font-label-md text-on-surface">{title}</p>
+                  <p className="font-body-sm text-on-surface-variant">{body}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
         </div>
 
-        <div className="md:w-1/3 bg-card p-8 md:p-10 flex flex-col justify-center">
-          <h2 className="text-lg font-semibold text-center mb-2">Sign in</h2>
-          <p className="text-sm text-muted-foreground text-center mb-8">
-            Authenticate securely to continue to your account
-          </p>
-
+        <div className="flex flex-col justify-center gap-space-lg border-t border-border-subtle pt-space-lg md:border-t-0 md:border-l md:pl-space-2xl md:pt-0">
+          <div>
+            <h2 className="font-headline-sm text-on-surface mb-space-2xs">
+              Sign in
+            </h2>
+            <p className="font-body-sm text-on-surface-variant">
+              Authenticate securely to continue to your account.
+            </p>
+          </div>
           <LoginButton />
-
-          <p className="text-sm text-center mt-6 text-muted-foreground">
+          <p className="font-body-sm text-on-surface-variant">
             New here?{" "}
             <button
               type="button"
-              onClick={() => keycloakRegister()}
-              className="text-brand-primary font-semibold hover:underline"
+              onClick={() => oidcRegister()}
+              className="font-label-md text-primary hover:text-primary-hover underline-offset-2 hover:underline"
             >
               Create an account
             </button>
+            <span className="block mt-space-xs">
+              Register at our identity provider, then return here to sign in.
+            </span>
           </p>
-
-          <p className="text-xs text-muted-foreground text-center mt-4">
-            <Link href="/" className="hover:underline">
-              Back to home
-            </Link>
-          </p>
+          <Link
+            href="/"
+            className="font-label-md text-on-surface-variant hover:text-primary"
+          >
+            Back to home
+          </Link>
         </div>
       </div>
     </div>
   );
-};
-
-export default LoginPage;
+}

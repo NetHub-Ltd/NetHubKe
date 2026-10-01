@@ -6,7 +6,6 @@ import { X } from "lucide-react";
 const CookieBanner = () => {
   const [isVisible, setIsVisible] = useState(false);
 
-  // localStorage is client-only; defer setState to avoid set-state-in-effect
   useEffect(() => {
     const id = window.setTimeout(() => {
       if (!localStorage.getItem("nethub_cookie_consent")) {
@@ -24,38 +23,38 @@ const CookieBanner = () => {
   if (!isVisible) return null;
 
   return (
-    <div className="fixed bottom-6 left-6 right-6 z-[100] md:left-auto md:max-w-sm">
-      <div className="bg-card border border-border p-6 rounded-2xl shadow-2xl backdrop-blur-lg">
-        <div className="flex justify-between items-start mb-4">
-          <h4 className="font-bold text-brand-primary">Cookie Policy</h4>
+    <div className="fixed bottom-6 left-6 right-6 z-100 md:left-auto md:max-w-sm">
+      <div className="card-surface border border-border-subtle shadow-lg backdrop-blur-sm">
+        <div className="mb-space-md flex items-start justify-between gap-space-sm">
+          <h4 className="font-label-md text-primary">Cookie Policy</h4>
           <button
             type="button"
             onClick={() => setIsVisible(false)}
-            className="opacity-50 hover:opacity-100"
+            className="btn-ghost p-space-2xs text-on-surface-variant"
+            aria-label="Dismiss cookie notice"
           >
             <X size={18} />
           </button>
         </div>
-        <p className="text-sm text-foreground/70 leading-relaxed mb-6">
-          We use cookies to improve your experience and analyze our traffic. By
-          clicking &quot;Accept&quot;, you agree to our
-          <Link href="/privacy-policy" className="text-brand-primary underline ml-1">
+        <p className="font-body-sm text-on-surface-variant mb-space-lg">
+          We use cookies to improve your experience and analyze traffic. By
+          choosing Accept, you agree to our{" "}
+          <Link
+            href="/privacy-policy"
+            className="text-primary font-label-md underline-offset-2 hover:underline"
+          >
             Privacy Policy
           </Link>
           .
         </p>
-        <div className="flex gap-3">
-          <button
-            type="button"
-            onClick={acceptCookies}
-            className="flex-1 bg-brand-primary text-white py-2 rounded-xl text-sm font-bold hover:bg-brand-secondary transition-all"
-          >
+        <div className="flex gap-space-sm">
+          <button type="button" onClick={acceptCookies} className="btn-primary flex-1">
             Accept
           </button>
           <button
             type="button"
             onClick={() => setIsVisible(false)}
-            className="flex-1 border border-border py-2 rounded-xl text-sm font-bold hover:bg-background transition-all"
+            className="btn-secondary flex-1"
           >
             Decline
           </button>
