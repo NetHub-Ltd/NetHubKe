@@ -2,9 +2,8 @@ import type { MetadataRoute } from "next";
 import { services } from "@/lib/data/services";
 
 /**
- * Sitemap for public, indexable pages.
- * Service slugs are sourced from the static frontend catalogue
- * (approved data source for this PR).
+ * Sitemap for public, indexable pages only.
+ * Canonical service URLs live under /services/{slug} (not /service/).
  */
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = "https://nethub.co.ke";
@@ -34,6 +33,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified,
       changeFrequency: "monthly",
       priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/schedule`,
+      lastModified,
+      changeFrequency: "monthly",
+      priority: 0.6,
     },
     {
       url: `${baseUrl}/privacy-policy`,

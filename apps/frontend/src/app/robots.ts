@@ -1,22 +1,22 @@
 import type { MetadataRoute } from "next";
 
 /**
- * Crawl directives for search engines.
- * Public commercial and marketing pages are allowed.
- * Auth, dashboard, and API routes are disallowed.
+ * Crawl directives: public marketing allowed; auth/app/api disallowed.
  */
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
       {
         userAgent: "*",
-        allow: ["/", "/services", "/services/", "/about", "/contact", "/privacy-policy", "/terms-of-service"],
+        allow: "/",
         disallow: [
           "/dashboard",
+          "/dashboard/",
           "/settings",
           "/login",
           "/welcome",
           "/api/",
+          "/service/",
         ],
       },
     ],

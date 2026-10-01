@@ -14,7 +14,7 @@ export default function NotFound() {
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-[12rem] md:text-[18rem] font-black leading-none tracking-tighter text-brand-primary/10 select-none"
+            className="text-[12rem] md:text-[18rem] font-black leading-none tracking-tighter text-primary/10 select-none"
           >
             404
           </motion.h1>
@@ -42,7 +42,7 @@ export default function NotFound() {
 
         {/* Messaging */}
         <h2 className="text-3xl md:text-4xl font-black mb-6 tracking-tight">
-          Lost in the <span className="text-brand-primary">Source Code?</span>
+          Lost in the <span className="text-primary">Source Code?</span>
         </h2>
         <p className="text-lg text-muted-foreground mb-12 max-w-md mx-auto leading-relaxed">
           The architectural path you’re looking for doesn’t exist or has been
@@ -53,7 +53,7 @@ export default function NotFound() {
         <div className="grid sm:grid-cols-2 gap-4 max-w-md mx-auto">
           <Link
             href="/"
-            className="flex items-center justify-center gap-2 bg-foreground text-background px-8 py-4 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-brand-primary hover:text-white transition-all group"
+            className="flex items-center justify-center gap-2 bg-foreground text-background px-8 py-4 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-primary hover:text-white transition-all group"
           >
             <Home size={18} />
             Go Home
@@ -61,7 +61,7 @@ export default function NotFound() {
 
           <Link
             href="/services"
-            className="flex items-center justify-center gap-2 bg-card border border-border px-8 py-4 rounded-2xl font-black text-sm uppercase tracking-widest hover:border-brand-primary hover:text-brand-primary transition-all"
+            className="flex items-center justify-center gap-2 bg-card border border-border px-8 py-4 rounded-2xl font-black text-sm uppercase tracking-widest hover:border-primary hover:text-primary transition-all"
           >
             <Terminal size={18} />
             Our Solutions

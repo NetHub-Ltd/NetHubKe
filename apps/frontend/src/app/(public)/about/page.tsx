@@ -44,7 +44,7 @@ export default function AboutPage() {
         <div className="max-w-container-max mx-auto px-gutter-mobile lg:px-gutter-desktop relative z-10">
           {/* Breadcrumb & Telemetry Marker */}
           <div className="flex flex-wrap items-center justify-between gap-space-sm mb-space-xl">
-            <div className="inline-flex items-center gap-space-xs bg-brand-cobalt-light px-space-md py-space-2xs rounded-full">
+            <div className="inline-flex items-center gap-space-xs bg-primary-muted px-space-md py-space-2xs rounded-full">
               <span className="font-metric-mono text-metric-mono text-primary font-bold tracking-widest uppercase">
                 THE NETHUB MISSION
               </span>
@@ -211,7 +211,7 @@ export default function AboutPage() {
             {/* Pillar 1 */}
             <div className="bg-surface-canvas p-space-xl rounded-xl shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
               <div>
-                <div className="w-12 h-12 rounded-lg bg-brand-cobalt-light flex items-center justify-center text-primary-container mb-space-lg">
+                <div className="w-12 h-12 rounded-lg bg-primary-muted flex items-center justify-center text-primary-container mb-space-lg">
                   <span className="material-symbols-outlined text-[28px]">
                     account_balance_wallet
                   </span>
@@ -463,7 +463,7 @@ export default function AboutPage() {
             </div>
             <div className="relative z-10 flex flex-col sm:flex-row items-center gap-space-md shrink-0 w-full sm:w-auto">
               <Link
-                className="w-full sm:w-auto inline-flex items-center justify-center font-label-md text-label-md text-on-primary bg-primary-container hover:bg-brand-cobalt-hover px-space-xl py-space-sm rounded-lg shadow-md transition-all font-semibold"
+                className="w-full sm:w-auto inline-flex items-center justify-center font-label-md text-label-md text-on-primary bg-primary-container hover:bg-primary-hover px-space-xl py-space-sm rounded-lg shadow-md transition-all font-semibold"
                 href="/contact"
               >
                 <span>Start Consultation</span>
