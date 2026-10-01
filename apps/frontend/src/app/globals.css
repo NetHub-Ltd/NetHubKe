@@ -1,97 +1,473 @@
 @import "tailwindcss";
 
 /* =========================================================
-   1. Design Tokens & Theme Variables
+   NetHub design system — indigo primary, global tokens
+   Typography, spacing, radius, shadows, form controls.
+   Prefer these tokens over one-off values in components.
 ========================================================= */
+
 @theme {
-  --color-surface: #f9f9ff;
-  --color-surface-dim: #cfdaf2;
-  --color-surface-bright: #f9f9ff;
-  --color-surface-container-lowest: #ffffff;
-  --color-surface-container-low: #f0f3ff;
-  --color-surface-container: #e7eeff;
-  --color-surface-container-high: #dee8ff;
-  --color-surface-container-highest: #d8e3fb;
-  --color-on-surface: #111c2d;
-  --color-on-surface-variant: #444655;
-  --color-inverse-surface: #263143;
-  --color-inverse-on-surface: #ecf1ff;
-  --color-outline: #747686;
-  --color-outline-variant: #c4c5d7;
-  --color-surface-tint: #2e4edc;
-  --color-primary: #2346d5;
+  /* --- Brand: Indigo --- */
+  --color-primary: #4f46e5;
+  --color-primary-hover: #4338ca;
+  --color-primary-active: #3730a3;
   --color-on-primary: #ffffff;
-  --color-primary-container: #4361ee;
-  --color-on-primary-container: #f4f2ff;
-  --color-inverse-primary: #bac3ff;
-  --color-secondary: #565e74;
-  --color-on-secondary: #ffffff;
-  --color-secondary-container: #dae2fd;
-  --color-on-secondary-container: #5c647a;
-  --color-tertiary: #00652b;
-  --color-on-tertiary: #ffffff;
-  --color-tertiary-container: #008138;
-  --color-on-tertiary-container: #d5ffd5;
-  --color-error: #ba1a1a;
-  --color-on-error: #ffffff;
-  --color-error-container: #ffdad6;
-  --color-on-error-container: #93000a;
-  --color-primary-fixed: #dee1ff;
-  --color-primary-fixed-dim: #bac3ff;
-  --color-on-primary-fixed: #001159;
-  --color-on-primary-fixed-variant: #0031c4;
-  --color-secondary-fixed: #dae2fd;
-  --color-secondary-fixed-dim: #bec6e0;
-  --color-on-secondary-fixed: #131b2e;
-  --color-on-secondary-fixed-variant: #3f465c;
-  --color-tertiary-fixed: #6bff8f;
-  --color-tertiary-fixed-dim: #4ae176;
-  --color-on-tertiary-fixed: #002109;
-  --color-on-tertiary-fixed-variant: #005321;
-  --color-background: #f9f9ff;
-  --color-on-background: #111c2d;
-  --color-surface-variant: #d8e3fb;
+  --color-primary-container: #e0e7ff;
+  --color-on-primary-container: #312e81;
+  --color-primary-muted: #eef2ff;
+  --color-inverse-primary: #a5b4fc;
+  --color-surface-tint: #4f46e5;
+
+  /* Aliases used across components */
+  --color-brand-cobalt-hover: #4338ca;
+  --color-brand-cobalt-light: #eef2ff;
+  --color-border-focus: #4f46e5;
+  --color-metric-badge-blue-bg: #eef2ff;
+  --color-metric-badge-blue-text: #3730a3;
+
+  /* --- Neutrals / surface --- */
+  --color-background: #f8fafc;
+  --color-surface: #f8fafc;
+  --color-surface-dim: #e2e8f0;
+  --color-surface-bright: #ffffff;
   --color-surface-canvas: #ffffff;
   --color-surface-subtle: #f8fafc;
   --color-surface-muted: #f1f5f9;
-  --color-border-subtle: #e2e8f0;
-  --color-border-focus: #4361ee;
-  --color-brand-cobalt-hover: #3651d4;
-  --color-brand-cobalt-light: #eef2ff;
-  --color-slate-text-muted: #64748b;
-  --color-success-emerald: #22c55e;
-  --color-success-emerald-bg: #ecfdf5;
-  --color-metric-badge-blue-bg: #eff6ff;
-  --color-metric-badge-blue-text: #1d4ed8;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f8fafc;
+  --color-surface-container: #f1f5f9;
+  --color-surface-container-high: #e2e8f0;
+  --color-surface-container-highest: #cbd5e1;
+  --color-surface-variant: #e2e8f0;
 
-  --spacing-space-2xs: 0.25rem;
-  --spacing-space-xs: 0.5rem;
-  --spacing-space-sm: 0.75rem;
-  --spacing-space-md: 1rem;
-  --spacing-space-lg: 1.5rem;
-  --spacing-space-xl: 2rem;
-  --spacing-space-2xl: 3rem;
-  --spacing-space-3xl: 4rem;
-  --spacing-space-4xl: 6rem;
+  --color-on-surface: #0f172a;
+  --color-on-surface-variant: #475569;
+  --color-on-background: #0f172a;
+  --color-inverse-surface: #1e293b;
+  --color-inverse-on-surface: #f1f5f9;
+
+  --color-outline: #64748b;
+  --color-outline-variant: #cbd5e1;
+  --color-border-subtle: #e2e8f0;
+
+  --color-slate-text-muted: #64748b;
+
+  /* --- Secondary / tertiary / semantic --- */
+  --color-secondary: #475569;
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #e2e8f0;
+  --color-on-secondary-container: #1e293b;
+
+  --color-tertiary: #0f766e;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: #ccfbf1;
+  --color-on-tertiary-container: #134e4a;
+
+  --color-error: #dc2626;
+  --color-on-error: #ffffff;
+  --color-error-container: #fee2e2;
+  --color-on-error-container: #7f1d1d;
+
+  --color-success-emerald: #16a34a;
+  --color-success-emerald-bg: #ecfdf5;
+
+  /* Fixed (legacy MD tokens — mapped to indigo) */
+  --color-primary-fixed: #e0e7ff;
+  --color-primary-fixed-dim: #a5b4fc;
+  --color-on-primary-fixed: #1e1b4b;
+  --color-on-primary-fixed-variant: #3730a3;
+  --color-secondary-fixed: #e2e8f0;
+  --color-secondary-fixed-dim: #94a3b8;
+  --color-on-secondary-fixed: #0f172a;
+  --color-on-secondary-fixed-variant: #334155;
+  --color-tertiary-fixed: #ccfbf1;
+  --color-tertiary-fixed-dim: #5eead4;
+  --color-on-tertiary-fixed: #042f2e;
+  --color-on-tertiary-fixed-variant: #115e59;
+
+  /* --- Spacing scale (uniform) --- */
+  --spacing-space-2xs: 0.25rem; /* 4 */
+  --spacing-space-xs: 0.5rem; /* 8 */
+  --spacing-space-sm: 0.75rem; /* 12 */
+  --spacing-space-md: 1rem; /* 16 */
+  --spacing-space-lg: 1.5rem; /* 24 */
+  --spacing-space-xl: 2rem; /* 32 */
+  --spacing-space-2xl: 3rem; /* 48 */
+  --spacing-space-3xl: 4rem; /* 64 */
+  --spacing-space-4xl: 6rem; /* 96 */
   --spacing-gutter-mobile: 1rem;
   --spacing-gutter-desktop: 1.5rem;
-  --spacing-container-max: 1200px;
+  --spacing-container-max: 72rem; /* 1152px */
+
+  /* --- Radius --- */
+  --radius-sm: 0.375rem; /* 6 */
+  --radius-md: 0.5rem; /* 8 */
+  --radius-lg: 0.75rem; /* 12 */
+  --radius-xl: 1rem; /* 16 */
+  --radius-2xl: 1.25rem; /* 20 */
+  --radius-full: 9999px;
+
+  /* --- Shadows (soft indigo-tinted) --- */
+  --shadow-xs: 0 1px 2px rgb(15 23 42 / 0.05);
+  --shadow-sm: 0 1px 3px rgb(15 23 42 / 0.08), 0 1px 2px rgb(15 23 42 / 0.04);
+  --shadow-md: 0 4px 12px rgb(15 23 42 / 0.08), 0 2px 4px rgb(15 23 42 / 0.04);
+  --shadow-lg: 0 12px 32px rgb(15 23 42 / 0.1), 0 4px 8px rgb(15 23 42 / 0.05);
+  --shadow-xl: 0 20px 48px rgb(15 23 42 / 0.12), 0 8px 16px rgb(15 23 42 / 0.06);
+  --shadow-focus: 0 0 0 3px rgb(79 70 229 / 0.35);
+  --shadow-primary: 0 8px 24px rgb(79 70 229 / 0.25);
+
+  /* --- Type scale (rem; responsive via clamp where useful) --- */
+  --font-size-display-xl: clamp(2.25rem, 1.5rem + 3vw, 3.5rem);
+  --font-size-display-lg: clamp(1.875rem, 1.4rem + 2vw, 2.75rem);
+  --font-size-headline-lg: clamp(1.5rem, 1.25rem + 1vw, 2rem);
+  --font-size-headline-md: 1.5rem;
+  --font-size-headline-sm: 1.25rem;
+  --font-size-body-lg: 1.125rem;
+  --font-size-body-md: 0.9375rem; /* 15px */
+  --font-size-body-sm: 0.8125rem; /* 13px */
+  --font-size-label-md: 0.875rem;
+  --font-size-label-sm: 0.6875rem;
+
+  --line-height-display: 1.15;
+  --line-height-headline: 1.25;
+  --line-height-body: 1.6;
+  --line-height-label: 1.4;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
 }
 
 /* =========================================================
-   2. Base Layer & Icon Styling
+   2. Base layer — document + form controls
 ========================================================= */
 @layer base {
+  html {
+    font-size: 100%;
+    -webkit-text-size-adjust: 100%;
+  }
+
   body {
-    background-color: var(--color-surface, #f9f9ff);
-    color: var(--color-on-surface, #111c2d);
-    font-family: var(--font-sans), "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    font-size: 15px;
-    line-height: 24px;
-    @apply antialiased selection:bg-brand-cobalt-light selection:text-primary;
+    background-color: var(--color-surface);
+    color: var(--color-on-surface);
+    font-family: var(--font-sans), "Inter", system-ui, -apple-system, "Segoe UI",
+      Roboto, sans-serif;
+    font-size: var(--font-size-body-md);
+    line-height: var(--line-height-body);
+    font-weight: var(--font-weight-regular);
+    @apply antialiased;
+  }
+
+  ::selection {
+    background-color: var(--color-primary-muted);
+    color: var(--color-on-primary-container);
+  }
+
+  /* Focus visible — keyboard only */
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* Uniform inputs */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  textarea,
+  select {
+    font-family: inherit;
+    font-size: var(--font-size-body-md);
+    line-height: var(--line-height-body);
+    color: var(--color-on-surface);
+    background-color: var(--color-surface-container-lowest);
+    border: 1px solid var(--color-outline-variant);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-space-sm) var(--spacing-space-md);
+    box-shadow: var(--shadow-xs);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    width: 100%;
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):hover,
+  textarea:hover,
+  select:hover {
+    border-color: var(--color-outline);
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus,
+  textarea:focus,
+  select:focus {
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-focus);
+    outline: none;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-slate-text-muted);
+  }
+
+  input:disabled,
+  textarea:disabled,
+  select:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    background-color: var(--color-surface-muted);
+  }
+
+  /* Buttons baseline */
+  button,
+  [type="button"],
+  [type="submit"],
+  [type="reset"] {
+    font-family: inherit;
+    font-size: var(--font-size-label-md);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-label);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease,
+      box-shadow 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+  }
+
+  button:disabled,
+  [type="button"]:disabled,
+  [type="submit"]:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  a {
+    color: var(--color-primary);
+    text-underline-offset: 0.15em;
+  }
+
+  a:hover {
+    color: var(--color-primary-hover);
   }
 }
 
+/* =========================================================
+   3. Component primitives (global — use these class names)
+========================================================= */
+@layer components {
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-space-xs);
+    padding: var(--spacing-space-sm) var(--spacing-space-lg);
+    background-color: var(--color-primary);
+    color: var(--color-on-primary);
+    border: 1px solid transparent;
+    border-radius: var(--radius-lg);
+    font-size: var(--font-size-label-md);
+    font-weight: var(--font-weight-semibold);
+    box-shadow: var(--shadow-sm), var(--shadow-primary);
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background-color: var(--color-primary-hover);
+  }
+
+  .btn-primary:active:not(:disabled) {
+    background-color: var(--color-primary-active);
+  }
+
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-space-xs);
+    padding: var(--spacing-space-sm) var(--spacing-space-lg);
+    background-color: var(--color-surface-container-lowest);
+    color: var(--color-on-surface);
+    border: 1px solid var(--color-outline-variant);
+    border-radius: var(--radius-lg);
+    font-size: var(--font-size-label-md);
+    font-weight: var(--font-weight-semibold);
+    box-shadow: var(--shadow-xs);
+  }
+
+  .btn-secondary:hover:not(:disabled) {
+    background-color: var(--color-surface-muted);
+    border-color: var(--color-outline);
+  }
+
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-space-xs);
+    padding: var(--spacing-space-sm) var(--spacing-space-md);
+    background: transparent;
+    color: var(--color-on-surface-variant);
+    border: 1px solid transparent;
+    border-radius: var(--radius-lg);
+    font-size: var(--font-size-label-md);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .btn-ghost:hover:not(:disabled) {
+    background-color: var(--color-surface-container);
+    color: var(--color-on-surface);
+  }
+
+  .input-field {
+    /* explicit class if components avoid raw input styling */
+    font-family: inherit;
+    font-size: var(--font-size-body-md);
+    line-height: var(--line-height-body);
+    color: var(--color-on-surface);
+    background-color: var(--color-surface-container-lowest);
+    border: 1px solid var(--color-outline-variant);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-space-sm) var(--spacing-space-md);
+    box-shadow: var(--shadow-xs);
+    width: 100%;
+  }
+
+  .input-field:focus {
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-focus);
+    outline: none;
+  }
+
+  .card-surface {
+    background-color: var(--color-surface-container-lowest);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-sm);
+    padding: var(--spacing-space-lg);
+  }
+
+  .container-page {
+    width: 100%;
+    max-width: var(--spacing-container-max);
+    margin-inline: auto;
+    padding-inline: var(--spacing-gutter-mobile);
+  }
+
+  @media (min-width: 768px) {
+    .container-page {
+      padding-inline: var(--spacing-gutter-desktop);
+    }
+  }
+}
+
+/* =========================================================
+   4. Typography utilities (responsive via clamp tokens)
+========================================================= */
+.font-display-xl,
+.text-display-xl {
+  font-size: var(--font-size-display-xl);
+  line-height: var(--line-height-display);
+  letter-spacing: -0.03em;
+  font-weight: var(--font-weight-extrabold);
+}
+
+.font-display-xl-mobile,
+.text-display-xl-mobile {
+  font-size: clamp(2rem, 1.6rem + 2vw, 2.25rem);
+  line-height: var(--line-height-display);
+  letter-spacing: -0.025em;
+  font-weight: var(--font-weight-extrabold);
+}
+
+.font-display-lg,
+.text-display-lg {
+  font-size: var(--font-size-display-lg);
+  line-height: var(--line-height-display);
+  letter-spacing: -0.025em;
+  font-weight: var(--font-weight-extrabold);
+}
+
+.font-display-lg-mobile,
+.text-display-lg-mobile {
+  font-size: clamp(1.75rem, 1.4rem + 1.5vw, 1.875rem);
+  line-height: var(--line-height-headline);
+  letter-spacing: -0.02em;
+  font-weight: var(--font-weight-bold);
+}
+
+.font-headline-lg,
+.text-headline-lg {
+  font-size: var(--font-size-headline-lg);
+  line-height: var(--line-height-headline);
+  letter-spacing: -0.02em;
+  font-weight: var(--font-weight-bold);
+}
+
+.font-headline-md,
+.text-headline-md {
+  font-size: var(--font-size-headline-md);
+  line-height: var(--line-height-headline);
+  letter-spacing: -0.015em;
+  font-weight: var(--font-weight-bold);
+}
+
+.font-headline-sm,
+.text-headline-sm {
+  font-size: var(--font-size-headline-sm);
+  line-height: var(--line-height-headline);
+  letter-spacing: -0.01em;
+  font-weight: var(--font-weight-semibold);
+}
+
+.font-body-lg,
+.text-body-lg {
+  font-size: var(--font-size-body-lg);
+  line-height: var(--line-height-body);
+  font-weight: var(--font-weight-regular);
+}
+
+.font-body-md,
+.text-body-md {
+  font-size: var(--font-size-body-md);
+  line-height: var(--line-height-body);
+  font-weight: var(--font-weight-regular);
+}
+
+.font-body-sm,
+.text-body-sm {
+  font-size: var(--font-size-body-sm);
+  line-height: var(--line-height-body);
+  font-weight: var(--font-weight-regular);
+}
+
+.font-label-md,
+.text-label-md {
+  font-size: var(--font-size-label-md);
+  line-height: var(--line-height-label);
+  letter-spacing: 0.01em;
+  font-weight: var(--font-weight-semibold);
+}
+
+.font-label-sm,
+.text-label-sm {
+  font-size: var(--font-size-label-sm);
+  line-height: var(--line-height-label);
+  letter-spacing: 0.04em;
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+}
+
+.font-metric-mono,
+.text-metric-mono {
+  font-size: var(--font-size-body-sm);
+  line-height: 1.25;
+  letter-spacing: 0.02em;
+  font-weight: var(--font-weight-bold);
+  font-family: var(--font-mono), "JetBrains Mono", ui-monospace, monospace;
+}
+
+/* =========================================================
+   5. Icons + misc
+========================================================= */
 .material-symbols-outlined {
   font-family: "Material Symbols Outlined", sans-serif;
   font-weight: normal;
@@ -108,115 +484,6 @@
   font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
 }
 
-/* =========================================================
-   3. Custom Typography Utilities
-========================================================= */
-.font-display-xl,
-.text-display-xl {
-  font-size: 56px;
-  line-height: 64px;
-  letter-spacing: -0.03em;
-  font-weight: 800;
-}
-
-.font-display-xl-mobile,
-.text-display-xl-mobile {
-  font-size: 36px;
-  line-height: 44px;
-  letter-spacing: -0.025em;
-  font-weight: 800;
-}
-
-.font-display-lg,
-.text-display-lg {
-  font-size: 44px;
-  line-height: 52px;
-  letter-spacing: -0.025em;
-  font-weight: 800;
-}
-
-.font-display-lg-mobile,
-.text-display-lg-mobile {
-  font-size: 30px;
-  line-height: 38px;
-  letter-spacing: -0.02em;
-  font-weight: 700;
-}
-
-.font-headline-lg,
-.text-headline-lg {
-  font-size: 32px;
-  line-height: 40px;
-  letter-spacing: -0.02em;
-  font-weight: 700;
-}
-
-.font-headline-md,
-.text-headline-md {
-  font-size: 24px;
-  line-height: 32px;
-  letter-spacing: -0.015em;
-  font-weight: 700;
-}
-
-.font-headline-sm,
-.text-headline-sm {
-  font-size: 20px;
-  line-height: 28px;
-  letter-spacing: -0.01em;
-  font-weight: 600;
-}
-
-.font-body-lg,
-.text-body-lg {
-  font-size: 18px;
-  line-height: 28px;
-  letter-spacing: -0.005em;
-  font-weight: 400;
-}
-
-.font-body-md,
-.text-body-md {
-  font-size: 15px;
-  line-height: 24px;
-  letter-spacing: 0em;
-  font-weight: 400;
-}
-
-.font-body-sm,
-.text-body-sm {
-  font-size: 13px;
-  line-height: 20px;
-  letter-spacing: 0em;
-  font-weight: 400;
-}
-
-.font-label-md,
-.text-label-md {
-  font-size: 14px;
-  line-height: 20px;
-  letter-spacing: 0.01em;
-  font-weight: 600;
-}
-
-.font-label-sm,
-.text-label-sm {
-  font-size: 11px;
-  line-height: 16px;
-  letter-spacing: 0.04em;
-  font-weight: 700;
-}
-
-.font-metric-mono,
-.text-metric-mono {
-  font-size: 12px;
-  line-height: 16px;
-  letter-spacing: 0.02em;
-  font-weight: 700;
-  font-family: var(--font-mono), "JetBrains Mono", monospace;
-}
-
-/* Category pill active state */
 .category-pill input:checked ~ div span:first-child {
-  color: var(--color-primary, #2346d5);
+  color: var(--color-primary);
 }
