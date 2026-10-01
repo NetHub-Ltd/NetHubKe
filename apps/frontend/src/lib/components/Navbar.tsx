@@ -181,7 +181,7 @@ const Navbar = () => {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed inset-0 top-19 bg-background z-90 md:hidden border-t border-border"
+            className="fixed inset-0 top-16 bg-background z-90 md:hidden border-t border-border"
           >
             <div className="flex flex-col p-8 gap-6 h-full justify-between pb-24">
               <div className="flex flex-col gap-6">
@@ -195,7 +195,7 @@ const Navbar = () => {
                     <Link
                       href={link.href}
                       onClick={() => setIsOpen(false)}
-                      className={`text-4xl font-black tracking-tighter flex items-center justify-between group ${
+                      className={`font-headline-md tracking-tight flex items-center justify-between group ${
                         pathname === link.href
                           ? "text-primary"
                           : "text-foreground"

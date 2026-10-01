@@ -37,12 +37,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title,
     description,
-    keywords: service.seoKeywords,
     alternates: {
       canonical: `/services/${service.slug}`,
     },
     openGraph: {
-      title: `${service.title} | NetHub Kenya`,
+      title: service.title,
       description,
       url: `https://nethub.co.ke/services/${service.slug}`,
       type: "website",

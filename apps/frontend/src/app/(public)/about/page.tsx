@@ -153,7 +153,7 @@ export default function AboutPage() {
                   12+
                 </div>
                 <p className="font-label-md text-label-md text-slate-text-muted mt-space-2xs">
-                  Engineering Experts
+                  Engineering team
                 </p>
               </div>
             </div>
@@ -262,7 +262,7 @@ export default function AboutPage() {
                   Technical Search Authority
                 </h3>
                 <p className="font-body-sm text-body-sm text-slate-text-muted leading-relaxed">
-                  Beyond keywords—we engineer websites with perfect Core Web Vitals
+                  We focus on measurable performance—Core Web Vitals and reliable delivery
                   and Schema architectures to dominate Nairobi&apos;s search results.
                 </p>
               </div>
@@ -385,7 +385,7 @@ export default function AboutPage() {
               TECHNICAL DIALOGUE
             </span>
             <h2 className="font-headline-lg text-headline-lg text-on-surface font-bold tracking-tight mt-space-xs">
-              Expert Insights
+              Insights
             </h2>
             <p className="font-body-md text-body-md text-slate-text-muted mt-space-xs">
               Clear answers for technical decision-makers.
