@@ -1,9 +1,11 @@
 import type { Metadata, Viewport } from "next";
 
+const SITE = "https://nethub.co.ke";
+
 export const viewportConfig: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#020617" },
+    { media: "(prefers-color-scheme: light)", color: "#4f46e5" },
+    { media: "(prefers-color-scheme: dark)", color: "#312e81" },
   ],
   width: "device-width",
   initialScale: 1,
@@ -11,23 +13,23 @@ export const viewportConfig: Viewport = {
 
 /**
  * Root metadata baseline for NetHub Kenya.
- * Page-level generateMetadata overrides title/description/canonical as needed.
+ * Page-level metadata overrides title/description/canonical as needed.
  */
 export const metadataConfig: Metadata = {
-  metadataBase: new URL("https://nethub.co.ke"),
+  metadataBase: new URL(SITE),
   title: {
-    default: "NetHub | Software & Web Development Agency in Kenya",
+    default: "NetHub Kenya | Digital infrastructure, M-Pesa & apps",
     template: "%s | NetHub Kenya",
   },
   description:
-    "NetHub builds high-performance apps and M-Pesa integrations. Expert web design and SEO solutions for Kenyan businesses. Get a quote today.",
+    "NetHub builds and operates digital infrastructure for Kenyan businesses — M-Pesa integrations, APIs, and modern web applications. Based in Nairobi.",
   keywords: [
-    "M-Pesa API integration services Kenya",
-    "Custom software development Nairobi",
-    "Lipa Na M-Pesa STK Push setup",
-    "Affordable web design packages Kenya",
-    "Hire mobile app developers Nairobi",
-    "Fintech developers in Kenya",
+    "NetHub Kenya",
+    "M-Pesa API integration Kenya",
+    "STK Push integration",
+    "custom software Nairobi",
+    "digital infrastructure Kenya",
+    "web applications Kenya",
   ],
   alternates: {
     canonical: "/",
@@ -35,14 +37,17 @@ export const metadataConfig: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_KE",
-    url: "https://nethub.co.ke",
+    url: SITE,
     siteName: "NetHub Kenya",
+    title: "NetHub Kenya | Digital infrastructure, M-Pesa & apps",
+    description:
+      "M-Pesa integrations, APIs, and modern web applications for Kenyan businesses.",
     images: [
       {
         url: "/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "NetHub - M-Pesa Integrations & Software Development",
+        alt: "NetHub Kenya — digital infrastructure and M-Pesa integrations",
       },
     ],
   },
@@ -50,6 +55,9 @@ export const metadataConfig: Metadata = {
     card: "summary_large_image",
     site: "@nethub_ke",
     creator: "@nethub_ke",
+    title: "NetHub Kenya | Digital infrastructure, M-Pesa & apps",
+    description:
+      "M-Pesa integrations, APIs, and modern web applications for Kenyan businesses.",
   },
   robots: {
     index: true,
@@ -65,16 +73,16 @@ export const metadataConfig: Metadata = {
 };
 
 /**
- * Organization / professional service schema for the agency.
- * No placeholder aggregate ratings — only real, visible claims.
+ * Organization schema — only claims we can stand behind (no fake ratings).
  */
 export const jsonLd = {
   "@context": "https://schema.org",
-  "@type": "ProfessionalService",
+  "@type": "Organization",
   name: "NetHub Kenya",
-  image: "https://nethub.co.ke/og-image.jpg",
+  url: SITE,
+  image: `${SITE}/og-image.jpg`,
   description:
-    "Specialists in M-Pesa API Integration and Custom Software Development in Nairobi, Kenya.",
+    "Digital infrastructure, M-Pesa API integration, and web applications for businesses in Kenya.",
   address: {
     "@type": "PostalAddress",
     addressLocality: "Nairobi",
@@ -84,6 +92,5 @@ export const jsonLd = {
     "@type": "Country",
     name: "Kenya",
   },
-  url: "https://nethub.co.ke",
-  priceRange: "$$",
+  sameAs: ["https://x.com/nethub_ke"],
 };

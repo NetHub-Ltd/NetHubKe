@@ -13,7 +13,7 @@ export default function Homepage() {
         <div className="max-w-container-max mx-auto px-gutter-mobile lg:px-gutter-desktop relative z-10">
           {/* Telemetry Header */}
           <div className="flex flex-wrap items-center justify-between gap-space-sm mb-space-xl">
-            <div className="inline-flex items-center gap-space-xs bg-brand-cobalt-light px-space-md py-space-2xs rounded-full">
+            <div className="inline-flex items-center gap-space-xs bg-primary-muted px-space-md py-space-2xs rounded-full">
               <span className="font-metric-mono text-metric-mono text-primary font-bold tracking-widest uppercase">
                 ENTERPRISE SOFTWARE &amp; FINTECH AUTHORITY
               </span>
@@ -46,7 +46,7 @@ export default function Homepage() {
               <div className="flex flex-col sm:flex-row items-center gap-space-md pt-space-md">
                 <Link
                   href="/services"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-space-xs font-label-md text-label-md text-on-primary bg-primary-container hover:bg-brand-cobalt-hover px-space-xl py-space-sm rounded-lg shadow-md transition-all font-semibold"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-space-xs font-label-md text-label-md text-on-primary bg-primary-container hover:bg-primary-hover px-space-xl py-space-sm rounded-lg shadow-md transition-all font-semibold"
                 >
                   <span>Explore Engineering Services</span>
                   <span className="material-symbols-outlined text-[18px]">
@@ -192,12 +192,12 @@ export default function Homepage() {
             {/* Card 1 */}
             <div className="bg-surface-canvas p-space-xl rounded-xl shadow-sm border border-border-subtle flex flex-col justify-between hover:shadow-md transition-shadow">
               <div>
-                <div className="w-12 h-12 rounded-lg bg-brand-cobalt-light text-primary flex items-center justify-center mb-space-md">
+                <div className="w-12 h-12 rounded-lg bg-primary-muted text-primary flex items-center justify-center mb-space-md">
                   <span className="material-symbols-outlined text-[28px]">
                     account_balance_wallet
                   </span>
                 </div>
-                <span className="font-metric-mono text-metric-mono text-primary bg-brand-cobalt-light px-space-xs py-space-2xs rounded-full font-bold uppercase">
+                <span className="font-metric-mono text-metric-mono text-primary bg-primary-muted px-space-xs py-space-2xs rounded-full font-bold uppercase">
                   FINTECH
                 </span>
                 <h3 className="font-headline-md text-headline-md text-on-surface font-bold mt-space-sm mb-space-xs">
@@ -227,7 +227,7 @@ export default function Homepage() {
                     web
                   </span>
                 </div>
-                <span className="font-metric-mono text-metric-mono text-primary bg-brand-cobalt-light px-space-xs py-space-2xs rounded-full font-bold uppercase">
+                <span className="font-metric-mono text-metric-mono text-primary bg-primary-muted px-space-xs py-space-2xs rounded-full font-bold uppercase">
                   CLOUD SYSTEMS
                 </span>
                 <h3 className="font-headline-md text-headline-md text-on-surface font-bold mt-space-sm mb-space-xs">
@@ -301,7 +301,7 @@ export default function Homepage() {
             </div>
             <div className="relative z-10 flex flex-col sm:flex-row items-center gap-space-md shrink-0 w-full sm:w-auto">
               <Link
-                className="w-full sm:w-auto inline-flex items-center justify-center font-label-md text-label-md text-on-primary bg-primary-container hover:bg-brand-cobalt-hover px-space-xl py-space-sm rounded-lg shadow-md transition-all font-semibold"
+                className="w-full sm:w-auto inline-flex items-center justify-center font-label-md text-label-md text-on-primary bg-primary-container hover:bg-primary-hover px-space-xl py-space-sm rounded-lg shadow-md transition-all font-semibold"
                 href="/contact"
               >
                 <span>Start Consultation</span>

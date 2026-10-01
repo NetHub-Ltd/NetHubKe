@@ -51,7 +51,7 @@ export default function ContactPage() {
         <div className="max-w-container-max mx-auto px-gutter-mobile lg:px-gutter-desktop relative z-10">
           {/* Breadcrumb & SLA Marker */}
           <div className="flex flex-wrap items-center justify-between gap-space-sm mb-space-xl">
-            <div className="inline-flex items-center gap-space-xs bg-brand-cobalt-light px-space-md py-space-2xs rounded-full">
+            <div className="inline-flex items-center gap-space-xs bg-primary-muted px-space-md py-space-2xs rounded-full">
               <span className="font-metric-mono text-metric-mono text-primary font-bold tracking-widest uppercase">
                 PROJECT INTAKE &amp; TECHNICAL DISCOVERY
               </span>
@@ -95,7 +95,7 @@ export default function ContactPage() {
 
                 <div className="flex flex-col gap-space-md">
                   <div className="flex items-start gap-space-sm">
-                    <div className="w-10 h-10 rounded-lg bg-brand-cobalt-light text-primary flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-lg bg-primary-muted text-primary flex items-center justify-center shrink-0">
                       <span className="material-symbols-outlined text-[20px]">
                         location_on
                       </span>
@@ -111,7 +111,7 @@ export default function ContactPage() {
                   </div>
 
                   <div className="flex items-start gap-space-sm">
-                    <div className="w-10 h-10 rounded-lg bg-brand-cobalt-light text-primary flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-lg bg-primary-muted text-primary flex items-center justify-center shrink-0">
                       <span className="material-symbols-outlined text-[20px]">
                         call
                       </span>
@@ -127,7 +127,7 @@ export default function ContactPage() {
                   </div>
 
                   <div className="flex items-start gap-space-sm">
-                    <div className="w-10 h-10 rounded-lg bg-brand-cobalt-light text-primary flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-lg bg-primary-muted text-primary flex items-center justify-center shrink-0">
                       <span className="material-symbols-outlined text-[20px]">
                         mail
                       </span>
@@ -182,7 +182,7 @@ export default function ContactPage() {
               </div>
 
               {/* Direct Booking Callout Card */}
-              <div className="bg-brand-cobalt-light p-space-xl rounded-xl border border-primary/20 flex flex-col gap-space-sm">
+              <div className="bg-primary-muted p-space-xl rounded-xl border border-primary/20 flex flex-col gap-space-sm">
                 <span className="font-headline-sm text-headline-sm text-primary font-bold">
                   Need an Immediate Call?
                 </span>
@@ -418,7 +418,7 @@ export default function ContactPage() {
                     <button
                       type="submit"
                       disabled={isSubmitting || !agreeTerms}
-                      className="w-full inline-flex items-center justify-center gap-space-xs font-label-md text-label-md text-on-primary bg-primary-container hover:bg-brand-cobalt-hover py-space-md rounded-lg shadow-md transition-all font-bold disabled:opacity-50"
+                      className="w-full inline-flex items-center justify-center gap-space-xs font-label-md text-label-md text-on-primary bg-primary-container hover:bg-primary-hover py-space-md rounded-lg shadow-md transition-all font-bold disabled:opacity-50"
                     >
                       {isSubmitting ? (
                         <>

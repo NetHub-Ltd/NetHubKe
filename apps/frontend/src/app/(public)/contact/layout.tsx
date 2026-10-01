@@ -1,16 +1,14 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Contact NetHub — Request a Technical Discovery",
+  title: "Contact",
   description:
-    "Talk to NetHub engineers about M-Pesa integration, custom app development, or SEO for your Kenyan business. Response within business hours.",
-  alternates: {
-    canonical: "/contact",
-  },
+    "Contact NetHub Kenya about M-Pesa integration, APIs, or custom applications. We respond within business hours.",
+  alternates: { canonical: "/contact" },
   openGraph: {
     title: "Contact NetHub Kenya",
     description:
-      "Request a technical discovery call for M-Pesa, apps, or SEO projects.",
+      "Request a conversation about M-Pesa, APIs, or application projects.",
     url: "https://nethub.co.ke/contact",
   },
 };

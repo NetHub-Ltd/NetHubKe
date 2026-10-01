@@ -48,7 +48,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className="bg-surface font-body-md text-body-md text-on-surface antialiased min-h-screen flex flex-col selection:bg-brand-cobalt-light selection:text-primary">
+      <body className="bg-surface font-body-md text-body-md text-on-surface antialiased min-h-screen flex flex-col selection:bg-primary-muted selection:text-primary">
         {/* Skip to Content Link for A11y (WCAG 2.4.1) */}
         <a
           href="#main-content"

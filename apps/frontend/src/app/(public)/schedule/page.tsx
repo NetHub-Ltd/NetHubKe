@@ -56,7 +56,7 @@ export default function SchedulePage() {
       <section className="relative w-full bg-surface-canvas overflow-hidden pt-space-3xl pb-space-3xl border-b border-border-subtle">
         <div className="max-w-container-max mx-auto px-gutter-mobile lg:px-gutter-desktop">
           <div className="flex flex-wrap items-center justify-between gap-space-sm mb-space-xl">
-            <div className="inline-flex items-center gap-space-xs bg-brand-cobalt-light px-space-md py-space-2xs rounded-full">
+            <div className="inline-flex items-center gap-space-xs bg-primary-muted px-space-md py-space-2xs rounded-full">
               <span className="font-metric-mono text-metric-mono text-primary font-bold tracking-widest uppercase">
                 DIRECT ARCHITECTURAL CONSULTATION
               </span>
@@ -126,7 +126,7 @@ export default function SchedulePage() {
               <div className="flex justify-center gap-space-md">
                 <Link
                   href="/"
-                  className="font-label-md text-label-md text-on-primary bg-primary-container hover:bg-brand-cobalt-hover px-space-lg py-space-xs rounded-lg shadow-sm font-semibold"
+                  className="font-label-md text-label-md text-on-primary bg-primary-container hover:bg-primary-hover px-space-lg py-space-xs rounded-lg shadow-sm font-semibold"
                 >
                   Return to Home
                 </Link>
@@ -158,7 +158,7 @@ export default function SchedulePage() {
                         onClick={() => setSelectedTopic(t.id)}
                         className={`p-space-md rounded-lg border cursor-pointer transition-all ${
                           selectedTopic === t.id
-                            ? "border-primary bg-brand-cobalt-light"
+                            ? "border-primary bg-primary-muted"
                             : "border-border-subtle bg-surface hover:border-primary/40"
                         }`}
                       >
@@ -302,7 +302,7 @@ export default function SchedulePage() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full inline-flex items-center justify-center gap-space-xs font-label-md text-label-md text-on-primary bg-primary-container hover:bg-brand-cobalt-hover py-space-md rounded-lg shadow-md transition-all font-bold disabled:opacity-50 mt-space-xs"
+                    className="w-full inline-flex items-center justify-center gap-space-xs font-label-md text-label-md text-on-primary bg-primary-container hover:bg-primary-hover py-space-md rounded-lg shadow-md transition-all font-bold disabled:opacity-50 mt-space-xs"
                   >
                     {loading ? (
                       <>

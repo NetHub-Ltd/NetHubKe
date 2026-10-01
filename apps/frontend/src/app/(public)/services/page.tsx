@@ -47,9 +47,9 @@ export default function ServicesPage() {
     <div className="min-h-screen flex flex-col">
       <section className="border-b border-border bg-card/30">
         <div className="max-w-7xl mx-auto py-16 md:py-28 px-6 text-left">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-primary/10 border border-brand-primary/20 mb-6">
-            <Cog size={14} className="text-brand-primary" />
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-brand-primary">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 mb-6">
+            <Cog size={14} className="text-primary" />
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
               Engineering Excellence
             </span>
           </div>
@@ -94,7 +94,7 @@ export default function ServicesPage() {
           </p>
           <Link
             href="/contact"
-            className="inline-flex items-center gap-2 font-bold text-brand-primary hover:underline"
+            className="inline-flex items-center gap-2 font-bold text-primary hover:underline"
           >
             Request a technical discovery
           </Link>

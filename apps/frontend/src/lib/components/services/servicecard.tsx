@@ -74,20 +74,20 @@ export const ServiceCard = ({
   return (
     <Link
       href={`/services/${service.slug}`}
-      className="group w-full relative flex flex-col justify-between border border-border p-6 md:p-8 rounded-3xl hover:border-brand-primary/50 transition-all duration-500 hover:shadow-[0_20px_50px_rgba(0,0,0,0.1)] bg-card"
+      className="group w-full relative flex flex-col justify-between border border-border p-6 md:p-8 rounded-3xl hover:border-primary/50 transition-all duration-500 hover:shadow-[0_20px_50px_rgba(0,0,0,0.1)] bg-card"
       aria-labelledby={`title-${service.slug}`}
     >
       <div>
         {/* Header: Icon & Social Proof Badge */}
         <div className="flex items-center justify-between mb-10">
-          <div className="w-14 h-14 bg-brand-primary/5 rounded-2xl flex items-center justify-center text-brand-primary group-hover:bg-brand-primary group-hover:text-white transition-all duration-500 transform group-hover:rotate-3">
+          <div className="w-14 h-14 bg-primary/5 rounded-2xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all duration-500 transform group-hover:rotate-3">
             {iconMap[service.icon as string] || <Code className="w-6 h-6" />}
           </div>
 
           {/* Social Proof Capsule */}
           <div className="text-right">
             <div className="flex items-center justify-end gap-1.5 mb-1">
-              <span className="text-brand-primary">{proof.icon}</span>
+              <span className="text-primary">{proof.icon}</span>
               <span className="text-xs font-bold tracking-tight text-foreground uppercase">
                 {proof.label}
               </span>
@@ -101,7 +101,7 @@ export const ServiceCard = ({
         {/* Content Section */}
         <h3
           id={`title-${service.slug}`}
-          className="text-2xl font-bold mb-4 tracking-tight group-hover:text-brand-primary transition-colors duration-300"
+          className="text-2xl font-bold mb-4 tracking-tight group-hover:text-primary transition-colors duration-300"
         >
           {service.title}
         </h3>
@@ -120,7 +120,7 @@ export const ServiceCard = ({
               <div className="mt-1 shrink-0">
                 <CheckCircle2
                   size={16}
-                  className="text-brand-primary/60 group-hover:text-brand-primary transition-colors"
+                  className="text-primary/60 group-hover:text-primary transition-colors"
                 />
               </div>
               <span className="leading-tight">{feature}</span>
@@ -131,10 +131,10 @@ export const ServiceCard = ({
 
       {/* Conversion Action Footer */}
       <div className="flex items-center justify-between pt-6 border-t border-border/40">
-        <span className="text-[11px] font-bold uppercase tracking-widest text-foreground group-hover:text-brand-primary transition-colors">
+        <span className="text-[11px] font-bold uppercase tracking-widest text-foreground group-hover:text-primary transition-colors">
           View Solution Details
         </span>
-        <div className="w-10 h-10 rounded-full bg-brand-primary/5 flex items-center justify-center group-hover:bg-brand-primary group-hover:text-white transition-all duration-300">
+        <div className="w-10 h-10 rounded-full bg-primary/5 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all duration-300">
           <ArrowRight
             size={18}
             className="group-hover:translate-x-1 transition-transform duration-300"
