@@ -32,14 +32,16 @@ class Settings(BaseSettings):
     FASTAPI_DB_HOST: str
     FASTAPI_DB_PORT: int = 5432
 
-    # AUTHENTIK_CLIENT_ID: str
-    # authentik_jwkrs: str
-    keycloak_jwks: str
-    keycloak_issuer_url: str
+    # OIDC IdP (IdP-agnostic). Prefer OIDC_*; KEYCLOAK_* remain env aliases.
+    # Set via OIDC_ISSUER / OIDC_JWKS_URL or KEYCLOAK_ISSUER_URL / KEYCLOAK_JWKS.
+    oidc_issuer: str | None = None
+    oidc_jwks_url: str | None = None
+    keycloak_jwks: str | None = None
+    keycloak_issuer_url: str | None = None
 
-    # JWT audience expected in access tokens (Keycloak client / API audience).
-    # Override with env AUDIENCE. Must match tokens issued for this resource server.
-    audience: str = "nethub-backend"
+    # JWT audience expected in access tokens (API resource / client audience).
+    # Override with env AUDIENCE. Default nethub-api for Zitadel API app.
+    audience: str = "nethub-api"
     algorithms: list[str] = ["RS256"]
     jwks_cache_ttl: int = 3600  # seconds; PyJWKClient lifespan uses its own cache
     allowed_origins: str
@@ -58,8 +60,32 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379/0"
     jwks_redis_ttl_sec: int = 120
 
+    # Managed signing keys: backend generates RSA; rotate when active key age exceeds max.
+    # Env PEM is opt-in only (TAWALA_JWT_ALLOW_ENV_PEM=true) — avoid PEM-in-env in k3s.
+    signing_key_max_age_hours: int = 168  # 7 days
+    signing_key_retire_overlap_hours: int = 24  # dual JWKS window after rotate
+    tawala_jwt_allow_env_pem: bool = False
 
 
+
+
+
+    @property
+    def idp_issuer(self) -> str:
+        """Resolved OIDC issuer URL (OIDC_ISSUER or KEYCLOAK_ISSUER_URL)."""
+        v = (self.oidc_issuer or self.keycloak_issuer_url or "").strip()
+        if not v:
+            raise ValueError("OIDC_ISSUER or KEYCLOAK_ISSUER_URL must be set")
+        return v.rstrip("/")
+
+    @property
+    def idp_jwks_url(self) -> str:
+        """Resolved JWKS URL (OIDC_JWKS_URL or KEYCLOAK_JWKS or issuer + /oauth/v2/keys)."""
+        v = (self.oidc_jwks_url or self.keycloak_jwks or "").strip()
+        if v:
+            return v
+        # Zitadel default; Keycloak would be /protocol/openid-connect/certs — prefer explicit env
+        return f"{self.idp_issuer}/oauth/v2/keys"
 
     @property
     def async_db_url(self) -> str:

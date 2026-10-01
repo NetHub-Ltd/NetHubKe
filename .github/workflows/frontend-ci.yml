@@ -1,4 +1,4 @@
-name: Frontend CI (lint + build)
+name: Frontend CI
 
 on:
   push:
@@ -8,6 +8,8 @@ on:
       - main
     paths:
       - "apps/frontend/**"
+      - "package.json"
+      - "package-lock.json"
       - ".github/workflows/frontend-ci.yml"
   pull_request:
     branches:
@@ -16,6 +18,8 @@ on:
       - main
     paths:
       - "apps/frontend/**"
+      - "package.json"
+      - "package-lock.json"
       - ".github/workflows/frontend-ci.yml"
   workflow_dispatch:
 
@@ -27,11 +31,10 @@ permissions:
   contents: read
 
 jobs:
-  lint-and-build:
-    name: Lint & Build
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -46,16 +49,30 @@ jobs:
       - name: Install dependencies
         run: |
           set -euo pipefail
-          echo "Working directory: $(pwd)"
-          ls -la package.json package-lock.json 2>&1 || true
-          # Use npm install (not npm ci): root package.json declares workspaces
-          # but there is no root lockfile; npm ci inside apps/frontend fails with
-          # EUSAGE under Node 24 / npm 11 even when package-lock.json exists.
-          echo "Using npm install"
           npm install
 
       - name: Lint
         run: npm run lint
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: apps/frontend/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          set -euo pipefail
+          npm install
 
       - name: Build
         env:
@@ -63,8 +80,11 @@ jobs:
           NEXTAUTH_URL: http://localhost:3000
           NEXTAUTH_SECRET: ci-build-placeholder-not-a-real-secret
           AUTH_SECRET: ci-build-placeholder-not-a-real-secret
+          OIDC_ISSUER: https://example.com
+          OIDC_CLIENT_ID: ci-client
+          OIDC_CLIENT_SECRET: ci-secret
           KEYCLOAK_CLIENT_ID: ci-client
           KEYCLOAK_CLIENT_SECRET: ci-secret
-          KEYCLOAK_ISSUER: https://example.com/realms/ci
+          KEYCLOAK_ISSUER: https://example.com
           BACKEND_URL: http://127.0.0.1:8000/api/v1
         run: npm run build

@@ -46,3 +46,23 @@ async def redis_delete(*keys: str) -> None:
 
 JWKS_CACHE_KEY = "nethub:as:jwks"
 ACTIVE_KID_CACHE_KEY = "nethub:as:signing:active_kid"
+
+
+async def ensure_redis_ready(timeout_sec: float = 5.0) -> None:
+    """
+    Hard readiness check: Redis must answer PING.
+
+    Raises RuntimeError if Redis is unreachable or not ready.
+    Connection alone is not enough — we require a successful PING.
+    """
+    import asyncio
+
+    client = get_redis()
+    try:
+        pong = await asyncio.wait_for(client.ping(), timeout=timeout_sec)
+        if not pong:
+            raise RuntimeError("Redis PING returned falsy")
+        logger.info("Redis readiness verified (PING ok)")
+    except Exception as exc:  # noqa: BLE001
+        logger.critical(f"Redis not ready: {exc}")
+        raise RuntimeError(f"Redis unavailable or not ready: {exc}") from exc

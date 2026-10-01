@@ -11,6 +11,7 @@ import base64
 import json
 import time
 import uuid
+from datetime import datetime, timedelta, timezone
 from typing import Any, Optional, Tuple
 from uuid import UUID
 
@@ -56,12 +57,32 @@ def public_jwk_from_private(private_key, kid: str) -> dict[str, Any]:
 
 
 def _load_env_private_key():
+    """
+    Load optional env PEM for emergency/dev bootstrap.
+
+    Returns None if unset, empty, or **not a valid PEM** (never raises).
+    Misconfigured secrets (hex tokens, JWT strings, etc.) must not 500 JWKS.
+    """
+    # Env PEM disabled by default — keys are generated and stored in Postgres.
+    if not bool(getattr(settings, "tawala_jwt_allow_env_pem", False)):
+        return None
     pem = (getattr(settings, "tawala_jwt_private_key", None) or "").strip()
     if not pem:
         return None
     pem = pem.replace("\\n", "\n")
-    return serialization.load_pem_private_key(pem.encode("utf-8"), password=None)
-
+    # Quick reject of clearly non-PEM material (common misconfig: hex secret / password)
+    if "BEGIN" not in pem.upper():
+        logger.warning(
+            "TAWALA_JWT_PRIVATE_KEY is set but is not PEM (missing BEGIN); ignoring env key"
+        )
+        return None
+    try:
+        return serialization.load_pem_private_key(pem.encode("utf-8"), password=None)
+    except Exception as exp:  # noqa: BLE001
+        logger.warning(
+            f"TAWALA_JWT_PRIVATE_KEY is set but failed to parse as PEM; ignoring env key: {exp}"
+        )
+        return None
 
 def _generate_rsa_keypair():
     key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
@@ -77,6 +98,143 @@ def _generate_rsa_keypair():
 
 async def invalidate_jwks_cache() -> None:
     await redis_delete(JWKS_CACHE_KEY, ACTIVE_KID_CACHE_KEY)
+
+
+async def rotate_signing_key(
+    db: AsyncSession,
+    *,
+    retire_after_hours: int = 24,
+) -> dict[str, Any]:
+    """
+    N5: Create a new active signing key; mark previous active key(s) as retiring.
+
+    JWKS continues to publish active + retiring until retire_after, then keys
+    should be marked retired (see prune_expired_retiring_keys).
+    Redis JWKS / active-kid caches are purged immediately.
+    """
+    hours = max(1, int(retire_after_hours))
+    retire_at = datetime.now(timezone.utc) + timedelta(hours=hours)
+
+    active_rows = list(
+        await db.exec(
+            select(SigningKey).where(
+                SigningKey.status == "active",
+                SigningKey.deleted_at.is_(None),
+            )
+        )
+    )
+    for row in active_rows:
+        row.status = "retiring"
+        row.retire_after = retire_at
+        db.add(row)
+
+    kid, pem, jwk, _ = _generate_rsa_keypair()
+    new_row = SigningKey(
+        kid=kid,
+        status="active",
+        algorithm="RS256",
+        private_pem=pem,
+        public_jwk=jwk,
+    )
+    db.add(new_row)
+    await db.commit()
+    await db.refresh(new_row)
+    await invalidate_jwks_cache()
+    logger.info(
+        f"Rotated signing key new_kid={kid} retiring={[r.kid for r in active_rows]} retire_after={retire_at.isoformat()}"
+    )
+    return {
+        "new_kid": kid,
+        "retiring_kids": [r.kid for r in active_rows],
+        "retire_after": retire_at.isoformat(),
+    }
+
+
+async def prune_expired_retiring_keys(db: AsyncSession) -> int:
+    """Mark retiring keys past retire_after as retired; purge JWKS cache if any changed."""
+    now = datetime.now(timezone.utc)
+    rows = list(
+        await db.exec(
+            select(SigningKey).where(
+                SigningKey.status == "retiring",
+                SigningKey.deleted_at.is_(None),
+            )
+        )
+    )
+    changed = 0
+    for row in rows:
+        if row.retire_after is not None and row.retire_after <= now:
+            row.status = "retired"
+            db.add(row)
+            changed += 1
+    if changed:
+        await db.commit()
+        await invalidate_jwks_cache()
+        logger.info(f"Pruned {changed} retiring signing keys to retired")
+    return changed
+
+
+
+async def ensure_fresh_signing_key(db: AsyncSession) -> None:
+    """
+    Auto-rotate when the active key is older than SIGNING_KEY_MAX_AGE_HOURS (default 7d).
+
+    Called from JWKS and mint paths so rotation happens without a separate cron.
+    Also prunes retiring keys past retire_after.
+    """
+    await prune_expired_retiring_keys(db)
+    max_age_h = int(getattr(settings, "signing_key_max_age_hours", 168) or 168)
+    overlap_h = int(getattr(settings, "signing_key_retire_overlap_hours", 24) or 24)
+    if max_age_h <= 0:
+        return
+
+    result = await db.exec(
+        select(SigningKey).where(
+            SigningKey.status == "active",
+            SigningKey.deleted_at.is_(None),
+        )
+    )
+    first_fn = getattr(result, "first", None)
+    row = first_fn() if callable(first_fn) else None
+    # SQLAlchemy/SQLModel result is sync; AsyncMock tests may yield a coroutine
+    if hasattr(row, "__await__"):
+        row = await row  # type: ignore[misc]
+    if row is None:
+        return  # bootstrap happens on mint when exchange enabled
+
+    created = getattr(row, "created_at", None)
+    if created is not None and getattr(created, "tzinfo", "missing") is None:
+        created = created.replace(tzinfo=timezone.utc)
+    if not isinstance(created, datetime):
+        return
+    age = datetime.now(timezone.utc) - created
+    if age >= timedelta(hours=max_age_h):
+        logger.info(
+            f"Active signing key kid={getattr(row, 'kid', '?')} age={age} >= max_age={max_age_h}h; rotating"
+        )
+        await rotate_signing_key(db, retire_after_hours=overlap_h)
+
+
+
+async def ensure_signing_keys_ready(db: AsyncSession) -> SigningKey:
+    """
+    Ensure at least one active signing key exists (backend-generated).
+
+    Not gated on exchange flag — JWKS must publish keys so product apps can
+    configure trust before the first exchange. Generates RSA in Postgres if empty.
+    """
+    await ensure_fresh_signing_key(db)
+    row = (
+        await db.exec(
+            select(SigningKey).where(
+                SigningKey.status == "active",
+                SigningKey.deleted_at.is_(None),
+            )
+        )
+    ).first()
+    if row is not None:
+        return row
+    return await bootstrap_signing_key(db)
 
 
 async def bootstrap_signing_key(db: AsyncSession) -> SigningKey:
@@ -107,19 +265,16 @@ async def bootstrap_signing_key(db: AsyncSession) -> SigningKey:
 async def get_active_signing_key(db: AsyncSession) -> Tuple[Any, str]:
     """
     Return (private_key object, kid) for minting.
+    Auto-rotates when active key exceeds SIGNING_KEY_MAX_AGE_HOURS.
     """
+    await ensure_fresh_signing_key(db)
     stmt = select(SigningKey).where(
         SigningKey.status == "active",
         SigningKey.deleted_at.is_(None),
     )
     row = (await db.exec(stmt)).first()
     if row is None:
-        if not exchange_enabled():
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Tawala token exchange is not enabled",
-            )
-        row = await bootstrap_signing_key(db)
+        row = await ensure_signing_keys_ready(db)
 
     private_key = serialization.load_pem_private_key(
         row.private_pem.encode("utf-8"), password=None
@@ -129,7 +284,8 @@ async def get_active_signing_key(db: AsyncSession) -> Tuple[Any, str]:
 
 
 async def build_jwks_document(db: AsyncSession) -> dict[str, Any]:
-    """JWKS for active + retiring keys (not retired)."""
+    """JWKS for active + retiring keys (not retired). Auto-rotates by max age."""
+    await ensure_fresh_signing_key(db)
     cached = await redis_get(JWKS_CACHE_KEY)
     if cached:
         try:
@@ -143,12 +299,26 @@ async def build_jwks_document(db: AsyncSession) -> dict[str, Any]:
     )
     rows = list(await db.exec(stmt))
     keys = []
+    now = datetime.now(timezone.utc)
     for row in rows:
+        if row.status == "retiring" and row.retire_after is not None and row.retire_after <= now:
+            continue  # treat as retired for JWKS until prune job runs
         jwk = row.public_jwk or {}
         if jwk:
             keys.append(jwk)
 
-    # Fallback: env-only until first bootstrap
+    # Backend bootstrap: never leave JWKS empty if we can generate a key
+    if not keys:
+        await ensure_signing_keys_ready(db)
+        rows = list(await db.exec(stmt))
+        for row in rows:
+            if row.status == "retiring" and row.retire_after is not None and row.retire_after <= now:
+                continue
+            jwk = row.public_jwk or {}
+            if jwk:
+                keys.append(jwk)
+
+    # Opt-in env PEM only (TAWALA_JWT_ALLOW_ENV_PEM=true)
     if not keys:
         env_key = _load_env_private_key()
         if env_key is not None:
@@ -176,10 +346,89 @@ async def mint_tawala_access_token(
     principal: str,
     email: Optional[str] = None,
 ) -> tuple[str, int]:
+    """Backward-compatible Tawala mint; delegates to product mint."""
+    return await mint_product_access_token(
+        db,
+        product_slug="tawala",
+        audience=getattr(settings, "tawala_jwt_audience", "tawala-api") or "tawala-api",
+        sub=sub,
+        org_id=org_id,
+        principal=principal,
+        email=email,
+    )
+
+
+async def get_product_by_slug(db: AsyncSession, slug: str):
+    """Load active product by slug or raise 404/400."""
+    from app.db.models.models import Product
+    from sqlmodel import select
+
+    normalized = (slug or "").strip().lower()
+    if not normalized:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="product is required",
+        )
+    row = (
+        await db.exec(
+            select(Product).where(
+                Product.slug == normalized,
+                Product.deleted_at.is_(None),  # type: ignore[union-attr]
+            )
+        )
+    ).first()
+    if not row:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Unknown product: {normalized}",
+        )
+    if not row.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Product is not active: {normalized}",
+        )
+    return row
+
+
+async def ensure_tawala_product(db: AsyncSession):
+    """Idempotent seed of tawala product from settings (dev convenience)."""
+    from app.db.models.models import Product
+    from sqlmodel import select
+
+    existing = (
+        await db.exec(select(Product).where(Product.slug == "tawala"))
+    ).first()
+    if existing:
+        return existing
+    row = Product(
+        slug="tawala",
+        name="Tawala",
+        audience=getattr(settings, "tawala_jwt_audience", "tawala-api") or "tawala-api",
+        is_active=True,
+        claim_profile="tawala",
+        notes="Hard-session exchange; org_id + principal owner|terminal",
+    )
+    db.add(row)
+    await db.commit()
+    await db.refresh(row)
+    return row
+
+
+async def mint_product_access_token(
+    db: AsyncSession,
+    *,
+    product_slug: str,
+    audience: str,
+    sub: str,
+    org_id: UUID,
+    principal: str,
+    email: Optional[str] = None,
+) -> tuple[str, int]:
+    """Mint RS256 product access token using managed signing key."""
     if not exchange_enabled():
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Tawala token exchange is not enabled",
+            detail="Token exchange is not enabled",
         )
     if principal not in ("owner", "terminal"):
         raise HTTPException(
@@ -195,8 +444,9 @@ async def mint_tawala_access_token(
         "sub": str(sub),
         "org_id": str(org_id),
         "principal": principal,
+        "product": product_slug,
         "iss": settings.tawala_jwt_issuer,
-        "aud": settings.tawala_jwt_audience,
+        "aud": audience,
         "iat": now,
         "exp": exp,
     }
@@ -210,3 +460,4 @@ async def mint_tawala_access_token(
         headers={"kid": kid},
     )
     return token, exp
+

@@ -1,5 +1,4 @@
 # Repository State
-- PR target: **dev**
-- Branch: feat/readme-badges-codecov
-- Default branch for badges: **master**
-- Backend CI includes Codecov upload (needs CODECOV_TOKEN secret)
+- Branch: feat/n8-billing-read
+- Milestone: N8 (#54)
+- PR target: dev
