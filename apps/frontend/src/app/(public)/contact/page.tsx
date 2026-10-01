@@ -69,7 +69,7 @@ export default function ContactPage() {
           <div className="max-w-3xl flex flex-col gap-space-md">
             <h1 className="font-display-xl text-display-xl text-on-surface tracking-tight font-extrabold">
               Let&apos;s Architect Your <br className="hidden sm:inline" />
-              <span className="text-primary-container">Next Digital Foundation.</span>
+              <span className="text-primary">Next Digital Foundation.</span>
             </h1>
             <p className="font-body-lg text-body-lg text-slate-text-muted leading-relaxed">
               Whether you require high-throughput Daraja 3.0 M-Pesa gateways,
@@ -262,7 +262,7 @@ export default function ContactPage() {
                             onClick={() => toggleObjective(objective)}
                             className={`font-label-md text-label-md px-space-md py-space-xs rounded-lg transition-all border ${
                               isSelected
-                                ? "bg-primary-container text-on-primary border-primary-container font-semibold shadow-xs"
+                                ? "bg-primary text-on-primary border-primary font-semibold shadow-xs"
                                 : "bg-surface text-on-surface-variant border-border-subtle hover:border-primary/40"
                             }`}
                           >
@@ -418,7 +418,7 @@ export default function ContactPage() {
                     <button
                       type="submit"
                       disabled={isSubmitting || !agreeTerms}
-                      className="w-full inline-flex items-center justify-center gap-space-xs font-label-md text-label-md text-on-primary bg-primary-container hover:bg-primary-hover py-space-md rounded-lg shadow-md transition-all font-bold disabled:opacity-50"
+                      className="w-full inline-flex items-center justify-center gap-space-xs font-label-md text-label-md btn-primary py-space-md rounded-lg shadow-md transition-all font-bold disabled:opacity-50"
                     >
                       {isSubmitting ? (
                         <>

@@ -33,7 +33,7 @@ export default function Homepage() {
             <div className="lg:col-span-8 flex flex-col gap-space-md">
               <h1 className="font-display-xl text-display-xl text-on-surface tracking-tight font-extrabold">
                 Engineering Scalable Systems for{" "}
-                <span className="text-primary-container">African Market Leaders.</span>
+                <span className="text-primary">African Market Leaders.</span>
               </h1>
               <p className="font-body-lg text-body-lg text-slate-text-muted max-w-2xl leading-relaxed">
                 We build the technical foundations of East Africa&apos;s digital economy:
@@ -46,7 +46,7 @@ export default function Homepage() {
               <div className="flex flex-col sm:flex-row items-center gap-space-md pt-space-md">
                 <Link
                   href="/services"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-space-xs font-label-md text-label-md text-on-primary bg-primary-container hover:bg-primary-hover px-space-xl py-space-sm rounded-lg shadow-md transition-all font-semibold"
+                  className="btn-primary w-full sm:w-auto px-space-xl py-space-sm"
                 >
                   <span>Explore Engineering Services</span>
                   <span className="material-symbols-outlined text-[18px]">
@@ -301,7 +301,7 @@ export default function Homepage() {
             </div>
             <div className="relative z-10 flex flex-col sm:flex-row items-center gap-space-md shrink-0 w-full sm:w-auto">
               <Link
-                className="w-full sm:w-auto inline-flex items-center justify-center font-label-md text-label-md text-on-primary bg-primary-container hover:bg-primary-hover px-space-xl py-space-sm rounded-lg shadow-md transition-all font-semibold"
+                className="btn-primary w-full sm:w-auto px-space-xl py-space-sm"
                 href="/contact"
               >
                 <span>Start Consultation</span>
