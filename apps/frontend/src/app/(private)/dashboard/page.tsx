@@ -1,7 +1,7 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { useSession } from "next-auth/react";
 import {
   RefreshCcw,
   AlertCircle,
@@ -10,6 +10,8 @@ import {
   User,
   ArrowRight,
   Shield,
+  Copy,
+  Check,
 } from "lucide-react";
 import { useUser } from "@/lib/hooks/useauth";
 import { federatedLogout } from "@/lib/actions/logout";
@@ -32,7 +34,19 @@ function Field({ label, value }: { label: string; value?: string | null }) {
  * Shows IdP (Zitadel) identity + app user from /users/sync.
  */
 export default function DashboardHomePage() {
-  const { user, status: authStatus, idp } = useUser();
+  const { user, status: authStatus, idp, accessToken, idToken } = useUser();
+  const [copied, setCopied] = useState<"access" | "id" | null>(null);
+
+  async function copyToken(kind: "access" | "id", value?: string) {
+    if (!value) return;
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(kind);
+      window.setTimeout(() => setCopied(null), 2000);
+    } catch {
+      // ignore clipboard failures (insecure context)
+    }
+  }
 
   if (authStatus === "loading") {
     return (
@@ -137,6 +151,58 @@ export default function DashboardHomePage() {
               value={user?.is_active ? "Active" : "Inactive"}
             />
           </dl>
+
+          {(accessToken || idToken) && (
+            <div className="mt-space-lg border-t border-outline-variant/40 pt-space-md">
+              <p className="font-label-sm text-on-surface-variant">
+                Session tokens (for debugging — do not share)
+              </p>
+              <div className="mt-space-sm flex flex-wrap gap-space-sm">
+                {accessToken && (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => copyToken("access", accessToken)}
+                    aria-label="Copy access token"
+                  >
+                    {copied === "access" ? (
+                      <Check className="h-4 w-4" aria-hidden />
+                    ) : (
+                      <Copy className="h-4 w-4" aria-hidden />
+                    )}
+                    {copied === "access" ? "Access token copied" : "Copy access token"}
+                  </Button>
+                )}
+                {idToken && (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => copyToken("id", idToken)}
+                    aria-label="Copy ID token"
+                  >
+                    {copied === "id" ? (
+                      <Check className="h-4 w-4" aria-hidden />
+                    ) : (
+                      <Copy className="h-4 w-4" aria-hidden />
+                    )}
+                    {copied === "id" ? "ID token copied" : "Copy ID token"}
+                  </Button>
+                )}
+              </div>
+              <p className="font-body-sm mt-space-xs text-on-surface-variant">
+                Paste into{" "}
+                <a
+                  href="https://jwt.io"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary underline-offset-2 hover:underline"
+                >
+                  jwt.io
+                </a>{" "}
+                to inspect claims (iss, aud, email, sub).
+              </p>
+            </div>
+          )}
         </section>
 
         <section
