@@ -22,7 +22,7 @@ export default function AppChrome({ children }: { children: React.ReactNode }) {
       <Navbar />
       <main
         id="main-content"
-        className="grow outline-none pt-16"
+        className="grow outline-none"
         tabIndex={-1}
       >
         {children}
