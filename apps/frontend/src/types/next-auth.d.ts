@@ -18,11 +18,10 @@ declare module "next-auth" {
       email?: string | null;
       name?: string | null;
       username?: string | null;
-    } & DefaultSession["user"];
+    } & Omit<DefaultSession["user"], "email" | "name">;
     accessToken?: string;
     idToken?: string;
     error?: string;
-    /** Raw-ish IdP identity captured at sign-in */
     idp?: IdpProfile;
   }
 }

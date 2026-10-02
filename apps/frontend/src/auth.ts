@@ -118,9 +118,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             id: token.user.id,
             tenantId: token.user.tenantId,
             isActive: token.user.isActive,
-            email: token.user.email,
-            name: token.user.name,
-            username: token.user.username,
+            email: token.user.email ?? session.user?.email ?? null,
+            name: token.user.name ?? session.user?.name ?? null,
+            username: token.user.username ?? null,
           };
         }
         session.accessToken = token.accessToken;
