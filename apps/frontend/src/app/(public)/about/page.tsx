@@ -64,7 +64,7 @@ export default function AboutPage() {
             <div className="lg:col-span-8 flex flex-col gap-space-md">
               <h1 className="font-display-xl text-display-xl text-on-surface tracking-tight font-extrabold">
                 Engineering the Future of <br className="hidden sm:inline" />
-                <span className="text-primary-container">Kenyan Digital Commerce.</span>
+                <span className="text-primary">Kenyan Digital Commerce.</span>
               </h1>
               <p className="font-body-lg text-body-lg text-slate-text-muted max-w-2xl leading-relaxed">
                 NetHub was established to solve the &quot;Fragility Gap&quot; in East
@@ -153,7 +153,7 @@ export default function AboutPage() {
                   12+
                 </div>
                 <p className="font-label-md text-label-md text-slate-text-muted mt-space-2xs">
-                  Engineering Experts
+                  Engineering team
                 </p>
               </div>
             </div>
@@ -211,7 +211,7 @@ export default function AboutPage() {
             {/* Pillar 1 */}
             <div className="bg-surface-canvas p-space-xl rounded-xl shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
               <div>
-                <div className="w-12 h-12 rounded-lg bg-primary-muted flex items-center justify-center text-primary-container mb-space-lg">
+                <div className="w-12 h-12 rounded-lg bg-primary-muted flex items-center justify-center text-primary mb-space-lg">
                   <span className="material-symbols-outlined text-[28px]">
                     account_balance_wallet
                   </span>
@@ -253,7 +253,7 @@ export default function AboutPage() {
             {/* Pillar 3 */}
             <div className="bg-surface-canvas p-space-xl rounded-xl shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
               <div>
-                <div className="w-12 h-12 rounded-lg bg-surface-container flex items-center justify-center text-primary-container mb-space-lg">
+                <div className="w-12 h-12 rounded-lg bg-surface-container flex items-center justify-center text-primary mb-space-lg">
                   <span className="material-symbols-outlined text-[28px]">
                     search_insights
                   </span>
@@ -262,7 +262,7 @@ export default function AboutPage() {
                   Technical Search Authority
                 </h3>
                 <p className="font-body-sm text-body-sm text-slate-text-muted leading-relaxed">
-                  Beyond keywords—we engineer websites with perfect Core Web Vitals
+                  We focus on measurable performance—Core Web Vitals and reliable delivery
                   and Schema architectures to dominate Nairobi&apos;s search results.
                 </p>
               </div>
@@ -385,7 +385,7 @@ export default function AboutPage() {
               TECHNICAL DIALOGUE
             </span>
             <h2 className="font-headline-lg text-headline-lg text-on-surface font-bold tracking-tight mt-space-xs">
-              Expert Insights
+              Insights
             </h2>
             <p className="font-body-md text-body-md text-slate-text-muted mt-space-xs">
               Clear answers for technical decision-makers.
@@ -442,7 +442,7 @@ export default function AboutPage() {
                 viewBox="0 0 1000 400"
               >
                 <path
-                  className="text-primary-container"
+                  className="text-primary"
                   d="M0,200 C300,300 700,100 1000,200 L1000,400 L0,400 Z"
                   fill="currentColor"
                 />
@@ -463,7 +463,7 @@ export default function AboutPage() {
             </div>
             <div className="relative z-10 flex flex-col sm:flex-row items-center gap-space-md shrink-0 w-full sm:w-auto">
               <Link
-                className="w-full sm:w-auto inline-flex items-center justify-center font-label-md text-label-md text-on-primary bg-primary-container hover:bg-primary-hover px-space-xl py-space-sm rounded-lg shadow-md transition-all font-semibold"
+                className="btn-primary w-full sm:w-auto px-space-xl py-space-sm"
                 href="/contact"
               >
                 <span>Start Consultation</span>

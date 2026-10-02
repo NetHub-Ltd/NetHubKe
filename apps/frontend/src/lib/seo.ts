@@ -23,14 +23,6 @@ export const metadataConfig: Metadata = {
   },
   description:
     "NetHub builds and operates digital infrastructure for Kenyan businesses — M-Pesa integrations, APIs, and modern web applications. Based in Nairobi.",
-  keywords: [
-    "NetHub Kenya",
-    "M-Pesa API integration Kenya",
-    "STK Push integration",
-    "custom software Nairobi",
-    "digital infrastructure Kenya",
-    "web applications Kenya",
-  ],
   alternates: {
     canonical: "/",
   },

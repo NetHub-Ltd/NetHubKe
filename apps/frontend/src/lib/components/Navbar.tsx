@@ -110,8 +110,8 @@ const Navbar = () => {
     <nav
       className={`sticky top-0 z-100 transition-all duration-500 ${
         scrolled
-          ? "bg-background/80 backdrop-blur-xl py-3 border-b border-border shadow-lg"
-          : "bg-background shadow-sm py-5 border-b border-transparent"
+          ? "bg-surface-canvas/90 backdrop-blur-xl py-3 border-b border-border shadow-lg"
+          : "bg-surface-canvas/80 backdrop-blur-md py-5 border-b border-border-subtle"
       }`}
     >
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
@@ -126,10 +126,10 @@ const Navbar = () => {
               width={40}
               height={40}
               priority
-              className="shrink-0 text-gradient"
+              className="shrink-0 text-primary"
             />
           </motion.div>
-          <span className="text-2xl text-gradient font-bold tracking-tighter">
+          <span className="text-2xl text-primary font-bold tracking-tighter">
             NetHub
             <span className="text-primary group-hover:text-primary-hover transition-colors">
               {" "}
@@ -181,7 +181,7 @@ const Navbar = () => {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed inset-0 top-19 bg-background z-90 md:hidden border-t border-border"
+            className="fixed inset-0 top-16 z-90 border-t border-border-subtle bg-surface-canvas md:hidden"
           >
             <div className="flex flex-col p-8 gap-6 h-full justify-between pb-24">
               <div className="flex flex-col gap-6">
@@ -195,7 +195,7 @@ const Navbar = () => {
                     <Link
                       href={link.href}
                       onClick={() => setIsOpen(false)}
-                      className={`text-4xl font-black tracking-tighter flex items-center justify-between group ${
+                      className={`font-headline-md tracking-tight flex items-center justify-between group ${
                         pathname === link.href
                           ? "text-primary"
                           : "text-foreground"

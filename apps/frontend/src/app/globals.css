@@ -1,62 +1,60 @@
 @import "tailwindcss";
 
 /* =========================================================
-   NetHub design system — indigo primary, global tokens
-   Typography, spacing, radius, shadows, form controls.
-   Prefer these tokens over one-off values in components.
+   NetHub design system
+   - Page: soft indigo→slate gradient canvas
+   - Cards/sections: milky cream surfaces + subtle elevation
+   - Primary: solid indigo (not washed container tints on CTAs)
 ========================================================= */
 
 @theme {
-  /* --- Brand: Indigo --- */
+  /* Brand indigo — solid */
   --color-primary: #4f46e5;
   --color-primary-hover: #4338ca;
   --color-primary-active: #3730a3;
   --color-on-primary: #ffffff;
   --color-primary-container: #e0e7ff;
-  --color-on-primary-container: #312e81;
+  --color-on-primary-container: #1e1b4b;
   --color-primary-muted: #eef2ff;
-  --color-inverse-primary: #a5b4fc;
+  --color-inverse-primary: #c7d2fe;
   --color-surface-tint: #4f46e5;
-
-  /* Aliases used across components */
   --color-brand-cobalt-hover: #4338ca;
   --color-brand-cobalt-light: #eef2ff;
   --color-border-focus: #4f46e5;
   --color-metric-badge-blue-bg: #eef2ff;
   --color-metric-badge-blue-text: #3730a3;
 
-  /* --- Neutrals / surface --- */
-  --color-background: #f8fafc;
-  --color-surface: #f8fafc;
-  --color-surface-dim: #e2e8f0;
-  --color-surface-bright: #ffffff;
-  --color-surface-canvas: #ffffff;
-  --color-surface-subtle: #f8fafc;
-  --color-surface-muted: #f1f5f9;
-  --color-surface-container-lowest: #ffffff;
-  --color-surface-container-low: #f8fafc;
-  --color-surface-container: #f1f5f9;
-  --color-surface-container-high: #e2e8f0;
-  --color-surface-container-highest: #cbd5e1;
-  --color-surface-variant: #e2e8f0;
-
+  /* Canvas (behind cards) — cool wash */
+  --color-background: #eef2ff;
+  --color-surface: #eef2ff;
+  --color-surface-dim: #e0e7ff;
+  --color-surface-bright: #f8fafc;
+  --color-on-background: #0f172a;
   --color-on-surface: #0f172a;
   --color-on-surface-variant: #475569;
-  --color-on-background: #0f172a;
   --color-inverse-surface: #1e293b;
-  --color-inverse-on-surface: #f1f5f9;
+  --color-inverse-on-surface: #f8fafc;
+
+  /* Milky / creamy card & section fill */
+  --color-surface-canvas: #fffcf8;
+  --color-surface-subtle: #faf8f5;
+  --color-surface-muted: #f5f3ef;
+  --color-surface-container-lowest: #fffcf8;
+  --color-surface-container-low: #faf8f5;
+  --color-surface-container: #f5f3ef;
+  --color-surface-container-high: #efece7;
+  --color-surface-container-highest: #e8e4de;
+  --color-surface-variant: #efece7;
 
   --color-outline: #64748b;
-  --color-outline-variant: #cbd5e1;
-  --color-border-subtle: #e2e8f0;
-
+  --color-outline-variant: #d6d3d1;
+  --color-border-subtle: #e7e5e4;
   --color-slate-text-muted: #64748b;
 
-  /* --- Secondary / tertiary / semantic --- */
-  --color-secondary: #475569;
+  --color-secondary: #57534e;
   --color-on-secondary: #ffffff;
-  --color-secondary-container: #e2e8f0;
-  --color-on-secondary-container: #1e293b;
+  --color-secondary-container: #f5f5f4;
+  --color-on-secondary-container: #1c1917;
 
   --color-tertiary: #0f766e;
   --color-on-tertiary: #ffffff;
@@ -67,72 +65,65 @@
   --color-on-error: #ffffff;
   --color-error-container: #fee2e2;
   --color-on-error-container: #7f1d1d;
-
   --color-success-emerald: #16a34a;
   --color-success-emerald-bg: #ecfdf5;
 
-  /* Fixed (legacy MD tokens — mapped to indigo) */
   --color-primary-fixed: #e0e7ff;
   --color-primary-fixed-dim: #a5b4fc;
   --color-on-primary-fixed: #1e1b4b;
   --color-on-primary-fixed-variant: #3730a3;
-  --color-secondary-fixed: #e2e8f0;
-  --color-secondary-fixed-dim: #94a3b8;
-  --color-on-secondary-fixed: #0f172a;
-  --color-on-secondary-fixed-variant: #334155;
+  --color-secondary-fixed: #f5f5f4;
+  --color-secondary-fixed-dim: #a8a29e;
+  --color-on-secondary-fixed: #1c1917;
+  --color-on-secondary-fixed-variant: #44403c;
   --color-tertiary-fixed: #ccfbf1;
   --color-tertiary-fixed-dim: #5eead4;
   --color-on-tertiary-fixed: #042f2e;
   --color-on-tertiary-fixed-variant: #115e59;
 
-  /* --- Spacing scale (uniform) --- */
-  --spacing-space-2xs: 0.25rem; /* 4 */
-  --spacing-space-xs: 0.5rem; /* 8 */
-  --spacing-space-sm: 0.75rem; /* 12 */
-  --spacing-space-md: 1rem; /* 16 */
-  --spacing-space-lg: 1.5rem; /* 24 */
-  --spacing-space-xl: 2rem; /* 32 */
-  --spacing-space-2xl: 3rem; /* 48 */
-  --spacing-space-3xl: 4rem; /* 64 */
-  --spacing-space-4xl: 6rem; /* 96 */
+  --spacing-space-2xs: 0.25rem;
+  --spacing-space-xs: 0.5rem;
+  --spacing-space-sm: 0.75rem;
+  --spacing-space-md: 1rem;
+  --spacing-space-lg: 1.5rem;
+  --spacing-space-xl: 2rem;
+  --spacing-space-2xl: 3rem;
+  --spacing-space-3xl: 4rem;
+  --spacing-space-4xl: 6rem;
   --spacing-gutter-mobile: 1rem;
   --spacing-gutter-desktop: 1.5rem;
-  --spacing-container-max: 72rem; /* 1152px */
+  --spacing-container-max: 72rem;
 
-  /* --- Radius --- */
-  --radius-sm: 0.375rem; /* 6 */
-  --radius-md: 0.5rem; /* 8 */
-  --radius-lg: 0.75rem; /* 12 */
-  --radius-xl: 1rem; /* 16 */
-  --radius-2xl: 1.25rem; /* 20 */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
   --radius-full: 9999px;
 
-  /* --- Shadows (soft indigo-tinted) --- */
-  --shadow-xs: 0 1px 2px rgb(15 23 42 / 0.05);
-  --shadow-sm: 0 1px 3px rgb(15 23 42 / 0.08), 0 1px 2px rgb(15 23 42 / 0.04);
-  --shadow-md: 0 4px 12px rgb(15 23 42 / 0.08), 0 2px 4px rgb(15 23 42 / 0.04);
-  --shadow-lg: 0 12px 32px rgb(15 23 42 / 0.1), 0 4px 8px rgb(15 23 42 / 0.05);
-  --shadow-xl: 0 20px 48px rgb(15 23 42 / 0.12), 0 8px 16px rgb(15 23 42 / 0.06);
+  --shadow-xs: 0 1px 2px rgb(28 25 23 / 0.04);
+  --shadow-sm: 0 1px 3px rgb(28 25 23 / 0.06), 0 1px 2px rgb(28 25 23 / 0.04);
+  --shadow-md: 0 4px 16px rgb(28 25 23 / 0.07), 0 2px 4px rgb(28 25 23 / 0.04);
+  --shadow-lg: 0 12px 32px rgb(28 25 23 / 0.09), 0 4px 8px rgb(28 25 23 / 0.04);
+  --shadow-xl: 0 20px 48px rgb(28 25 23 / 0.1), 0 8px 16px rgb(28 25 23 / 0.05);
   --shadow-focus: 0 0 0 3px rgb(79 70 229 / 0.35);
-  --shadow-primary: 0 8px 24px rgb(79 70 229 / 0.25);
+  --shadow-primary: 0 8px 20px rgb(79 70 229 / 0.28);
+  --shadow-card: 0 2px 8px rgb(28 25 23 / 0.04), 0 8px 24px rgb(49 46 129 / 0.06);
 
-  /* --- Type scale (rem; responsive via clamp where useful) --- */
   --font-size-display-xl: clamp(2.25rem, 1.5rem + 3vw, 3.5rem);
   --font-size-display-lg: clamp(1.875rem, 1.4rem + 2vw, 2.75rem);
   --font-size-headline-lg: clamp(1.5rem, 1.25rem + 1vw, 2rem);
   --font-size-headline-md: 1.5rem;
   --font-size-headline-sm: 1.25rem;
   --font-size-body-lg: 1.125rem;
-  --font-size-body-md: 0.9375rem; /* 15px */
-  --font-size-body-sm: 0.8125rem; /* 13px */
+  --font-size-body-md: 0.9375rem;
+  --font-size-body-sm: 0.8125rem;
   --font-size-label-md: 0.875rem;
   --font-size-label-sm: 0.6875rem;
-
   --line-height-display: 1.15;
   --line-height-headline: 1.25;
   --line-height-body: 1.6;
   --line-height-label: 1.4;
-
   --font-weight-regular: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
@@ -140,9 +131,6 @@
   --font-weight-extrabold: 800;
 }
 
-/* =========================================================
-   2. Base layer — document + form controls
-========================================================= */
 @layer base {
   html {
     font-size: 100%;
@@ -150,7 +138,16 @@
   }
 
   body {
-    background-color: var(--color-surface);
+    /* Soft indigo → cream page gradient */
+    background-color: var(--color-background);
+    background-image: linear-gradient(
+      165deg,
+      #e0e7ff 0%,
+      #eef2ff 28%,
+      #f5f3ef 62%,
+      #faf8f5 100%
+    );
+    background-attachment: fixed;
     color: var(--color-on-surface);
     font-family: var(--font-sans), "Inter", system-ui, -apple-system, "Segoe UI",
       Roboto, sans-serif;
@@ -165,7 +162,6 @@
     color: var(--color-on-primary-container);
   }
 
-  /* Focus visible — keyboard only */
   :focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
@@ -175,7 +171,6 @@
     outline: none;
   }
 
-  /* Uniform inputs */
   input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
   textarea,
   select {
@@ -183,7 +178,7 @@
     font-size: var(--font-size-body-md);
     line-height: var(--line-height-body);
     color: var(--color-on-surface);
-    background-color: var(--color-surface-container-lowest);
+    background-color: var(--color-surface-canvas);
     border: 1px solid var(--color-outline-variant);
     border-radius: var(--radius-lg);
     padding: var(--spacing-space-sm) var(--spacing-space-md);
@@ -219,7 +214,6 @@
     background-color: var(--color-surface-muted);
   }
 
-  /* Buttons baseline */
   button,
   [type="button"],
   [type="submit"],
@@ -251,9 +245,6 @@
   }
 }
 
-/* =========================================================
-   3. Component primitives (global — use these class names)
-========================================================= */
 @layer components {
   .btn-primary {
     display: inline-flex;
@@ -284,7 +275,7 @@
     justify-content: center;
     gap: var(--spacing-space-xs);
     padding: var(--spacing-space-sm) var(--spacing-space-lg);
-    background-color: var(--color-surface-container-lowest);
+    background-color: var(--color-surface-canvas);
     color: var(--color-on-surface);
     border: 1px solid var(--color-outline-variant);
     border-radius: var(--radius-lg);
@@ -313,36 +304,23 @@
   }
 
   .btn-ghost:hover:not(:disabled) {
-    background-color: var(--color-surface-container);
+    background-color: rgb(255 252 248 / 0.7);
     color: var(--color-on-surface);
-  }
-
-  .input-field {
-    /* explicit class if components avoid raw input styling */
-    font-family: inherit;
-    font-size: var(--font-size-body-md);
-    line-height: var(--line-height-body);
-    color: var(--color-on-surface);
-    background-color: var(--color-surface-container-lowest);
-    border: 1px solid var(--color-outline-variant);
-    border-radius: var(--radius-lg);
-    padding: var(--spacing-space-sm) var(--spacing-space-md);
-    box-shadow: var(--shadow-xs);
-    width: 100%;
-  }
-
-  .input-field:focus {
-    border-color: var(--color-primary);
-    box-shadow: var(--shadow-focus);
-    outline: none;
   }
 
   .card-surface {
-    background-color: var(--color-surface-container-lowest);
+    background-color: var(--color-surface-canvas);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-xl);
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow-card);
     padding: var(--spacing-space-lg);
+  }
+
+  .section-surface {
+    background-color: var(--color-surface-canvas);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-2xl);
+    box-shadow: var(--shadow-card);
   }
 
   .container-page {
@@ -357,11 +335,27 @@
       padding-inline: var(--spacing-gutter-desktop);
     }
   }
+
+  /* Accent line in titles — solid indigo, not washed */
+  .text-gradient {
+    color: var(--color-primary);
+    background-image: linear-gradient(
+      120deg,
+      #4f46e5 0%,
+      #6366f1 45%,
+      #3730a3 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* Prefer solid primary when gradient fill fails accessibility */
+  .text-accent {
+    color: var(--color-primary);
+  }
 }
 
-/* =========================================================
-   4. Typography utilities (responsive via clamp tokens)
-========================================================= */
 .font-display-xl,
 .text-display-xl {
   font-size: var(--font-size-display-xl);
@@ -465,9 +459,6 @@
   font-family: var(--font-mono), "JetBrains Mono", ui-monospace, monospace;
 }
 
-/* =========================================================
-   5. Icons + misc
-========================================================= */
 .material-symbols-outlined {
   font-family: "Material Symbols Outlined", sans-serif;
   font-weight: normal;

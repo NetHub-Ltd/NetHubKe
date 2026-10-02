@@ -6,16 +6,16 @@ import { services } from "@/lib/data/services";
 import type { ServiceIcon } from "@/lib/types/api";
 
 export const metadata: Metadata = {
-  title: "Services — M-Pesa, Apps & SEO for Kenyan Businesses",
+  title: "Services",
   description:
-    "Explore NetHub services: M-Pesa Daraja API integration, custom app development, and SEO for Kenyan businesses. Clear pricing and delivery focused on results.",
+    "M-Pesa integrations, application development, and technical SEO from NetHub Kenya.",
   alternates: {
     canonical: "/services",
   },
   openGraph: {
-    title: "NetHub Services | M-Pesa, Apps & SEO Kenya",
+    title: "Services",
     description:
-      "M-Pesa API integration, custom mobile & web apps, and SEO for Kenyan businesses.",
+      "M-Pesa integrations, application development, and technical SEO from NetHub Kenya.",
     url: "https://nethub.co.ke/services",
   },
 };

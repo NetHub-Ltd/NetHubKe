@@ -74,7 +74,7 @@ export default function SchedulePage() {
           <div className="max-w-3xl flex flex-col gap-space-md">
             <h1 className="font-display-xl text-display-xl text-on-surface tracking-tight font-extrabold">
               Book an Enterprise <br className="hidden sm:inline" />
-              <span className="text-primary-container">Architecture Review.</span>
+              <span className="text-primary">Architecture Review.</span>
             </h1>
             <p className="font-body-lg text-body-lg text-slate-text-muted leading-relaxed">
               Meet directly with our Lead Systems Architect in Westlands, Nairobi
@@ -126,7 +126,7 @@ export default function SchedulePage() {
               <div className="flex justify-center gap-space-md">
                 <Link
                   href="/"
-                  className="font-label-md text-label-md text-on-primary bg-primary-container hover:bg-primary-hover px-space-lg py-space-xs rounded-lg shadow-sm font-semibold"
+                  className="font-label-md text-label-md btn-primary px-space-lg py-space-xs rounded-lg shadow-sm font-semibold"
                 >
                   Return to Home
                 </Link>
@@ -302,7 +302,7 @@ export default function SchedulePage() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full inline-flex items-center justify-center gap-space-xs font-label-md text-label-md text-on-primary bg-primary-container hover:bg-primary-hover py-space-md rounded-lg shadow-md transition-all font-bold disabled:opacity-50 mt-space-xs"
+                    className="w-full inline-flex items-center justify-center gap-space-xs font-label-md text-label-md btn-primary py-space-md rounded-lg shadow-md transition-all font-bold disabled:opacity-50 mt-space-xs"
                   >
                     {loading ? (
                       <>
