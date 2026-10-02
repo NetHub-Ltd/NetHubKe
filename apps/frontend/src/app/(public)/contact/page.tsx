@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { Button, Input, Textarea } from "@/lib/components/ui";
 
 export default function ContactPage() {
   const [selectedObjectives, setSelectedObjectives] = useState<string[]>([
@@ -286,51 +287,48 @@ export default function ContactPage() {
                         <label className="block font-label-sm text-label-sm text-on-surface font-bold mb-space-2xs">
                           Full Name / Technical Lead *
                         </label>
-                        <input
+                        <Input
                           type="text"
                           required
                           value={name}
                           onChange={(e) => setName(e.target.value)}
                           placeholder="e.g. David Mwangi"
-                          className="w-full bg-surface border border-border-subtle rounded-lg px-space-md py-space-xs text-on-surface font-body-md text-body-md focus:outline-none focus:border-primary"
-                        />
+                          />
                       </div>
                       <div>
                         <label className="block font-label-sm text-label-sm text-on-surface font-bold mb-space-2xs">
                           Work Email Address *
                         </label>
-                        <input
+                        <Input
                           type="email"
                           required
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
                           placeholder="david@company.co.ke"
-                          className="w-full bg-surface border border-border-subtle rounded-lg px-space-md py-space-xs text-on-surface font-body-md text-body-md focus:outline-none focus:border-primary"
-                        />
+                          />
                       </div>
                       <div>
                         <label className="block font-label-sm text-label-sm text-on-surface font-bold mb-space-2xs">
                           Phone Number (WhatsApp / Mobile) *
                         </label>
-                        <input
+                        <Input
                           type="tel"
                           required
                           value={phone}
                           onChange={(e) => setPhone(e.target.value)}
                           placeholder="+254 7..."
-                          className="w-full bg-surface border border-border-subtle rounded-lg px-space-md py-space-xs text-on-surface font-body-md text-body-md focus:outline-none focus:border-primary"
-                        />
+                          />
                       </div>
                       <div>
                         <label className="block font-label-sm text-label-sm text-on-surface font-bold mb-space-2xs">
                           Company / Organization Name
                         </label>
-                        <input
+                        <Input
                           type="text"
                           value={company}
                           onChange={(e) => setCompany(e.target.value)}
                           placeholder="e.g. Mwangi Logistics Ltd"
-                          className="w-full bg-surface border border-border-subtle rounded-lg px-space-md py-space-xs text-on-surface font-body-md text-body-md focus:outline-none focus:border-primary"
+                          
                         />
                       </div>
                     </div>
@@ -352,7 +350,7 @@ export default function ContactPage() {
                         <select
                           value={timeline}
                           onChange={(e) => setTimeline(e.target.value)}
-                          className="w-full bg-surface border border-border-subtle rounded-lg px-space-md py-space-xs text-on-surface font-body-md text-body-md focus:outline-none focus:border-primary"
+                          
                         >
                           <option>Urgent (&lt; 2 Weeks)</option>
                           <option>1 Month</option>
@@ -367,7 +365,7 @@ export default function ContactPage() {
                         <select
                           value={budget}
                           onChange={(e) => setBudget(e.target.value)}
-                          className="w-full bg-surface border border-border-subtle rounded-lg px-space-md py-space-xs text-on-surface font-body-md text-body-md focus:outline-none focus:border-primary"
+                          
                         >
                           <option>KSh 45,000 - 75,000 (Starter STK)</option>
                           <option>KSh 75,000 - 150,000 (Enterprise Web/Hub)</option>
@@ -390,13 +388,12 @@ export default function ContactPage() {
                       Describe your current stack, expected transaction load (TPS),
                       or specific bottlenecks:
                     </p>
-                    <textarea
+                    <Textarea
                       rows={4}
                       value={details}
                       onChange={(e) => setDetails(e.target.value)}
                       placeholder="e.g. We have an existing Next.js frontend and need to integrate Daraja 3.0 STK push with automated callbacks and reconciliation to our PostgreSQL ledger..."
-                      className="w-full bg-surface border border-border-subtle rounded-lg p-space-md text-on-surface font-body-md text-body-md focus:outline-none focus:border-primary leading-relaxed"
-                    ></textarea>
+                      />
                   </div>
 
                   {/* Step 5: Compliance & Submit */}
@@ -415,27 +412,18 @@ export default function ContactPage() {
                       </span>
                     </label>
 
-                    <button
+                    <Button
                       type="submit"
-                      disabled={isSubmitting || !agreeTerms}
-                      className="w-full inline-flex items-center justify-center gap-space-xs font-label-md text-label-md btn-primary py-space-md rounded-lg shadow-md transition-all font-bold disabled:opacity-50"
+                      variant="primary"
+                      size="lg"
+                      fullWidth
+                      loading={isSubmitting}
+                      disabled={!agreeTerms}
                     >
-                      {isSubmitting ? (
-                        <>
-                          <span className="animate-spin material-symbols-outlined text-[20px]">
-                            progress_activity
-                          </span>
-                          <span>Encrypting &amp; Dispatching Intake...</span>
-                        </>
-                      ) : (
-                        <>
-                          <span>Dispatch Technical Specifications</span>
-                          <span className="material-symbols-outlined text-[20px]">
-                            arrow_forward
-                          </span>
-                        </>
-                      )}
-                    </button>
+                      {isSubmitting
+                        ? "Sending…"
+                        : "Dispatch technical specifications"}
+                    </Button>
                   </div>
                 </form>
               )}

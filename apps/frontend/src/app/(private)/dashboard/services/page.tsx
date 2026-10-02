@@ -15,6 +15,7 @@ import DashboardShell from "@/lib/components/dashboard/DashboardShell";
 import { useSession } from "next-auth/react";
 import LaunchButton from "@/lib/components/dashboard/LaunchButton";
 import ApiOfflineNotice from "@/lib/components/dashboard/ApiOfflineNotice";
+import { Button } from "@/lib/components/ui";
 
 type ProductStatus = "connected" | "trial" | "not_connected";
 
@@ -132,16 +133,18 @@ export default function DashboardServicesPage() {
         <div className="max-w-md rounded-xl border border-error-container bg-surface-container-lowest p-8 text-center shadow-lg">
           <AlertCircle className="mx-auto h-12 w-12 text-error" />
           <h2 className="mt-4 text-xl font-bold">Session Expired</h2>
-          <button
+          <Button
             type="button"
+            variant="primary"
+            fullWidth
+            className="mt-space-lg"
             onClick={async () => {
               const url = await federatedLogout();
               if (url) window.location.href = url;
             }}
-            className="mt-6 w-full rounded-lg bg-primary px-4 py-2 font-semibold text-on-primary"
           >
             Go to Login
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -160,15 +163,16 @@ export default function DashboardServicesPage() {
               </p>
             </div>
           </div>
-          <button
+          <Button
             type="button"
+            variant="secondary"
+            size="sm"
+            loading={loading}
             onClick={() => void refresh()}
-            className="inline-flex items-center gap-2 rounded-lg border border-outline-variant px-3 py-2 text-sm font-medium text-on-surface hover:bg-surface-container-high"
-            disabled={loading}
+            leftIcon={<RefreshCcw className="h-4 w-4" />}
           >
-            <RefreshCcw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
             Refresh
-          </button>
+          </Button>
         </header>
 
         {error ? (

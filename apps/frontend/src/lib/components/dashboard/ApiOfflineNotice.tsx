@@ -1,6 +1,7 @@
 "use client";
 
 import { CloudOff } from "lucide-react";
+import { Button } from "@/lib/components/ui";
 
 type Props = {
   title?: string;
@@ -29,14 +30,15 @@ export default function ApiOfflineNotice({
         {description}
       </p>
       {onRetry ? (
-        <button
+        <Button
           type="button"
+          variant="secondary"
+          className="mt-space-lg"
+          loading={retrying}
           onClick={onRetry}
-          disabled={retrying}
-          className="btn-secondary mt-space-lg"
         >
-          {retrying ? "Checking…" : "Try again"}
-        </button>
+          Try again
+        </Button>
       ) : null}
     </div>
   );

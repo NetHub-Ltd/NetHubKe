@@ -308,6 +308,159 @@
     color: var(--color-on-surface);
   }
 
+  .btn-outline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-space-xs);
+    padding: var(--spacing-space-sm) var(--spacing-space-lg);
+    background-color: transparent;
+    color: var(--color-primary);
+    border: 1.5px solid var(--color-primary);
+    border-radius: var(--radius-lg);
+    font-size: var(--font-size-label-md);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .btn-outline:hover:not(:disabled) {
+    background-color: var(--color-primary-muted);
+  }
+
+  .btn-outline:active:not(:disabled) {
+    background-color: var(--color-primary-container);
+  }
+
+  .btn-destructive {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-space-xs);
+    padding: var(--spacing-space-sm) var(--spacing-space-lg);
+    background-color: var(--color-error);
+    color: var(--color-on-error);
+    border: 1px solid transparent;
+    border-radius: var(--radius-lg);
+    font-size: var(--font-size-label-md);
+    font-weight: var(--font-weight-semibold);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .btn-destructive:hover:not(:disabled) {
+    filter: brightness(0.92);
+  }
+
+  .btn-size-sm {
+    padding: var(--spacing-space-2xs) var(--spacing-space-sm);
+    font-size: var(--font-size-label-sm);
+  }
+
+  .btn-size-md {
+    /* default padding from variant */
+  }
+
+  .btn-size-lg {
+    padding: var(--spacing-space-md) var(--spacing-space-xl);
+    font-size: var(--font-size-body-md);
+  }
+
+  .btn-primary:disabled,
+  .btn-secondary:disabled,
+  .btn-outline:disabled,
+  .btn-ghost:disabled,
+  .btn-destructive:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+
+  .btn-loading {
+    cursor: wait;
+  }
+
+  .field-stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-space-xs);
+  }
+
+  .field-label {
+    font-size: var(--font-size-label-md);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-label);
+    color: var(--color-on-surface);
+  }
+
+  .field-control {
+    font-family: inherit;
+    font-size: var(--font-size-body-md);
+    line-height: var(--line-height-body);
+    color: var(--color-on-surface);
+    background-color: var(--color-surface-canvas);
+    border: 1px solid var(--color-outline-variant);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-space-sm) var(--spacing-space-md);
+    box-shadow: var(--shadow-xs);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    width: 100%;
+  }
+
+  .field-control:hover:not(:disabled) {
+    border-color: var(--color-outline);
+  }
+
+  .field-control:focus {
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-focus);
+    outline: none;
+  }
+
+  .field-control:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    background-color: var(--color-surface-muted);
+  }
+
+  .field-invalid {
+    border-color: var(--color-error) !important;
+  }
+
+  .field-invalid:focus {
+    box-shadow: 0 0 0 3px rgb(220 38 38 / 0.25);
+  }
+
+  .field-textarea {
+    min-height: 6rem;
+    resize: vertical;
+  }
+
+  .field-select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    padding-right: 2.5rem;
+  }
+
+  .field-hint {
+    font-size: var(--font-size-body-sm);
+    color: var(--color-on-surface-variant);
+  }
+
+  .field-error {
+    font-size: var(--font-size-body-sm);
+    color: var(--color-error);
+  }
+
+  .calendar-day-selected {
+    background-color: var(--color-primary);
+    color: var(--color-on-primary);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .calendar-day-today:not(.calendar-day-selected) {
+    box-shadow: inset 0 0 0 1.5px var(--color-primary);
+  }
+
   .card-surface {
     background-color: var(--color-surface-canvas);
     border: 1px solid var(--color-border-subtle);
