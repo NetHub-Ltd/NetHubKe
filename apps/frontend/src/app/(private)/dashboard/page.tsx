@@ -14,6 +14,7 @@ import {
 import { useUser } from "@/lib/hooks/useauth";
 import { federatedLogout } from "@/lib/actions/logout";
 import DashboardShell from "@/lib/components/dashboard/DashboardShell";
+import { Button } from "@/lib/components/ui";
 
 function Field({ label, value }: { label: string; value?: string | null }) {
   return (
@@ -57,16 +58,18 @@ export default function DashboardHomePage() {
           <p className="font-body-md mt-space-sm text-on-surface-variant">
             Your session is no longer valid. Sign in again to continue.
           </p>
-          <button
+          <Button
             type="button"
+            variant="primary"
+            fullWidth
+            className="mt-space-lg"
             onClick={async () => {
               const url = await federatedLogout();
               if (url) window.location.href = url;
             }}
-            className="btn-primary mt-space-lg w-full"
           >
             Go to login
-          </button>
+          </Button>
         </div>
       </div>
     );

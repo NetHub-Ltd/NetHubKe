@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { Button, Input, Textarea } from "@/lib/components/ui";
 
 export default function SchedulePage() {
   const [selectedTopic, setSelectedTopic] = useState("M-Pesa Daraja 3.0 Architecture");
@@ -196,7 +197,7 @@ export default function SchedulePage() {
                       type="date"
                       value={selectedDate}
                       onChange={(e) => setSelectedDate(e.target.value)}
-                      className="w-full bg-surface border border-border-subtle rounded-lg px-space-md py-space-xs text-on-surface font-body-md text-body-md focus:outline-none focus:border-primary"
+                      
                     />
                   </div>
 
@@ -238,13 +239,13 @@ export default function SchedulePage() {
                     <label className="block font-label-sm text-label-sm text-on-surface font-bold mb-space-2xs">
                       Full Name *
                     </label>
-                    <input
+                    <Input
                       type="text"
                       required
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="e.g. Grace Wanjiku"
-                      className="w-full bg-surface border border-border-subtle rounded-lg px-space-md py-space-xs text-on-surface font-body-md text-body-md focus:outline-none focus:border-primary"
+                      
                     />
                   </div>
 
@@ -252,13 +253,13 @@ export default function SchedulePage() {
                     <label className="block font-label-sm text-label-sm text-on-surface font-bold mb-space-2xs">
                       Work Email Address *
                     </label>
-                    <input
+                    <Input
                       type="email"
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="grace@fintech-kenya.co.ke"
-                      className="w-full bg-surface border border-border-subtle rounded-lg px-space-md py-space-xs text-on-surface font-body-md text-body-md focus:outline-none focus:border-primary"
+                      
                     />
                   </div>
 
@@ -266,13 +267,13 @@ export default function SchedulePage() {
                     <label className="block font-label-sm text-label-sm text-on-surface font-bold mb-space-2xs">
                       Phone Number (Mobile / WhatsApp) *
                     </label>
-                    <input
+                    <Input
                       type="tel"
                       required
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="+254 7..."
-                      className="w-full bg-surface border border-border-subtle rounded-lg px-space-md py-space-xs text-on-surface font-body-md text-body-md focus:outline-none focus:border-primary"
+                      
                     />
                   </div>
 
@@ -280,13 +281,12 @@ export default function SchedulePage() {
                     <label className="block font-label-sm text-label-sm text-on-surface font-bold mb-space-2xs">
                       Brief Architecture Questions or Context
                     </label>
-                    <textarea
+                    <Textarea
                       rows={3}
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
                       placeholder="What is your current transaction volume or key challenge?"
-                      className="w-full bg-surface border border-border-subtle rounded-lg p-space-md text-on-surface font-body-md text-body-md focus:outline-none focus:border-primary leading-relaxed"
-                    ></textarea>
+                    />
                   </div>
 
                   <div className="p-space-md bg-surface-subtle rounded-lg text-slate-text-muted font-body-sm text-body-sm flex items-center gap-space-xs">
@@ -299,27 +299,15 @@ export default function SchedulePage() {
                     </span>
                   </div>
 
-                  <button
+                  <Button
                     type="submit"
-                    disabled={loading}
-                    className="w-full inline-flex items-center justify-center gap-space-xs font-label-md text-label-md btn-primary py-space-md rounded-lg shadow-md transition-all font-bold disabled:opacity-50 mt-space-xs"
+                    variant="primary"
+                    size="lg"
+                    fullWidth
+                    loading={loading}
                   >
-                    {loading ? (
-                      <>
-                        <span className="animate-spin material-symbols-outlined text-[20px]">
-                          progress_activity
-                        </span>
-                        <span>Scheduling Architecture Review...</span>
-                      </>
-                    ) : (
-                      <>
-                        <span>Confirm Architecture Session</span>
-                        <span className="material-symbols-outlined text-[20px]">
-                          arrow_forward
-                        </span>
-                      </>
-                    )}
-                  </button>
+                    {loading ? "Scheduling…" : "Confirm architecture session"}
+                  </Button>
                 </form>
               </div>
             </div>

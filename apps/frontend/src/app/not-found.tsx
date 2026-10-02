@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Home, ChevronLeft, Terminal, AlertTriangle } from "lucide-react";
+import { Home, Terminal, AlertTriangle } from "lucide-react";
 
 export default function NotFound() {
   return (
