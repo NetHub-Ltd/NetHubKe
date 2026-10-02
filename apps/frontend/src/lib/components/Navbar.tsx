@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { Button } from "@/lib/components/ui";
 import { usePathname } from "next/navigation";
 import { Menu, X, ArrowRight, Zap } from "lucide-react";
 import Image from "next/image";
@@ -71,28 +72,24 @@ function AuthControls({ mobile = false }: { mobile?: boolean }) {
         mobile ? "flex flex-col gap-3 w-full" : "flex items-center gap-3"
       }
     >
-      <button
+      <Button
         type="button"
+        variant={mobile ? "secondary" : "ghost"}
+        size={mobile ? "lg" : "md"}
+        fullWidth={mobile}
         onClick={() => oidcLogin("/dashboard")}
-        className={
-          mobile
-            ? "btn-secondary w-full py-space-md"
-            : "btn-ghost px-space-sm py-space-xs"
-        }
       >
         Log in
-      </button>
-      <button
+      </Button>
+      <Button
         type="button"
+        variant="primary"
+        size={mobile ? "lg" : "md"}
+        fullWidth={mobile}
         onClick={() => oidcRegister()}
-        className={
-          mobile
-            ? "btn-primary w-full py-space-md"
-            : "btn-primary px-space-md py-space-xs"
-        }
       >
         Create account
-      </button>
+      </Button>
     </div>
   );
 }
