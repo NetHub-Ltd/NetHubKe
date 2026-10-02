@@ -14,6 +14,7 @@ import { federatedLogout } from "@/lib/actions/logout";
 import DashboardShell from "@/lib/components/dashboard/DashboardShell";
 import { useSession } from "next-auth/react";
 import LaunchButton from "@/lib/components/dashboard/LaunchButton";
+import ApiOfflineNotice from "@/lib/components/dashboard/ApiOfflineNotice";
 
 type ProductStatus = "connected" | "trial" | "not_connected";
 
@@ -170,16 +171,24 @@ export default function DashboardServicesPage() {
           </button>
         </header>
 
-        {error && (
-          <div
-            role="alert"
-            className="rounded-lg border border-error-container bg-error-container/20 px-4 py-3 text-sm text-on-error-container"
-          >
-            {error}
-          </div>
-        )}
+        {error ? (
+          <ApiOfflineNotice
+            title="Product connections unavailable"
+            description="We could not load service status from the API. You can still use Home and Profile. Try again when the NetHub backend is up."
+            onRetry={refresh}
+            retrying={loading}
+          />
+        ) : null}
 
-        {loading && !items.length ? (
+        {!error && !loading && items.length === 0 ? (
+          <ApiOfflineNotice
+            title="No products linked yet"
+            description="When the API is connected, Tawala, NetPay, and other products will show here with trial or active status."
+            onRetry={refresh}
+            retrying={loading}
+          />
+        ) : null}
+{loading && !items.length ? (
           <p className="text-sm text-on-surface-variant">Loading services…</p>
         ) : null}
 
