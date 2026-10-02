@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { services } from "@/lib/data/services";
+import { allPostsSorted } from "@/content/blog/posts";
 
 /**
  * Sitemap for public, indexable pages only.
@@ -22,6 +23,25 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "weekly",
       priority: 0.9,
     },
+    {
+      url: `${baseUrl}/blog`,
+      lastModified,
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/products/pay`,
+      lastModified,
+      changeFrequency: "monthly",
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/products/tawala`,
+      lastModified,
+      changeFrequency: "monthly",
+      priority: 0.9,
+    },
+
     {
       url: `${baseUrl}/about`,
       lastModified,
@@ -61,5 +81,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.8,
   }));
 
-  return [...staticEntries, ...serviceEntries];
+    const blogEntries: MetadataRoute.Sitemap = allPostsSorted().map((post) => ({
+    url: `${baseUrl}/blog/${post.slug}`,
+    lastModified: new Date(post.publishedAt),
+    changeFrequency: "monthly" as const,
+    priority: 0.7,
+  }));
+
+  return [...staticEntries, ...serviceEntries, ...blogEntries];
 }
