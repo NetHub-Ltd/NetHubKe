@@ -9,10 +9,12 @@ import {
 } from "./lib/server/oidcConfig";
 
 /**
- * Generic OIDC (Zitadel, etc.). Register at IdP first; NetHub syncs on login.
- * Default post-login path is /dashboard (set by signIn callbackUrl).
+ * OIDC login must succeed even when FastAPI is unreachable.
+ * Backend /users/sync enriches the session when available; it must not
+ * wipe the cookie on failure (that blocked /dashboard after Zitadel auth).
  */
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  trustHost: true,
   providers: [
     {
       id: "oidc",
@@ -28,7 +30,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     signIn: "/login",
   },
   callbacks: {
-    async jwt({ token, account, user, profile }): Promise<JWT | null> {
+    async jwt({ token, account, user, profile }): Promise<JWT> {
       if (account && user) {
         const idp = {
           sub:
@@ -54,6 +56,27 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           ),
         };
 
+        const idpUser = {
+          id: idp.sub || account.providerAccountId || "unknown",
+          tenantId: "",
+          isActive: true,
+          email: idp.email,
+          name: idp.name,
+          username: idp.preferredUsername,
+        };
+
+        const base: JWT = {
+          ...token,
+          accessToken: account.access_token,
+          refreshToken: account.refresh_token,
+          idToken: account.id_token,
+          expiresAt: (account.expires_at ?? 0) * 1000,
+          idp,
+          user: idpUser,
+          backendSynced: false,
+          error: undefined,
+        };
+
         try {
           const { backendFetch } = await import("@/lib/server/backend");
           const response = await backendFetch("/users/sync", {
@@ -61,49 +84,56 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             accessToken: account.access_token,
           });
 
-          if (!response.ok) throw new Error("Backend rejected IdP token");
-
-          const backendUser = await response.json();
-          const parsed = zUserRead.parse(backendUser);
-
-          if (!parsed.is_active) {
-            throw new Error("User account is inactive");
+          if (!response.ok) {
+            console.warn(
+              "Backend sync skipped:",
+              response.status,
+              "(session kept from IdP)",
+            );
+            return base;
           }
 
+          const backendUser = await response.json();
+          const parsed = zUserRead.safeParse(backendUser);
+          if (!parsed.success || !parsed.data.is_active) {
+            console.warn("Backend user invalid or inactive; using IdP profile");
+            return base;
+          }
+
+          const u = parsed.data;
           return {
-            ...token,
-            accessToken: account.access_token,
-            refreshToken: account.refresh_token,
-            idToken: account.id_token,
-            expiresAt: (account.expires_at ?? 0) * 1000,
-            idp,
+            ...base,
+            backendSynced: true,
             user: {
-              id: parsed.id,
-              tenantId: parsed.tenant_id ?? "",
-              isActive: parsed.is_active,
-              email: parsed.email || idp.email,
-              name: parsed.full_name || idp.name,
-              username: parsed.username || idp.preferredUsername,
+              id: u.id,
+              tenantId: u.tenant_id ?? "",
+              isActive: u.is_active,
+              email: u.email || idp.email,
+              name: u.full_name || idp.name,
+              username: u.username || idp.preferredUsername,
+              phoneNumber: u.phone_number ?? null,
+              tenantName: u.tenant_name ?? null,
+              tenantTier: u.tenant_tier ?? null,
+              createdAt: u.created_at ?? null,
             },
-            error: undefined,
           };
         } catch (error) {
-          console.error("Backend Sync Error:", error);
-          return { ...token, idp, error: "SyncError" };
+          console.warn("Backend sync unavailable; IdP session only:", error);
+          return base;
         }
       }
 
-      if (
-        token.error === "RefreshAccessTokenError" ||
-        token.error === "SyncError"
-      ) {
-        console.warn("JWT: Cleaning up stale session cookie.");
-        return null;
+      if (token.error === "RefreshAccessTokenError") {
+        return { ...token, error: "RefreshAccessTokenError" };
       }
 
       const now = Date.now();
       const buffer = 60 * 1000;
-      if (token.expiresAt && now > token.expiresAt - buffer) {
+      if (
+        token.expiresAt &&
+        now > token.expiresAt - buffer &&
+        token.refreshToken
+      ) {
         return await refreshAccessToken(token);
       }
 
@@ -111,23 +141,31 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
 
     async session({ session, token }) {
-      if (token) {
-        if (token.user) {
-          session.user = {
-            ...session.user,
-            id: token.user.id,
-            tenantId: token.user.tenantId,
-            isActive: token.user.isActive,
-            email: token.user.email ?? session.user?.email ?? null,
-            name: token.user.name ?? session.user?.name ?? null,
-            username: token.user.username ?? null,
-          };
-        }
-        session.accessToken = token.accessToken;
-        session.idToken = token.idToken;
+      if (token.error === "RefreshAccessTokenError") {
         session.error = token.error;
-        session.idp = token.idp;
+        return session;
       }
+
+      if (token.user) {
+        session.user = {
+          ...session.user,
+          id: token.user.id,
+          tenantId: token.user.tenantId,
+          isActive: token.user.isActive,
+          email: token.user.email ?? session.user?.email ?? null,
+          name: token.user.name ?? session.user?.name ?? null,
+          username: token.user.username ?? null,
+          phoneNumber: token.user.phoneNumber ?? null,
+          tenantName: token.user.tenantName ?? null,
+          tenantTier: token.user.tenantTier ?? null,
+          createdAt: token.user.createdAt ?? null,
+        };
+      }
+      session.accessToken = token.accessToken;
+      session.idToken = token.idToken;
+      session.error = token.error;
+      session.idp = token.idp;
+      session.backendSynced = Boolean(token.backendSynced);
       return session;
     },
   },
@@ -165,7 +203,7 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
       error: undefined,
     };
   } catch (error) {
-    console.error("Refresh Error Logic Triggered:", error);
+    console.error("RefreshAccessTokenError:", error);
     return { ...token, error: "RefreshAccessTokenError" };
   }
 }

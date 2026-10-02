@@ -1,28 +1,41 @@
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";
 
-export default auth((req) => {
+/**
+ * Network boundary (Next.js 16 proxy). Soft-guard /dashboard.
+ * Session must not depend on backend; only missing/expired OIDC blocks access.
+ */
+export const proxy = auth((req) => {
   const { nextUrl } = req;
   const session = req.auth;
 
-  const isProtectedRoute = nextUrl.pathname.startsWith("/dashboard");
+  const isProtected = nextUrl.pathname.startsWith("/dashboard");
+  const hasSession = Boolean(session?.user?.id);
+  const isExpired = session?.error === "RefreshAccessTokenError";
 
-  const isSessionInvalid = !session || !!session.error;
-
-  if (isProtectedRoute && isSessionInvalid) {
+  if (isProtected && (!hasSession || isExpired)) {
     const loginUrl = new URL("/login", nextUrl.origin);
     loginUrl.searchParams.set("callbackUrl", nextUrl.pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  // Authenticated users hitting /login → dashboard
-  if (nextUrl.pathname === "/login" && session && !session.error) {
+  if (
+    nextUrl.pathname === "/login" &&
+    hasSession &&
+    !isExpired
+  ) {
     return NextResponse.redirect(new URL("/dashboard", nextUrl.origin));
   }
 
   return NextResponse.next();
 });
 
+// Default export for compatibility with auth() wrapper consumers
+export default proxy;
+
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  matcher: [
+    "/dashboard/:path*",
+    "/login",
+  ],
 };
