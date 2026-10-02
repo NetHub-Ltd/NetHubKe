@@ -9,8 +9,8 @@ import {
 } from "./lib/server/oidcConfig";
 
 /**
- * Generic OIDC provider (Keycloak, Zitadel, Authentik, …).
- * Register users at the IdP first; NetHub syncs on first login via /users/sync.
+ * Generic OIDC (Zitadel, etc.). Register at IdP first; NetHub syncs on login.
+ * Default post-login path is /dashboard (set by signIn callbackUrl).
  */
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
@@ -24,10 +24,36 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       authorization: { params: { scope: "openid profile email" } },
     },
   ],
+  pages: {
+    signIn: "/login",
+  },
   callbacks: {
-    async jwt({ token, account, user }): Promise<JWT | null> {
-      // 1. INITIAL SIGN-IN
+    async jwt({ token, account, user, profile }): Promise<JWT | null> {
       if (account && user) {
+        const idp = {
+          sub:
+            (typeof profile?.sub === "string" && profile.sub) ||
+            account.providerAccountId ||
+            undefined,
+          email:
+            (typeof profile?.email === "string" && profile.email) ||
+            user.email ||
+            null,
+          name:
+            (typeof profile?.name === "string" && profile.name) ||
+            user.name ||
+            null,
+          preferredUsername:
+            typeof (profile as { preferred_username?: string } | undefined)
+              ?.preferred_username === "string"
+              ? (profile as { preferred_username: string }).preferred_username
+              : null,
+          emailVerified: Boolean(
+            (profile as { email_verified?: boolean } | undefined)
+              ?.email_verified,
+          ),
+        };
+
         try {
           const { backendFetch } = await import("@/lib/server/backend");
           const response = await backendFetch("/users/sync", {
@@ -38,28 +64,32 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           if (!response.ok) throw new Error("Backend rejected IdP token");
 
           const backendUser = await response.json();
-          const parsed_data = zUserRead.parse(backendUser);
+          const parsed = zUserRead.parse(backendUser);
 
-          if (!parsed_data.is_active) {
+          if (!parsed.is_active) {
             throw new Error("User account is inactive");
           }
-          const next: JWT = {
+
+          return {
             ...token,
             accessToken: account.access_token,
             refreshToken: account.refresh_token,
             idToken: account.id_token,
             expiresAt: (account.expires_at ?? 0) * 1000,
+            idp,
             user: {
-              id: parsed_data.id,
-              tenantId: parsed_data.tenant_id ?? "",
-              isActive: parsed_data.is_active,
+              id: parsed.id,
+              tenantId: parsed.tenant_id ?? "",
+              isActive: parsed.is_active,
+              email: parsed.email || idp.email,
+              name: parsed.full_name || idp.name,
+              username: parsed.username || idp.preferredUsername,
             },
             error: undefined,
           };
-          return next;
         } catch (error) {
           console.error("Backend Sync Error:", error);
-          return { ...token, error: "SyncError" };
+          return { ...token, idp, error: "SyncError" };
         }
       }
 
@@ -88,11 +118,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             id: token.user.id,
             tenantId: token.user.tenantId,
             isActive: token.user.isActive,
+            email: token.user.email ?? session.user?.email ?? null,
+            name: token.user.name ?? session.user?.name ?? null,
+            username: token.user.username ?? null,
           };
         }
         session.accessToken = token.accessToken;
         session.idToken = token.idToken;
         session.error = token.error;
+        session.idp = token.idp;
       }
       return session;
     },
@@ -100,7 +134,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 });
 
 async function refreshAccessToken(token: JWT): Promise<JWT> {
-  console.log("Attempting token refresh...");
   try {
     const discovery = await oidcDiscovery();
     const tokenEndpoint =
@@ -112,9 +145,7 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
       refresh_token: token.refreshToken as string,
     });
     const secret = oidcClientSecret();
-    if (secret) {
-      body.set("client_secret", secret);
-    }
+    if (secret) body.set("client_secret", secret);
 
     const response = await fetch(tokenEndpoint, {
       method: "POST",
@@ -124,8 +155,6 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
 
     const tokens = await response.json();
     if (!response.ok) throw tokens;
-
-    console.log("Token refreshed successfully.");
 
     return {
       ...token,
