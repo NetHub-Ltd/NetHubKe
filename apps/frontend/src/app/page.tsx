@@ -282,6 +282,29 @@ export default function Homepage() {
         </div>
       </section>
 
+      {/* Products & guides */}
+      <section className="w-full py-space-2xl" aria-labelledby="products-guides">
+        <div className="max-w-container-max mx-auto px-gutter-mobile lg:px-gutter-desktop">
+          <h2 id="products-guides" className="font-headline-md text-on-surface mb-space-lg">
+            Products &amp; guides
+          </h2>
+          <div className="grid gap-space-md sm:grid-cols-3">
+            <Link href="/products/tawala" className="card-surface block transition hover:border-primary/40 no-underline">
+              <p className="font-headline-sm text-on-surface">Tawala</p>
+              <p className="font-body-sm mt-space-xs text-on-surface-variant">Shop POS for Kenyan retail</p>
+            </Link>
+            <Link href="/products/pay" className="card-surface block transition hover:border-primary/40 no-underline">
+              <p className="font-headline-sm text-on-surface">NetPay</p>
+              <p className="font-body-sm mt-space-xs text-on-surface-variant">M-Pesa collections</p>
+            </Link>
+            <Link href="/blog" className="card-surface block transition hover:border-primary/40 no-underline">
+              <p className="font-headline-sm text-on-surface">Blog</p>
+              <p className="font-body-sm mt-space-xs text-on-surface-variant">Payments and shop operations</p>
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* 3. CTA BANNER */}
       <section className="w-full bg-surface-canvas py-space-4xl">
         <div className="max-w-container-max mx-auto px-gutter-mobile lg:px-gutter-desktop">

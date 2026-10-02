@@ -66,13 +66,16 @@ const Footer = () => {
             </span>
             <ul className="flex flex-col gap-space-xs font-body-sm text-body-sm text-slate-text-muted">
               <li className="hover:text-surface-canvas transition-colors">
-                <Link href="/about">About Us</Link>
+                <Link href="/about">About</Link>
               </li>
               <li className="hover:text-surface-canvas transition-colors">
-                <Link href="/services">Service Catalog</Link>
+                <Link href="/blog">Blog</Link>
               </li>
               <li className="hover:text-surface-canvas transition-colors">
-                <Link href="/contact">Project Intake</Link>
+                <Link href="/services">Services</Link>
+              </li>
+              <li className="hover:text-surface-canvas transition-colors">
+                <Link href="/contact">Contact</Link>
               </li>
               <li className="hover:text-surface-canvas transition-colors">
                 <Link href="/privacy-policy">Privacy Policy</Link>
@@ -80,25 +83,30 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Specialized Solutions */}
+          {/* Products */}
           <div className="flex flex-col gap-space-md">
             <span className="font-label-md text-label-md text-surface-canvas uppercase font-bold tracking-wider">
-              Specialized Solutions
+              Products
             </span>
             <ul className="flex flex-col gap-space-xs font-body-sm text-body-sm text-slate-text-muted">
               <li className="hover:text-surface-canvas transition-colors">
-                <Link href="/service/mpesa-integration">
-                  M-Pesa Daraja 3.0 API
-                </Link>
+                <Link href="/products/tawala">Tawala — shop POS</Link>
               </li>
               <li className="hover:text-surface-canvas transition-colors">
-                <Link href="/services">Next.js Cloud Systems</Link>
+                <Link href="/products/pay">NetPay — collections</Link>
               </li>
               <li className="hover:text-surface-canvas transition-colors">
-                <Link href="/services">Technical SEO Audit</Link>
+                <Link href="/blog">Blog</Link>
               </li>
               <li className="hover:text-surface-canvas transition-colors">
-                <Link href="/services">E-Commerce Middleware</Link>
+                <a href="https://tawala.nethub.co.ke/" rel="noopener noreferrer">
+                  Open Tawala
+                </a>
+              </li>
+              <li className="hover:text-surface-canvas transition-colors">
+                <a href="https://pay.nethub.co.ke/" rel="noopener noreferrer">
+                  Open NetPay
+                </a>
               </li>
             </ul>
           </div>

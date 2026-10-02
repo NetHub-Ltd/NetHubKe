@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { breadcrumbJsonLd } from "@/lib/seo/jsonld";
 
 export const metadata: Metadata = {
   title: "Tawala — shop POS for Kenyan retail",
@@ -9,8 +10,17 @@ export const metadata: Metadata = {
 };
 
 export default function TawalaLandingPage() {
+  const crumbLd = breadcrumbJsonLd([
+    { name: "Home", path: "/" },
+    { name: "Tawala", path: "/products/tawala" },
+  ]);
+
   return (
     <div className="container-page py-space-2xl">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(crumbLd) }}
+      />
       <div className="mx-auto max-w-3xl">
         <p className="font-label-sm text-primary mb-space-xs">NetHub product</p>
         <h1 className="font-headline-lg text-on-surface">
