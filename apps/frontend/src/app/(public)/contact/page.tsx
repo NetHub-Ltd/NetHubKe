@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { Button, Input, Textarea, Field } from "@/lib/components/ui";
+import { Button, Input, Textarea } from "@/lib/components/ui";
 
 export default function ContactPage() {
   const [selectedObjectives, setSelectedObjectives] = useState<string[]>([

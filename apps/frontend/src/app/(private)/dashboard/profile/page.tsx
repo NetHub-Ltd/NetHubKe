@@ -79,7 +79,7 @@ export default function ProfilePage() {
             }}
           >
             Go to login
-          </button>
+          </Button>
         </div>
       </div>
     );

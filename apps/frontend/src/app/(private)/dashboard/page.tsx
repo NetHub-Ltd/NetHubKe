@@ -69,7 +69,7 @@ export default function DashboardHomePage() {
             }}
           >
             Go to login
-          </button>
+          </Button>
         </div>
       </div>
     );

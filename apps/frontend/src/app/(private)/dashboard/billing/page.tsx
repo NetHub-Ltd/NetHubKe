@@ -151,7 +151,7 @@ export default function DashboardBillingPage() {
             }}
           >
             Go to Login
-          </button>
+          </Button>
         </div>
       </div>
     );

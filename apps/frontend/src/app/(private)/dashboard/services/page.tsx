@@ -144,7 +144,7 @@ export default function DashboardServicesPage() {
             }}
           >
             Go to Login
-          </button>
+          </Button>
         </div>
       </div>
     );
