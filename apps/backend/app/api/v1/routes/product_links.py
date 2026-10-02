@@ -51,7 +51,7 @@ async def set_my_product_link(
             detail="Only owner or admin roles may set product organization links",
         )
 
-    user = await user_crud.get_by_sub(db, token_data.sub)
+    user = await user_crud.get_by_email(db, str(token_data.email))
     if not user or not user.tenant_id:
         raise HTTPException(status_code=404, detail="User or tenant not found")
 
@@ -77,7 +77,7 @@ async def list_my_product_links(
     db: SessionDep,
     token_data: TokenData = Depends(require_scopes(["user:read"])),
 ):
-    user = await user_crud.get_by_sub(db, token_data.sub)
+    user = await user_crud.get_by_email(db, str(token_data.email))
     if not user or not user.tenant_id:
         return []
     rows = (

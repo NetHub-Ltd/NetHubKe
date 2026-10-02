@@ -73,18 +73,24 @@ async def get_current_user(
             detail="Invalid or expired token"
         )
 
-    logger.info(f"Auth Attempt | sub: {token_data.sub} | scopes: {token_data.scopes}")
+    logger.info(
+        f"Auth Attempt | email: {token_data.email} | sub: {token_data.sub} | scopes: {token_data.scopes}"
+    )
 
-    # 3. Database Integrity Check
-    # Ensure token_data.sub exists before querying
-    if not token_data.sub:
-        raise HTTPException(status_code=401, detail="Token missing subject claim")
+    # 3. Resolve local user by email (IdP-agnostic)
+    if not token_data.email:
+        raise HTTPException(status_code=401, detail="Token missing email claim")
 
-    user = await user_crud.get_by_sub(db, token_data.sub)
+    user = await user_crud.get_by_email(db, str(token_data.email))
 
     if not user:
-        logger.warning(f"Auth Fail | sub: {token_data.sub} | Reason: User not in database")
-        raise HTTPException(status_code=404, detail="User profile not initialized")
+        logger.warning(
+            f"Auth Fail | email: {token_data.email} | Reason: User not in database"
+        )
+        raise HTTPException(
+            status_code=404,
+            detail="User profile not initialized; call POST /users/sync first",
+        )
 
     # 4. Policy Enforcement
     if not user.is_active:
@@ -94,10 +100,9 @@ async def get_current_user(
             detail="Account is disabled. Please contact NetHub support."
         )
 
-    # 5. Return token data with Keycloak sub unchanged.
-    # Routes (e.g. /users/me) look up User by keycloak_id == token_data.sub.
-    # Replacing sub with the internal UUID previously broke those lookups.
-    logger.info(f"Auth Success | keycloak_sub: {token_data.sub} | user_id: {user.id} | scopes: {token_data.scopes}")
+    logger.info(
+        f"Auth Success | email: {token_data.email} | user_id: {user.id} | scopes: {token_data.scopes}"
+    )
 
     return token_data
 
