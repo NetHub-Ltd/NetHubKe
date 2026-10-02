@@ -42,7 +42,7 @@ function AuthControls({ mobile = false }: { mobile?: boolean }) {
           className={
             mobile
               ? "w-full bg-primary text-white py-4 rounded-2xl font-bold text-center"
-              : "text-sm font-bold text-foreground hover:text-primary transition-colors max-w-[12rem] truncate"
+              : "text-sm font-bold text-on-surface hover:text-primary transition-colors max-w-[12rem] truncate"
           }
           title={label}
         >
@@ -107,17 +107,18 @@ const Navbar = () => {
 
   return (
     <nav
-      className={`sticky top-0 z-100 transition-all duration-500 ${
+      className={`sticky top-0 z-50 transition-all duration-300 ${
         scrolled
-          ? "bg-surface-canvas/90 backdrop-blur-xl py-3 border-b border-border shadow-lg"
-          : "bg-surface-canvas/80 backdrop-blur-md py-5 border-b border-border-subtle"
+          ? "bg-surface-canvas/95 backdrop-blur-xl border-b border-border-subtle shadow-sm py-2.5"
+          : "bg-surface-canvas/90 backdrop-blur-md border-b border-border-subtle/80 py-3"
       }`}
+      aria-label="Primary"
     >
-      <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
+      <div className="max-w-container-max mx-auto px-gutter-mobile lg:px-gutter-desktop flex items-center justify-between gap-4">
         <Link href="/" className="group flex gap-2 items-center">
           <motion.div
             whileHover={{ rotate: 12 }}
-            className="relative w-10 h-10 flex items-center justify-center bg-primary/10 rounded-xl border border-primary/20"
+            className="relative h-9 w-9 flex items-center justify-center rounded-lg bg-primary/10 border border-primary/15"
           >
             <Image
               src="/logo.svg"
@@ -145,8 +146,8 @@ const Navbar = () => {
                 <Link
                   key={link.name}
                   href={link.href}
-                  className={`relative font-bold tracking-widest transition-all hover:text-primary ${
-                    isActive ? "text-primary" : "text-foreground"
+                  className={`relative text-sm font-semibold tracking-wide transition-colors hover:text-primary ${
+                    isActive ? "text-primary" : "text-on-surface"
                   }`}
                 >
                   {link.name}
@@ -166,7 +167,7 @@ const Navbar = () => {
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="md:hidden p-2 text-foreground focus:outline-none"
+          className="md:hidden p-2 text-on-surface focus:outline-none"
           aria-label="Toggle Menu"
         >
           {isOpen ? <X size={30} /> : <Menu size={30} />}
@@ -180,7 +181,7 @@ const Navbar = () => {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed inset-0 top-16 z-90 border-t border-border-subtle bg-surface-canvas md:hidden"
+            className="fixed inset-0 top-[3.25rem] z-40 border-t border-border-subtle bg-surface-canvas md:hidden"
           >
             <div className="flex flex-col p-8 gap-6 h-full justify-between pb-24">
               <div className="flex flex-col gap-6">
@@ -197,7 +198,7 @@ const Navbar = () => {
                       className={`font-headline-md tracking-tight flex items-center justify-between group ${
                         pathname === link.href
                           ? "text-primary"
-                          : "text-foreground"
+                          : "text-on-surface"
                       }`}
                     >
                       {link.name}

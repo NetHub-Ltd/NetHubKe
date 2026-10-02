@@ -2,9 +2,10 @@
 
 /* =========================================================
    NetHub design system
-   - Page: soft indigo→slate gradient canvas
-   - Cards/sections: milky cream surfaces + subtle elevation
-   - Primary: solid indigo (not washed container tints on CTAs)
+   - Page: soft slate→cream gradient (not bluish wash)
+   - Cards/sections: silky cream surfaces + subtle elevation
+   - Text: dark navy (footer-aligned)
+   - Primary: solid indigo CTAs only
 ========================================================= */
 
 @theme {
@@ -25,26 +26,26 @@
   --color-metric-badge-blue-text: #3730a3;
 
   /* Canvas (behind cards) — cool wash */
-  --color-background: #eef2ff;
-  --color-surface: #eef2ff;
-  --color-surface-dim: #e0e7ff;
-  --color-surface-bright: #f8fafc;
-  --color-on-background: #0f172a;
-  --color-on-surface: #0f172a;
+  --color-background: #f4f2ee;
+  --color-surface: #f4f2ee;
+  --color-surface-dim: #e8e6e1;
+  --color-surface-bright: #faf9f6;
+  --color-on-background: #1e293b;
+  --color-on-surface: #1e293b;
   --color-on-surface-variant: #475569;
   --color-inverse-surface: #1e293b;
   --color-inverse-on-surface: #f8fafc;
 
   /* Milky / creamy card & section fill */
-  --color-surface-canvas: #fffcf8;
-  --color-surface-subtle: #faf8f5;
-  --color-surface-muted: #f5f3ef;
-  --color-surface-container-lowest: #fffcf8;
-  --color-surface-container-low: #faf8f5;
-  --color-surface-container: #f5f3ef;
-  --color-surface-container-high: #efece7;
-  --color-surface-container-highest: #e8e4de;
-  --color-surface-variant: #efece7;
+  --color-surface-canvas: #faf8f5;
+  --color-surface-subtle: #f7f5f1;
+  --color-surface-muted: #f0ede8;
+  --color-surface-container-lowest: #faf8f5;
+  --color-surface-container-low: #f7f5f1;
+  --color-surface-container: #f0ede8;
+  --color-surface-container-high: #ebe8e2;
+  --color-surface-container-highest: #e4e0d9;
+  --color-surface-variant: #ebe8e2;
 
   --color-outline: #64748b;
   --color-outline-variant: #d6d3d1;
@@ -138,14 +139,14 @@
   }
 
   body {
-    /* Soft indigo → cream page gradient */
+    /* Slate-leaning cream page wash — not indigo-blue */
     background-color: var(--color-background);
     background-image: linear-gradient(
       165deg,
-      #e0e7ff 0%,
-      #eef2ff 28%,
-      #f5f3ef 62%,
-      #faf8f5 100%
+      #f7f6f3 0%,
+      #f1f0ec 38%,
+      #eceef2 72%,
+      #e8eaef 100%
     );
     background-attachment: fixed;
     color: var(--color-on-surface);
