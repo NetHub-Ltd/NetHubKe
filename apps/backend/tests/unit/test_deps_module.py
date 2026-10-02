@@ -17,14 +17,16 @@ def test_deps_exports():
 
 
 def _user(scopes: str) -> TokenData:
-    return TokenData(
-        sub=uuid.uuid4(),
-        email="user@example.com",
-        preferred_username="a",
-        name="A",
-        email_verified=True,
-        roles=["user"],
-        scope=scopes,
+    return TokenData.model_validate(
+        {
+            "sub": str(uuid.uuid4()),
+            "email": "user@example.com",
+            "preferred_username": "a",
+            "name": "A",
+            "email_verified": True,
+            "roles": ["user"],
+            "scope": scopes,
+        }
     )
 
 

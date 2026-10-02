@@ -111,7 +111,7 @@ def rsa_keys():
 
 @pytest.fixture
 def make_kc_token(rsa_keys):
-    """Build a Keycloak-shaped JWT; pair with patch_decode or mock JWKS."""
+    """Build an OIDC-shaped JWT (IdP-agnostic); pair with patch_decode or mock JWKS."""
     import jwt as pyjwt
 
     key, _, _ = rsa_keys
@@ -178,14 +178,16 @@ def patch_kc_decode(rsa_keys, monkeypatch):
             raw_scope = " ".join(raw_scope)
         realm_access = payload.get("realm_access") or {}
         roles = list(realm_access.get("roles") or [])
-        return TokenData(
-            sub=payload.get("sub"),
-            email=payload.get("email"),
-            preferred_username=payload.get("preferred_username"),
-            name=payload.get("name"),
-            email_verified=payload.get("email_verified", False),
-            roles=roles,
-            scope=raw_scope,
+        return TokenData.model_validate(
+            {
+                "sub": str(payload.get("sub") or ""),
+                "email": payload.get("email"),
+                "preferred_username": payload.get("preferred_username"),
+                "name": payload.get("name"),
+                "email_verified": payload.get("email_verified", False),
+                "roles": roles,
+                "scope": raw_scope,
+            }
         )
 
     monkeypatch.setattr(security_mod, "_decode_token", _decode)

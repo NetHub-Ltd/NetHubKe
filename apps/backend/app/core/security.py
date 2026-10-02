@@ -55,8 +55,12 @@ def _decode_token(token: str) -> TokenData:
         raw_scope = merge_scope_claims(payload)
         roles = extract_roles(payload)
 
+        if not payload.get("email"):
+            logger.warning("Auth Fail | Token missing email claim")
+            raise HTTPException(status_code=401, detail="Token missing email claim")
+
         validate_data = {
-            "sub": payload.get("sub"),
+            "sub": str(payload.get("sub") or ""),
             "email": payload.get("email"),
             "preferred_username": payload.get("preferred_username"),
             "name": payload.get("name"),

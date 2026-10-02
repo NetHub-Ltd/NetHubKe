@@ -35,14 +35,11 @@ class User(BaseMixin, table=True):
     __tablename__ = "users"
 
     username: str = Field(index=True)
-    email: str = Field(index=True)
+    email: str = Field(unique=True, index=True)
     full_name: str = Field(alias="fullName")
     is_active: bool = Field(default=False)
 
-    # Binary UUID for high-speed lookups
-    keycloak_id: uuid.UUID = Field(unique=True, index=True)
-
-    # Foreign Key: Remove unique=True so many users can join one tenant
+    # Foreign Key: many users can join one tenant
     tenant_id: Optional[uuid.UUID] = Field(default=None, foreign_key="tenants.id", index=True)
 
     # Relationship: Many Users belong to One Tenant

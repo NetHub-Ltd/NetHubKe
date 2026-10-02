@@ -55,7 +55,7 @@ class BillingSummary(BaseModel):
 
 
 async def _tenant_id_for_user(db, token: TokenData) -> UUID:
-    user = await user_crud.get_by_sub(db, token.sub)
+    user = await user_crud.get_by_email(db, str(token.email))
     if not user or not user.tenant_id:
         raise HTTPException(status_code=404, detail="User or tenant not found")
     return user.tenant_id
