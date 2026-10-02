@@ -25,11 +25,11 @@
   --color-metric-badge-blue-bg: #eef2ff;
   --color-metric-badge-blue-text: #3730a3;
 
-  /* Canvas (behind cards) — cool wash */
-  --color-background: #f4f2ee;
-  --color-surface: #f4f2ee;
-  --color-surface-dim: #e8e6e1;
-  --color-surface-bright: #faf9f6;
+  /* Canvas (behind cards) — ~80% soft slate, ~20% cream */
+  --color-background: #e4e9f0;
+  --color-surface: #e4e9f0;
+  --color-surface-dim: #d5dce6;
+  --color-surface-bright: #faf8f5;
   --color-on-background: #1e293b;
   --color-on-surface: #1e293b;
   --color-on-surface-variant: #475569;
@@ -139,14 +139,15 @@
   }
 
   body {
-    /* Slate-leaning cream page wash — not indigo-blue */
+    /* ~20% cream highlight + ~80% soft slate field */
     background-color: var(--color-background);
     background-image: linear-gradient(
       165deg,
-      #f7f6f3 0%,
-      #f1f0ec 38%,
-      #eceef2 72%,
-      #e8eaef 100%
+      #faf8f5 0%,
+      #eef1f5 18%,
+      #e4e9f0 45%,
+      #dce3eb 78%,
+      #d5dce6 100%
     );
     background-attachment: fixed;
     color: var(--color-on-surface);
