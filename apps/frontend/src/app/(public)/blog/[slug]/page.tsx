@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { allPostsSorted, getPost } from "@/content/blog/posts";
+import { breadcrumbJsonLd, faqPageJsonLd } from "@/lib/seo/jsonld";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -36,7 +37,7 @@ export default async function BlogPostPage({ params }: Props) {
     .map((s) => getPost(s))
     .filter(Boolean) as NonNullable<ReturnType<typeof getPost>>[];
 
-  const jsonLd = {
+  const articleLd = {
     "@context": "https://schema.org",
     "@type": "Article",
     headline: post.title,
@@ -50,12 +51,23 @@ export default async function BlogPostPage({ params }: Props) {
     },
     mainEntityOfPage: `https://nethub.co.ke/blog/${post.slug}`,
   };
+  const crumbLd = breadcrumbJsonLd([
+    { name: "Home", path: "/" },
+    { name: "Blog", path: "/blog" },
+    { name: post.title, path: `/blog/${post.slug}` },
+  ]);
+  const faqLd = post.faqs?.length
+    ? faqPageJsonLd(post.faqs.map((f) => ({ q: f.q, a: f.a })))
+    : null;
+  const graph: Record<string, unknown>[] = [articleLd, crumbLd];
+  if (faqLd) graph.push(faqLd);
+  const jsonLdGraph = { "@context": "https://schema.org", "@graph": graph };
 
   return (
     <article className="container-page py-space-2xl">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdGraph) }}
       />
       <div className="mx-auto max-w-3xl">
         <p className="font-label-sm text-on-surface-variant">

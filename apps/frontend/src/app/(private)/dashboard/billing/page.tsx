@@ -10,6 +10,7 @@ import {
 import { useUser } from "@/lib/hooks/useauth";
 import { federatedLogout } from "@/lib/actions/logout";
 import DashboardShell from "@/lib/components/dashboard/DashboardShell";
+import ApiOfflineNotice from "@/lib/components/dashboard/ApiOfflineNotice";
 
 type PlanRead = {
   id: string;
@@ -182,13 +183,17 @@ export default function DashboardBillingPage() {
           </button>
         </header>
 
-        {error && (
-          <div role="alert" className="rounded-lg border border-error-container bg-error-container/20 px-4 py-3 text-sm">
-            {error}
-          </div>
-        )}
-
-        <section
+        {error ? (
+          <ApiOfflineNotice
+            title="Billing unavailable"
+            description="Plan and invoice data need the NetHub API. Sign-in still works; billing will appear here once the backend is connected."
+            onRetry={refresh}
+            retrying={loading}
+          />
+        ) : null}
+        {!error ? (
+          <>
+<section
           className="rounded-xl border border-outline-variant/30 bg-surface-container-lowest p-6 shadow-sm"
           aria-labelledby="plan-heading"
         >
@@ -265,6 +270,8 @@ export default function DashboardBillingPage() {
             </ul>
           )}
         </section>
+          </>
+        ) : null}
       </div>
     </DashboardShell>
   );
