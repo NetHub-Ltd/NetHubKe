@@ -31,8 +31,7 @@ function Field({ label, value }: { label: string; value?: string | null }) {
  * Shows IdP (Zitadel) identity + app user from /users/sync.
  */
 export default function DashboardHomePage() {
-  const { user, status: authStatus } = useUser();
-  const { data: session } = useSession();
+  const { user, status: authStatus, idp } = useUser();
 
   if (authStatus === "loading") {
     return (
@@ -73,7 +72,6 @@ export default function DashboardHomePage() {
     );
   }
 
-  const idp = session?.idp;
   const displayName =
     user?.full_name ||
     idp?.name ||
