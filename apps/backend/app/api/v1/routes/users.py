@@ -36,8 +36,9 @@ async def sync_user(
         token_data: TokenData = Depends(get_token_data)  # <--- The lean dependency
 ):
     try:
-        logger.debug(f"Sync Attempt: {token_data.sub}: | Time: {utc_now()}")
-        # 1. Check if user exists by Keycloak 'sub'
+        logger.debug(f"Sync Attempt: email={token_data.email} | Time: {utc_now()}")
+        if not token_data.email:
+            raise HTTPException(status_code=400, detail="Token missing email claim")
         user = await user_crud.get_or_create(db, obj_in=token_data)
         # Reload with tenant for complete profile payload
         stmt = select(User).where(User.id == user.id).options(selectinload(User.tenant))
@@ -46,21 +47,22 @@ async def sync_user(
         logger.debug(f"Sync Success: {user.id} | Time: {utc_now()}")
         return _to_user_read(user)
     except Exception as e:
-        logger.error(f"Sync Failure | sub: {token_data.sub} | Error: {e}")
+        logger.error(f"Sync Failure | email: {token_data.email} | Error: {e}")
         raise HTTPException(status_code=500, detail="Sync failed")
 
 
 @router.get("/me", response_model=UserRead)
 async def read_current_user(db: SessionDep, current_user: TokenData = Depends(require_scopes(["user:read"]))):
     try:
-        # Lookup by Keycloak sub (not primary key)
-        stmt = (
-            select(User)
-            .where(User.keycloak_id == current_user.sub)
-            .options(selectinload(User.tenant))
-        )
-        result = await db.exec(stmt)
-        user = result.first()
+        user = await user_crud.get_by_email(db, str(current_user.email))
+        if user:
+            stmt = (
+                select(User)
+                .where(User.id == user.id)
+                .options(selectinload(User.tenant))
+            )
+            result = await db.exec(stmt)
+            user = result.first() or user
         if not user:
             raise HTTPException(
                 status_code=404,
@@ -77,7 +79,7 @@ async def read_current_user(db: SessionDep, current_user: TokenData = Depends(re
 @router.patch("/me", status_code=200, response_model=UserRead)
 async def update_current_user(db: SessionDep, user_data: UserUpdate, current_user: TokenData = Depends(require_scopes(['user:write']))):
     try:
-        db_obj = await user_crud.get_by_sub(db, current_user.sub)
+        db_obj = await user_crud.get_by_email(db, str(current_user.email))
         if not db_obj:
             raise HTTPException(status_code=404, detail="User Not Found.")
         user = await user_crud.update(db, db_obj=db_obj, obj_in=user_data)

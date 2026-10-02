@@ -102,7 +102,7 @@ async def _run_exchange(
 
     product = await get_product_by_slug(db, product_slug)
 
-    user = await user_crud.get_by_sub(db, token_data.sub)
+    user = await user_crud.get_by_email(db, str(token_data.email))
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -154,7 +154,7 @@ async def _run_exchange(
             detail="principal must be owner or terminal",
         )
 
-    kc_sub = str(user.keycloak_id)
+    nethub_sub = str(user.id)
     # Prefer settings audience for tawala so env overrides seed row
     audience = product.audience
     if product.slug == "tawala":
@@ -164,7 +164,7 @@ async def _run_exchange(
         db,
         product_slug=product.slug,
         audience=audience,
-        sub=kc_sub,
+        sub=nethub_sub,
         org_id=org_id,
         principal=principal,
         email=user.email,

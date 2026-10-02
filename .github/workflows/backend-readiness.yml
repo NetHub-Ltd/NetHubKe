@@ -1,0 +1,110 @@
+name: Backend readiness (Docker + Postgres + Redis)
+
+# Boots the API image against real Postgres/Redis and probes /health + /ready.
+# Separate from pytest (backend-ci.yml).
+
+on:
+  push:
+    branches: [dev, master]
+    paths:
+      - "apps/backend/**"
+      - "docker-compose*.yml"
+      - ".github/workflows/backend-readiness.yml"
+  pull_request:
+    branches: [dev]
+    paths:
+      - "apps/backend/**"
+      - "docker-compose*.yml"
+      - ".github/workflows/backend-readiness.yml"
+
+jobs:
+  readiness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: nethub
+          POSTGRES_PASSWORD: nethub
+          POSTGRES_DB: nethub
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U nethub -d nethub"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 12
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build API image
+        run: |
+          docker build -t nethub-api:ci -f apps/backend/Dockerfile apps/backend
+
+      - name: Run API container
+        run: |
+          docker run -d --name nethub-api \
+            --add-host=host.docker.internal:host-gateway \
+            -p 8000:8000 \
+            -e APP_NAME=NetHubKe \
+            -e APP_VERSION=0.0.0 \
+            -e IMAGE_TAG=ci \
+            -e ENVIRONMENT=development \
+            -e STARTUP_TEST=false \
+            -e FASTAPI_DB_USER=nethub \
+            -e FASTAPI_DB_PASSWORD=nethub \
+            -e FASTAPI_DB_NAME=nethub \
+            -e FASTAPI_DB_HOST=host.docker.internal \
+            -e FASTAPI_DB_PORT=5432 \
+            -e REDIS_URL=redis://host.docker.internal:6379/0 \
+            -e OIDC_ISSUER=https://idp.test/realms/nethub \
+            -e OIDC_JWKS_URL=https://idp.test/realms/nethub/protocol/openid-connect/certs \
+            -e KEYCLOAK_ISSUER_URL=https://idp.test/realms/nethub \
+            -e KEYCLOAK_JWKS=https://idp.test/realms/nethub/protocol/openid-connect/certs \
+            -e AUDIENCE=nethub-backend \
+            -e ALLOWED_ORIGINS=http://localhost:3000 \
+            -e TAWALA_EXCHANGE_ENABLED=false \
+            -e TAWALA_JWT_ISSUER=http://localhost:8000 \
+            -e TAWALA_JWT_AUDIENCE=tawala-api \
+            nethub-api:ci
+
+      - name: Wait for /health and /ready
+        run: |
+          set -e
+          for i in $(seq 1 60); do
+            if curl -sf http://127.0.0.1:8000/health | grep -q healthy; then
+              echo "health ok"
+              break
+            fi
+            echo "waiting health ($i)..."
+            docker logs nethub-api 2>&1 | tail -20 || true
+            sleep 3
+          done
+          curl -sf http://127.0.0.1:8000/health
+          # /ready needs redis+db; allow a few more tries
+          for i in $(seq 1 30); do
+            if curl -sf http://127.0.0.1:8000/ready | grep -q ready; then
+              echo "ready ok"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "readiness failed"
+          docker logs nethub-api 2>&1 | tail -80
+          exit 1
+
+      - name: Dump logs on failure
+        if: failure()
+        run: docker logs nethub-api 2>&1 | tail -120 || true

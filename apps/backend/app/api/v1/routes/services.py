@@ -105,7 +105,7 @@ async def my_service_status(
     - trial: product active, no link, tenant tier suggests trial (FREE) — soft signal
     - not_connected: product active, no link
     """
-    user = await user_crud.get_by_sub(db, token_data.sub)
+    user = await user_crud.get_by_email(db, str(token_data.email))
     if not user:
         raise HTTPException(status_code=404, detail="User profile not initialized")
 

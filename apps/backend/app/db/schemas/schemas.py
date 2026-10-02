@@ -13,14 +13,15 @@ from app.db.schemas.enums import ServicePricing, ServiceFAQ, ServiceIcon
 
 class TokenData(BaseModel):
     """
-    The 'Senior Architect' User Model:
-    Clean, typed, and focused only on actionable authorization data.
+    Claims extracted from a verified IdP access token.
+    Identity in NetHub is email + local UUID — not IdP subject format.
+    `sub` is opaque (string) and never stored as a foreign key.
     """
-    sub: UUID = Field(..., validation_alias=AliasChoices("sub"))
+    sub: str = Field(default="", validation_alias=AliasChoices("sub"))
     email: EmailStr
-    username: str = Field(..., validation_alias=AliasChoices("preferred_username"))
-    full_name: str = Field(..., validation_alias=AliasChoices("name"))
-    email_verified: bool = Field(..., validation_alias=AliasChoices("email_verified"))
+    username: str = Field(default="", validation_alias=AliasChoices("preferred_username", "username"))
+    full_name: str = Field(default="", validation_alias=AliasChoices("name"))
+    email_verified: bool = Field(default=False, validation_alias=AliasChoices("email_verified"))
 
     # Structural Data
     roles: List[str] = []
@@ -29,6 +30,8 @@ class TokenData(BaseModel):
     # Functional Permissions (Filtered Scopes)
     # permissions: List[str] = Field(default_factory=list)
     scopes: List[str] = Field(default_factory=list)
+
+    model_config = ConfigDict(populate_by_name=True)
 
     @model_validator(mode="before")
     @classmethod
@@ -41,8 +44,18 @@ class TokenData(BaseModel):
             oidc_noise = {"openid", "profile", "email", "groups", "roles", "offline_access", "address", "phone"}
 
             # 3. Filter the scopes into clean permissions (e.g., ['user:me'])
-            scope = raw_scope.split()
+            scope = raw_scope.split() if isinstance(raw_scope, str) else []
             data["scopes"] = [s for s in scope if s not in oidc_noise]
+
+            # Coerce IdP subject to string (Zitadel uses large integers)
+            if "sub" in data and data["sub"] is not None:
+                data["sub"] = str(data["sub"])
+
+            email = data.get("email") or ""
+            if not data.get("preferred_username") and not data.get("username"):
+                data["preferred_username"] = email.split("@")[0] if email else ""
+            if not data.get("name"):
+                data["name"] = data.get("preferred_username") or email or "User"
 
         return data
 
@@ -62,7 +75,6 @@ class UserCreate(BaseModel):
     full_name: str
 
 class UserCreateBase(UserCreate):
-    keycloak_id: UUID
     tenant_id: Optional[UUID] = None
     is_active: Optional[bool] = True
 
