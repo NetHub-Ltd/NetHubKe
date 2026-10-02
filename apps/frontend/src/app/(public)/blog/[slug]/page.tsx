@@ -59,7 +59,7 @@ export default async function BlogPostPage({ params }: Props) {
   const faqLd = post.faqs?.length
     ? faqPageJsonLd(post.faqs.map((f) => ({ q: f.q, a: f.a })))
     : null;
-  const graph = [articleLd, crumbLd];
+  const graph: Record<string, unknown>[] = [articleLd, crumbLd];
   if (faqLd) graph.push(faqLd);
   const jsonLdGraph = { "@context": "https://schema.org", "@graph": graph };
 
