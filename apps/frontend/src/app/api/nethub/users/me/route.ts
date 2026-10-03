@@ -1,10 +1,14 @@
 import { auth } from "@/auth";
 import { backendFetch } from "@/lib/server/backend";
+import { toPublicUserProfile } from "@/lib/server/user-profile";
 import { NextResponse } from "next/server";
 
 /**
  * BFF: browser → /api/nethub/users/me → FastAPI /api/v1/users/me
- * Does not expose BACKEND_URL to the client.
+ *
+ * - Requires a valid Auth.js session + access token
+ * - Zod-validates upstream body
+ * - Returns only the public profile fields (no tokens / extra claims)
  */
 export async function GET() {
   const session = await auth();
@@ -17,8 +21,25 @@ export async function GET() {
       accessToken: session.accessToken,
       method: "GET",
     });
-    const data = await res.json().catch(() => ({}));
-    return NextResponse.json(data, { status: res.status });
+    const raw = await res.json().catch(() => null);
+
+    if (!res.ok) {
+      return NextResponse.json(
+        typeof raw === "object" && raw && "detail" in raw
+          ? raw
+          : { detail: "Failed to load profile" },
+        { status: res.status },
+      );
+    }
+
+    const validated = toPublicUserProfile(raw);
+    if (!validated.ok) {
+      return NextResponse.json(
+        { detail: validated.detail },
+        { status: validated.status },
+      );
+    }
+    return NextResponse.json(validated.data, { status: 200 });
   } catch (e) {
     console.error("[BFF] GET /users/me", e);
     return NextResponse.json(
@@ -41,8 +62,25 @@ export async function PATCH(request: Request) {
       method: "PATCH",
       body,
     });
-    const data = await res.json().catch(() => ({}));
-    return NextResponse.json(data, { status: res.status });
+    const raw = await res.json().catch(() => null);
+
+    if (!res.ok) {
+      return NextResponse.json(
+        typeof raw === "object" && raw && "detail" in raw
+          ? raw
+          : { detail: "Failed to update profile" },
+        { status: res.status },
+      );
+    }
+
+    const validated = toPublicUserProfile(raw);
+    if (!validated.ok) {
+      return NextResponse.json(
+        { detail: validated.detail },
+        { status: validated.status },
+      );
+    }
+    return NextResponse.json(validated.data, { status: 200 });
   } catch (e) {
     console.error("[BFF] PATCH /users/me", e);
     return NextResponse.json(
