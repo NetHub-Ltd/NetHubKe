@@ -1,52 +1,31 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import {
   RefreshCcw,
   AlertCircle,
-  LayoutDashboard,
+  ArrowRight,
   Boxes,
   User,
-  ArrowRight,
-  Shield,
-  Copy,
-  Check,
+  CreditCard,
+  Sparkles,
+  Building2,
 } from "lucide-react";
 import { useUser } from "@/lib/hooks/useauth";
 import { federatedLogout } from "@/lib/actions/logout";
 import DashboardShell from "@/lib/components/dashboard/DashboardShell";
 import { Button } from "@/lib/components/ui";
 
-function Field({ label, value }: { label: string; value?: string | null }) {
-  return (
-    <div className="min-w-0">
-      <dt className="font-label-sm text-on-surface-variant">{label}</dt>
-      <dd className="font-body-md mt-space-2xs truncate text-on-surface">
-        {value?.trim() ? value : "—"}
-      </dd>
-    </div>
-  );
+function firstName(full?: string | null) {
+  if (!full?.trim()) return null;
+  return full.trim().split(/\s+/)[0];
 }
 
 /**
- * Post-login home: route is /dashboard (signIn callbackUrl).
- * Shows IdP (Zitadel) identity + app user from /users/sync.
+ * Welcome home — clean overview after login.
  */
 export default function DashboardHomePage() {
-  const { user, status: authStatus, idp, accessToken, idToken } = useUser();
-  const [copied, setCopied] = useState<"access" | "id" | null>(null);
-
-  async function copyToken(kind: "access" | "id", value?: string) {
-    if (!value) return;
-    try {
-      await navigator.clipboard.writeText(value);
-      setCopied(kind);
-      window.setTimeout(() => setCopied(null), 2000);
-    } catch {
-      // ignore clipboard failures (insecure context)
-    }
-  }
+  const { user, status: authStatus } = useUser();
 
   if (authStatus === "loading") {
     return (
@@ -61,16 +40,22 @@ export default function DashboardHomePage() {
     );
   }
 
-  if (authStatus === "stale" || authStatus === "unauthenticated") {
+  if (
+    authStatus === "stale" ||
+    authStatus === "unauthenticated" ||
+    authStatus === "error"
+  ) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-surface p-space-md">
         <div className="card-surface max-w-md text-center">
           <AlertCircle className="mx-auto h-12 w-12 text-error" />
           <h2 className="font-headline-sm mt-space-md text-on-surface">
-            Session expired
+            {authStatus === "error" ? "Couldn’t load your account" : "Session expired"}
           </h2>
           <p className="font-body-md mt-space-sm text-on-surface-variant">
-            Your session is no longer valid. Sign in again to continue.
+            {authStatus === "error"
+              ? "We couldn’t reach your NetHub profile. Try again or sign in again."
+              : "Your session is no longer valid. Sign in again to continue."}
           </p>
           <Button
             type="button"
@@ -80,168 +65,147 @@ export default function DashboardHomePage() {
             onClick={async () => {
               const url = await federatedLogout();
               if (url) window.location.href = url;
+              else window.location.href = "/login";
             }}
           >
-            Go to login
+            Sign in again
           </Button>
         </div>
       </div>
     );
   }
 
-  const displayName =
-    user?.full_name ||
-    idp?.name ||
-    user?.username ||
-    idp?.preferredUsername ||
-    "there";
-  const firstName = displayName.split(" ")[0];
+  const name = firstName(user?.full_name) || user?.email?.split("@")[0] || "there";
 
   return (
-    <DashboardShell title="Home" user={user}>
-      <div className="mx-auto max-w-4xl space-y-space-xl">
-        <header className="flex items-start gap-space-md">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-muted text-primary">
-            <LayoutDashboard className="h-6 w-6" aria-hidden />
-          </span>
+    <DashboardShell title="Overview" user={user}>
+      <div className="mx-auto max-w-5xl space-y-space-xl">
+        {/* Welcome */}
+        <section className="flex flex-col gap-space-md sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="font-headline-md text-on-surface">
-              Welcome back, {firstName}
-            </h1>
-            <p className="font-body-md mt-space-2xs text-on-surface-variant">
-              Signed in with NetHub ID. Account details below come from your
-              identity provider and your NetHub profile.
+            <p className="font-label-sm text-on-surface-variant">Overview</p>
+            <h2 className="font-headline-lg mt-space-2xs text-on-surface tracking-tight">
+              Welcome back, {name}
+            </h2>
+            <p className="font-body-md mt-space-sm max-w-xl text-on-surface-variant">
+              Manage your NetHub account, profile, and services from one place.
             </p>
           </div>
-        </header>
-
-        {/* Identity from Zitadel / OIDC + app sync */}
-        <section className="card-surface" aria-labelledby="identity-heading">
-          <div className="mb-space-lg flex items-center gap-space-sm">
-            <Shield className="h-5 w-5 text-primary" aria-hidden />
-            <h2 id="identity-heading" className="font-headline-sm text-on-surface">
-              Your identity
-            </h2>
-          </div>
-          <dl className="grid gap-space-md sm:grid-cols-2">
-            <Field label="Name" value={user?.full_name || idp?.name} />
-            <Field
-              label="Email"
-              value={user?.email || idp?.email || undefined}
-            />
-            <Field
-              label="Username"
-              value={user?.username || idp?.preferredUsername}
-            />
-            <Field
-              label="Email verified (IdP)"
-              value={
-                idp?.emailVerified === undefined
-                  ? undefined
-                  : idp.emailVerified
-                    ? "Yes"
-                    : "No"
-              }
-            />
-            <Field label="IdP subject (sub)" value={idp?.sub} />
-            <Field label="NetHub user id" value={user?.id} />
-            <Field label="Tenant" value={user?.tenant_name || user?.tenant_id} />
-            <Field
-              label="Account status"
-              value={user?.is_active ? "Active" : "Inactive"}
-            />
-          </dl>
-
-          {(accessToken || idToken) && (
-            <div className="mt-space-lg border-t border-outline-variant/40 pt-space-md">
-              <p className="font-label-sm text-on-surface-variant">
-                Session tokens (for debugging — do not share)
-              </p>
-              <div className="mt-space-sm flex flex-wrap gap-space-sm">
-                {accessToken && (
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={() => copyToken("access", accessToken)}
-                    aria-label="Copy access token"
-                  >
-                    {copied === "access" ? (
-                      <Check className="h-4 w-4" aria-hidden />
-                    ) : (
-                      <Copy className="h-4 w-4" aria-hidden />
-                    )}
-                    {copied === "access" ? "Access token copied" : "Copy access token"}
-                  </Button>
-                )}
-                {idToken && (
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={() => copyToken("id", idToken)}
-                    aria-label="Copy ID token"
-                  >
-                    {copied === "id" ? (
-                      <Check className="h-4 w-4" aria-hidden />
-                    ) : (
-                      <Copy className="h-4 w-4" aria-hidden />
-                    )}
-                    {copied === "id" ? "ID token copied" : "Copy ID token"}
-                  </Button>
-                )}
-              </div>
-              <p className="font-body-sm mt-space-xs text-on-surface-variant">
-                Paste into{" "}
-                <a
-                  href="https://jwt.io"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary underline-offset-2 hover:underline"
-                >
-                  jwt.io
-                </a>{" "}
-                to inspect claims (iss, aud, email, sub).
-              </p>
-            </div>
-          )}
-        </section>
-
-        <section
-          className="grid gap-space-md sm:grid-cols-2"
-          aria-label="Quick links"
-        >
-          <Link
-            href="/dashboard/services"
-            className="card-surface group flex flex-col transition hover:border-primary/40 hover:shadow-md"
-          >
-            <Boxes className="h-8 w-8 text-primary" aria-hidden />
-            <h2 className="font-headline-sm mt-space-md text-on-surface">
-              My services
-            </h2>
-            <p className="font-body-sm mt-space-xs flex-1 text-on-surface-variant">
-              Connected products, trials, and available links.
-            </p>
-            <span className="font-label-md mt-space-md inline-flex items-center gap-space-2xs text-primary">
-              Open
-              <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
-            </span>
-          </Link>
-
           <Link
             href="/dashboard/profile"
-            className="card-surface group flex flex-col transition hover:border-primary/40 hover:shadow-md"
+            className="btn-secondary inline-flex items-center gap-2 self-start rounded-lg px-4 py-2 text-sm font-semibold"
           >
-            <User className="h-8 w-8 text-primary" aria-hidden />
-            <h2 className="font-headline-sm mt-space-md text-on-surface">
-              Profile
-            </h2>
-            <p className="font-body-sm mt-space-xs flex-1 text-on-surface-variant">
-              Update account details and tenant information.
-            </p>
-            <span className="font-label-md mt-space-md inline-flex items-center gap-space-2xs text-primary">
-              Open
-              <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
-            </span>
+            Edit profile
+            <ArrowRight className="h-4 w-4" />
           </Link>
+        </section>
+
+        {/* Account snapshot */}
+        <section className="grid gap-space-md sm:grid-cols-3">
+          <div className="card-surface">
+            <div className="flex items-center gap-2 text-on-surface-variant">
+              <User className="h-4 w-4" />
+              <span className="font-label-sm">Account</span>
+            </div>
+            <p className="font-headline-sm mt-space-sm truncate text-on-surface">
+              {user?.full_name || "—"}
+            </p>
+            <p className="font-body-sm mt-space-2xs truncate text-on-surface-variant">
+              {user?.email}
+            </p>
+          </div>
+          <div className="card-surface">
+            <div className="flex items-center gap-2 text-on-surface-variant">
+              <Building2 className="h-4 w-4" />
+              <span className="font-label-sm">Organisation</span>
+            </div>
+            <p className="font-headline-sm mt-space-sm truncate text-on-surface">
+              {user?.tenant_name || "Personal"}
+            </p>
+            <p className="font-body-sm mt-space-2xs capitalize text-on-surface-variant">
+              {(user?.tenant_tier || "free").replace(/_/g, " ")} plan
+            </p>
+          </div>
+          <div className="card-surface">
+            <div className="flex items-center gap-2 text-on-surface-variant">
+              <Sparkles className="h-4 w-4" />
+              <span className="font-label-sm">Status</span>
+            </div>
+            <p className="font-headline-sm mt-space-sm text-on-surface">
+              {user?.is_active ? "Active" : "Inactive"}
+            </p>
+            <p className="font-body-sm mt-space-2xs text-on-surface-variant">
+              Profile synced with NetHub
+            </p>
+          </div>
+        </section>
+
+        {/* Quick links */}
+        <section>
+          <h3 className="font-label-sm mb-space-sm text-on-surface-variant">
+            Quick links
+          </h3>
+          <div className="grid gap-space-md sm:grid-cols-3">
+            <Link
+              href="/dashboard/services"
+              className="card-surface group block transition hover:border-primary/30"
+            >
+              <Boxes className="h-5 w-5 text-primary" />
+              <p className="font-headline-sm mt-space-sm text-on-surface group-hover:text-primary">
+                Services
+              </p>
+              <p className="font-body-sm mt-space-2xs text-on-surface-variant">
+                View products linked to your account. Request access is coming next.
+              </p>
+            </Link>
+            <Link
+              href="/dashboard/profile"
+              className="card-surface group block transition hover:border-primary/30"
+            >
+              <User className="h-5 w-5 text-primary" />
+              <p className="font-headline-sm mt-space-sm text-on-surface group-hover:text-primary">
+                Profile
+              </p>
+              <p className="font-body-sm mt-space-2xs text-on-surface-variant">
+                Update your display name and review organisation details.
+              </p>
+            </Link>
+            <Link
+              href="/dashboard/billing"
+              className="card-surface group block transition hover:border-primary/30"
+            >
+              <CreditCard className="h-5 w-5 text-primary" />
+              <p className="font-headline-sm mt-space-sm text-on-surface group-hover:text-primary">
+                Billing
+              </p>
+              <p className="font-body-sm mt-space-2xs text-on-surface-variant">
+                Plan and invoices when billing is enabled for your workspace.
+              </p>
+            </Link>
+          </div>
+        </section>
+
+        {/* Services CTA — placeholder for apply flow */}
+        <section className="card-surface border border-dashed border-outline-variant/60 bg-surface-container-low/50">
+          <div className="flex flex-col gap-space-md sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h3 className="font-headline-sm text-on-surface">
+                Need Tawala or NetPay?
+              </h3>
+              <p className="font-body-sm mt-space-2xs max-w-lg text-on-surface-variant">
+                Service applications (choose product, business details, review)
+                will live here. For now you can browse what’s available under
+                Services.
+              </p>
+            </div>
+            <Link
+              href="/dashboard/services"
+              className="btn-primary inline-flex shrink-0 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold"
+            >
+              Browse services
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
         </section>
       </div>
     </DashboardShell>
