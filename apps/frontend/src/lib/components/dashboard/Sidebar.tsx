@@ -7,6 +7,7 @@ import {
   CreditCard,
   ChevronLeft,
   ChevronRight,
+  LayoutDashboard,
   Home,
   Boxes,
 } from "lucide-react";
