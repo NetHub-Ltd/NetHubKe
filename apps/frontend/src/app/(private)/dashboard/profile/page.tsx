@@ -85,6 +85,7 @@ export default function ProfilePage() {
 
   async function onSave(e: React.FormEvent) {
     e.preventDefault();
+    if (!user) return;
     const next = fullName.trim();
     if (!next) {
       toast.error("Name is required");
