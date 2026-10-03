@@ -2,14 +2,14 @@
 
 import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import { toast } from "sonner";
 import { zUserRead } from "../types/api/zod.gen";
 import type { UserRead } from "../types/api/types.gen";
 
 /**
- * Session-first profile. Backend /users/me is optional enrichment.
- * Dashboard must work after Zitadel login even when FastAPI is down.
+ * Profile is authoritative from NetHub API via BFF.
+ * Session proves login; /api/nethub/users/me supplies the user after Zod validation.
  */
 export function useUser() {
   const { data: session, status: sessionStatus } = useSession();
@@ -19,34 +19,17 @@ export function useUser() {
   const isLoadingSession = sessionStatus === "loading";
   const isAuthenticated = sessionStatus === "authenticated" && !isPoisoned;
 
-  const sessionProfile: UserRead | null = useMemo(() => {
-    if (!isAuthenticated || !session?.user?.id) return null;
-    const u = session.user;
-    const idp = session.idp;
-    return {
-      id: u.id,
-      email: u.email || idp?.email || "",
-      full_name: u.name || idp?.name || "",
-      username: u.username || idp?.preferredUsername || "",
-      phone_number: u.phoneNumber ?? null,
-      is_active: u.isActive ?? true,
-      tenant_id: u.tenantId || null,
-      tenant_name: u.tenantName ?? null,
-      tenant_tier: u.tenantTier ?? null,
-      created_at: u.createdAt ?? null,
-    };
-  }, [isAuthenticated, session]);
-
   const {
     data: backendUser,
     isLoading: isLoadingUser,
     error: fetchError,
     refetch,
   } = useQuery({
-    queryKey: [`user-${session?.user?.id}`],
-    queryFn: async () => {
+    queryKey: ["nethub-user", session?.user?.id],
+    queryFn: async (): Promise<UserRead> => {
       const response = await fetch("/api/nethub/users/me");
       if (response.status === 401) throw new Error("Unauthorized");
+      if (response.status === 403) throw new Error("Account disabled");
       if (response.status === 502 || response.status >= 500) {
         throw new Error("Backend unavailable");
       }
@@ -57,10 +40,13 @@ export function useUser() {
         console.error("Zod Validation Errors:", parsed.error.format());
         throw new Error("Invalid user data format");
       }
+      if (!parsed.data.is_active) {
+        throw new Error("Account disabled");
+      }
       return parsed.data;
     },
     enabled: isAuthenticated,
-    retry: false,
+    retry: 1,
     staleTime: 1000 * 60 * 5,
   });
 
@@ -72,18 +58,25 @@ export function useUser() {
     }
   }, [isPoisoned]);
 
-  const user = backendUser ?? sessionProfile;
+  useEffect(() => {
+    if (fetchError?.message === "Account disabled") {
+      toast.error("Account disabled", {
+        description: "Contact NetHub support if this is unexpected.",
+      });
+    }
+  }, [fetchError]);
+
+  // Authoritative user = backend only (BFF already Zod-stripped)
+  const user = backendUser ?? null;
 
   const authStatus = (() => {
     if (isLoadingSession) return "loading";
     if (isPoisoned) return "stale";
     if (isUnauthenticated) return "unauthenticated";
-    // Authenticated with IdP session — do not wait forever on backend
-    if (isAuthenticated && (user || !isLoadingUser)) {
-      if (user) return "authenticated";
-    }
     if (isAuthenticated && isLoadingUser) return "loading";
-    if (isAuthenticated && sessionProfile) return "authenticated";
+    if (isAuthenticated && user) return "authenticated";
+    if (isAuthenticated && fetchError) return "error";
+    if (isAuthenticated) return "loading";
     return "idle";
   })();
 
@@ -92,13 +85,13 @@ export function useUser() {
     status: authStatus,
     error: isPoisoned
       ? "Session Expired"
-      : fetchError && !sessionProfile
+      : fetchError
         ? fetchError
         : null,
     accessToken: session?.accessToken,
     idToken: session?.idToken,
     idp: session?.idp,
-    backendSynced: Boolean(session?.backendSynced && backendUser),
+    backendSynced: Boolean(user),
     refresh: refetch,
   };
 }
