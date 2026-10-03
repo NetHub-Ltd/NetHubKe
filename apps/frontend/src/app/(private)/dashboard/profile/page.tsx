@@ -222,7 +222,9 @@ export default function ProfilePage() {
       <ProfileForm
         key={`${user.id ?? "anon"}:${user.full_name ?? ""}`}
         user={user}
-        refresh={() => refresh()}
+        refresh={async () => {
+          await refresh();
+        }}
       />
     </DashboardShell>
   );
