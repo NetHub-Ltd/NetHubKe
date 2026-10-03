@@ -219,7 +219,11 @@ export default function ProfilePage() {
 
   return (
     <DashboardShell title="Profile" user={user}>
-      <ProfileForm key={`${user.id ?? "anon"}:${user.full_name ?? ""}`} user={user} refresh={refresh} />
+      <ProfileForm
+        key={`${user.id ?? "anon"}:${user.full_name ?? ""}`}
+        user={user}
+        refresh={() => refresh()}
+      />
     </DashboardShell>
   );
 }
