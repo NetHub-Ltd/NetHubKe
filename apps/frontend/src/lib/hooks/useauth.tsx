@@ -89,8 +89,6 @@ export function useUser() {
         ? fetchError
         : null,
     accessToken: session?.accessToken,
-    idToken: session?.idToken,
-    idp: session?.idp,
     backendSynced: Boolean(user),
     refresh: refetch,
   };
