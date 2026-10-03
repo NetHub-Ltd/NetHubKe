@@ -219,7 +219,6 @@ export default function DashboardServicesPage() {
                   <p className="font-semibold text-on-surface">{item.name}</p>
                   <p className="truncate text-xs text-on-surface-variant">
                     {item.slug}
-                    {item.audience ? ` · aud ${item.audience}` : ""}
                   </p>
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-2 sm:flex-row sm:items-center">
