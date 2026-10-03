@@ -14,6 +14,7 @@ import {
 import { useUser } from "@/lib/hooks/useauth";
 import { federatedLogout } from "@/lib/actions/logout";
 import DashboardShell from "@/lib/components/dashboard/DashboardShell";
+import { Button } from "@/lib/components/ui";
 
 function firstName(full?: string | null) {
   if (!full?.trim()) return null;
