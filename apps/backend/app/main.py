@@ -2,14 +2,13 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from sqlalchemy import text
-from sqlmodel.ext.asyncio.session import AsyncSession
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import JSONResponse
 
 from app.api.v1.api_router import router as api_router
 from app.core.config import settings
 from app.core.redis_client import ensure_redis_ready, get_redis
-from app.db.session import engine
+from app.db.session import AsyncSessionLocal
 from app.utils.logging import logger
 
 
@@ -24,8 +23,11 @@ async def lifespan(app: FastAPI):
     # --------------------------------------------------------------
     # 1. Database readiness (must answer queries — not only "connect")
     # --------------------------------------------------------------
+    # Use AsyncSessionLocal (expire_on_commit=False) — not AsyncSession(engine),
+    # which defaults to expire_on_commit=True and triggers MissingGreenlet after
+    # commit when ORM attributes are accessed in lifespan.
     try:
-        async with AsyncSession(engine) as session:
+        async with AsyncSessionLocal() as session:
             logger.info("Verifying database readiness...")
             result = await session.exec(text("SELECT 1"))
             row = result.one() if hasattr(result, "one") else result.first()
@@ -64,9 +66,12 @@ async def lifespan(app: FastAPI):
     try:
         from app.services.tawala_token import ensure_signing_keys_ready
 
-        async with AsyncSession(engine) as session:
+        async with AsyncSessionLocal() as session:
             key_row = await ensure_signing_keys_ready(session)
-            logger.info(f"Signing keys ready kid={key_row.kid} status={key_row.status}")
+            # Copy scalars while session is open — avoid expired-instance IO after commit
+            kid = str(getattr(key_row, "kid", "") or "")
+            key_status = str(getattr(key_row, "status", "") or "")
+        logger.info(f"Signing keys ready kid={kid} status={key_status}")
     except Exception as e:
         logger.critical(f"Signing key bootstrap failed: {e}")
         raise RuntimeError(
@@ -120,7 +125,7 @@ async def readiness_check():
     from app.core.redis_client import ensure_redis_ready
 
     try:
-        async with AsyncSession(engine) as session:
+        async with AsyncSessionLocal() as session:
             await session.exec(text("SELECT 1"))
         await ensure_redis_ready(timeout_sec=2.0)
     except Exception as e:
