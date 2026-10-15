@@ -184,3 +184,30 @@ class ProductLink(BaseMixin, table=True):
     external_org_id: uuid.UUID = Field(index=True)
     is_active: bool = Field(default=True, index=True)
 
+
+class Membership(BaseMixin, table=True):
+    """
+    Service-agnostic product membership (Path A access plane).
+
+    One row per (user, tenant, product). Products interpret ``role``.
+    ``external_user_id`` is the product domain PK (e.g. Tawala PlatformUser.id
+    or Staff.id) — never rewrite domain FKs; link only.
+    """
+
+    __tablename__ = "memberships"
+    __table_args__ = (
+        sa.UniqueConstraint(
+            "user_id",
+            "tenant_id",
+            "product_id",
+            name="uq_memberships_user_tenant_product",
+        ),
+    )
+
+    user_id: uuid.UUID = Field(foreign_key="users.id", index=True)
+    tenant_id: uuid.UUID = Field(foreign_key="tenants.id", index=True)
+    product_id: uuid.UUID = Field(foreign_key="products.id", index=True)
+    role: str = Field(max_length=64, index=True)
+    external_user_id: Optional[uuid.UUID] = Field(default=None, index=True)
+    is_active: bool = Field(default=True, index=True)
+

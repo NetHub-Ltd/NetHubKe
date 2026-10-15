@@ -48,18 +48,34 @@ Admin router is not mounted.
 - Valid token, `is_active=false` → 403
 - Valid token, missing required scope → 403
 
-## Tawala hard-session exchange (M2)
+## Path A product access (service-agnostic)
 
 | Method | Path | Auth | Notes |
 |--------|------|------|-------|
-| GET | `/api/v1/auth/jwks.json` | None | Public JWKS for Tawala `AUTH_HARD_JWKS_URL` |
+| GET | `/api/v1/access/{product_slug}` | Bearer IdP JWT (`get_token_data`) | Principal JSON; no product JWT mint |
+
+**Response:** `user_id`, `sub`, `email`, `tenant_id`, `product`, `entitled`, `role`, `external_org_id`, `external_user_id`.
+
+**Data:** `memberships` — unique `(user_id, tenant_id, product_id)`; `role` interpreted by product; `external_user_id` = product domain PK (e.g. Tawala `PlatformUser.id` / `Staff.id`).
+
+**Products (rows, not tables):** `tawala`, `tawala-platform`, …
+
+**Fail closed:** unknown product 404; inactive user / no membership / not entitled 403; missing profile 404 (sync first).
+
+Apps forward the IdP token once (session establish); they do not decode IdP JWTs.
+
+## Tawala hard-session exchange (M2 — optional / not required for Path A)
+
+| Method | Path | Auth | Notes |
+|--------|------|------|-------|
+| GET | `/api/v1/auth/jwks.json` | None | Public JWKS for product JWT verify if used |
 | POST | `/api/v1/auth/exchange/tawala` | Keycloak Bearer | Mints `aud=tawala-api` RS256 token |
 
 **Flags (default off):** `TAWALA_EXCHANGE_ENABLED`, requires `TAWALA_JWT_PRIVATE_KEY` (PEM).
 
 **Claims issued:** `sub` (Keycloak id), `org_id` (`tenant.tawala_organization_id` or `tenant.id`), `principal` (`owner`\|`terminal`), `iss`, `aud`, `exp`, `iat`, optional `email`.
 
-No cashier rows are created in NetHub.
+No cashier rows are created in NetHub; Path A uses membership.`external_user_id` instead.
 
 ## Signing keys (N2)
 
