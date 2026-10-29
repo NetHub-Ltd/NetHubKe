@@ -127,7 +127,10 @@ async def test_mint_bad_principal():
 @pytest.mark.asyncio
 async def test_build_jwks_from_cache():
     db = AsyncMock()
-    cached = json.dumps({"keys": [{"kid": "c"}]})
+    cached = json.dumps({"keys": [{
+        "kty": "RSA", "use": "sig", "alg": "RS256",
+        "kid": "c", "n": "modulus", "e": "AQAB",
+    }]})
     with patch.object(tt, "ensure_fresh_signing_key", new_callable=AsyncMock):
         with patch.object(tt, "redis_get", new_callable=AsyncMock, return_value=cached):
             doc = await tt.build_jwks_document(db)
@@ -164,7 +167,10 @@ async def test_build_jwks_from_db_rows():
     row = MagicMock()
     row.status = "active"
     row.retire_after = None
-    row.public_jwk = {"kid": "db-kid", "kty": "RSA"}
+    row.public_jwk = {
+        "kid": "db-kid", "kty": "RSA", "use": "sig", "alg": "RS256",
+        "n": "modulus", "e": "AQAB", "d": "MUST_NOT_LEAK",
+    }
     result = MagicMock()
     result.__iter__ = lambda self: iter([row])
     result.first = MagicMock(return_value=None)
@@ -174,6 +180,8 @@ async def test_build_jwks_from_db_rows():
             with patch.object(tt, "redis_set", new_callable=AsyncMock):
                 doc = await tt.build_jwks_document(db)
     assert doc["keys"][0]["kid"] == "db-kid"
+    assert "d" not in doc["keys"][0]
+    assert set(doc["keys"][0]) <= {"kty", "use", "alg", "kid", "n", "e"}
 
 
 @pytest.mark.asyncio
@@ -283,3 +291,28 @@ async def test_mint_rejects_unknown_principal_without_loading_key():
                 )
     assert error.value.status_code == 400
     get_key.assert_not_awaited()
+
+
+def test_sanitize_public_jwks_filters_private_fields_and_duplicate_kids():
+    raw_keys = [
+        {
+            "kty": "RSA", "use": "sig", "alg": "RS256", "kid": "same",
+            "n": "modulus", "e": "AQAB", "d": "private",
+        },
+        {
+            "kty": "RSA", "use": "sig", "alg": "RS256", "kid": "same",
+            "n": "different-modulus", "e": "AQAB",
+        },
+        {
+            "kty": "RSA", "use": "sig", "alg": "RS256", "kid": "missing-modulus",
+            "e": "AQAB", "d": "private",
+        },
+        {
+            "kty": "RSA", "use": "sig", "alg": "HS256", "kid": "wrong-alg",
+            "n": "modulus", "e": "AQAB",
+        },
+    ]
+    result = tt._sanitize_public_jwks(raw_keys)
+    assert len(result) == 1
+    assert result[0]["kid"] == "same"
+    assert set(result[0]) == {"kty", "use", "alg", "kid", "n", "e"}
