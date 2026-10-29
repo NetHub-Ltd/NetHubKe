@@ -303,9 +303,18 @@ async def ensure_signing_keys_ready(db: AsyncSession) -> SigningKey:
     ).first()
     if row is not None:
         # Fail closed on malformed or unreadable stored private material.
-        serialization.load_pem_private_key(
-            _unprotect_private_pem(row.private_pem).encode("utf-8"), password=None
-        )
+        try:
+            serialization.load_pem_private_key(
+                _unprotect_private_pem(row.private_pem).encode("utf-8"), password=None
+            )
+        except HTTPException:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            logger.error("Stored signing key is invalid; refusing to use it")
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Stored signing key is invalid",
+            ) from exc
         return row
     return await bootstrap_signing_key(db)
 
@@ -429,6 +438,8 @@ async def build_jwks_document(db: AsyncSession) -> dict[str, Any]:
     keys = []
     now = datetime.now(timezone.utc)
     for row in rows:
+        if row.status not in ("active", "retiring"):
+            continue
         if row.status == "retiring" and row.retire_after is not None and row.retire_after <= now:
             continue  # treat as retired for JWKS until prune job runs
         jwk = _sanitize_public_jwks([row.public_jwk or {}])
@@ -441,6 +452,8 @@ async def build_jwks_document(db: AsyncSession) -> dict[str, Any]:
         await ensure_signing_keys_ready(db)
         rows = list(await db.exec(stmt))
         for row in rows:
+            if row.status not in ("active", "retiring"):
+                continue
             if row.status == "retiring" and row.retire_after is not None and row.retire_after <= now:
                 continue
             jwk = _sanitize_public_jwks([row.public_jwk or {}])
