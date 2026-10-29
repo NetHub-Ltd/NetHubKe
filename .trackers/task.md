@@ -8,3 +8,10 @@
 - Contract boundaries: no N6/N7 catalogue/launch work and no N8–N10 billing/settings work in this PR. Do not enable flags or change deployment.
 - Tests-first; inspect current implementation and tests before edits. Do not infer acceptance from closed legacy issues.
 - Workflow: topic branch; PR targets `dev`; update all four trackers at meaningful transitions; no merge without explicit user approval. Do not rebase, squash, reset, force-push, or rewrite history.
+
+## Implementation progress (2026-10-29)
+- Existing N3/N4/N5 code was audited before edits; the generic exchange route and product/link models already existed but acceptance gaps remained.
+- Added unique `jti` to minted product JWTs; serialized key rotation with the PostgreSQL advisory lock; added an emergency key revocation path that replaces an active compromised key, immediately retires the target, invalidates Redis caches, and writes a durable audit event.
+- Added PostgreSQL `security_audit_events` model/migration and durable audit for manual/automatic key rotation and emergency revocation.
+- Entitlement policy now denies an explicitly inactive service regardless of subscription flag; org resolution no longer silently treats `tenant.id` as a product's external organization ID. User sync no longer silently reactivates disabled users.
+- Added/updated tests for JWT jti, inactive service, missing explicit org link, disabled-user sync, key rotation audit and emergency revocation. CI not yet run; do not mark acceptance complete until the draft PR workflows and migration checks pass.
