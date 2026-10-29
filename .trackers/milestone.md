@@ -43,4 +43,4 @@
 - Branch `feat/n3-n5-token-policy-rotation`; issue #148.
 - A PostgreSQL migration adds durable `security_audit_events` (down revision `i2c3d4e5f6a7`); verify this is the active migration head in CI before merge.
 - Key remaining gaps to resolve before acceptance: canonical upstream identity mapping by (issuer, immutable sub); explicit org/individual grant precedence and a complete policy decision model; claim-profile behavior for non-Tawala products; comprehensive Redis failure, migration and end-to-end freshness tests.
-- CI and staging evidence pending. No flag enablement or merge is authorized.
+- Backend CI #75, Docker/Postgres/Redis readiness #36, and Vercel check passed on draft PR #151. These checks do not close the remaining acceptance gaps. No flag enablement or merge is authorized.
