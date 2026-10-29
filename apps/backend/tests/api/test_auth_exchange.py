@@ -271,3 +271,131 @@ async def test_exchange_rejects_client_principal_elevation_before_database_acces
     )
     assert response.status_code == 403
     assert response.json()["detail"] == "principal is derived by NetHubKe and cannot be overridden"
+
+
+@pytest.mark.asyncio
+async def test_exchange_rejects_inactive_local_user(
+    client: AsyncClient, db_session, make_kc_token, patch_kc_decode, monkeypatch
+):
+    import uuid
+
+    from app.api.v1.routes import auth
+    from app.db.models.models import Product, Tenant, User
+
+    tenant = Tenant(name="Inactive User Tenant", email=f"tenant-{uuid.uuid4()}@example.com")
+    db_session.add(tenant)
+    await db_session.flush()
+    user = User(
+        username=f"inactive-{uuid.uuid4().hex[:8]}",
+        email=f"inactive-{uuid.uuid4().hex[:8]}@example.com",
+        full_name="Inactive User",
+        is_active=False,
+        tenant_id=tenant.id,
+    )
+    db_session.add(user)
+    db_session.add(Product(
+        slug="tawala", name="Tawala", audience="tawala-api",
+        is_active=True, claim_profile="tawala",
+    ))
+    await db_session.commit()
+
+    monkeypatch.setattr(auth, "exchange_enabled", lambda: True)
+    entitlement = AsyncMock(return_value=True)
+    monkeypatch.setattr(auth, "check_entitled", entitlement)
+    response = await client.post(
+        "/api/v1/auth/exchange",
+        headers={"Authorization": f"Bearer {make_kc_token(email=user.email)}"},
+        json={"product": "tawala"},
+    )
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Account is disabled"
+    entitlement.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_exchange_rejects_user_without_tenant(
+    client: AsyncClient, db_session, make_kc_token, patch_kc_decode, monkeypatch
+):
+    import uuid
+
+    from app.api.v1.routes import auth
+    from app.db.models.models import Product, User
+
+    user = User(
+        username=f"orphan-{uuid.uuid4().hex[:8]}",
+        email=f"orphan-{uuid.uuid4().hex[:8]}@example.com",
+        full_name="Unlinked User",
+        is_active=True,
+        tenant_id=None,
+    )
+    db_session.add(user)
+    db_session.add(Product(
+        slug="tawala", name="Tawala", audience="tawala-api",
+        is_active=True, claim_profile="tawala",
+    ))
+    await db_session.commit()
+
+    monkeypatch.setattr(auth, "exchange_enabled", lambda: True)
+    response = await client.post(
+        "/api/v1/auth/exchange",
+        headers={"Authorization": f"Bearer {make_kc_token(email=user.email)}"},
+        json={"product": "tawala"},
+    )
+    assert response.status_code == 403
+    assert response.json()["detail"] == "User is not linked to a tenant"
+
+
+@pytest.mark.asyncio
+async def test_exchange_fails_closed_when_entitlement_denied(
+    client: AsyncClient, db_session, make_kc_token, patch_kc_decode, monkeypatch
+):
+    import uuid
+
+    from app.api.v1.routes import auth
+    from app.db.models.models import Product, Tenant, User
+
+    tenant = Tenant(name="Unentitled Tenant", email=f"tenant-{uuid.uuid4()}@example.com")
+    db_session.add(tenant)
+    await db_session.flush()
+    user = User(
+        username=f"unentitled-{uuid.uuid4().hex[:8]}",
+        email=f"unentitled-{uuid.uuid4().hex[:8]}@example.com",
+        full_name="Unentitled User",
+        is_active=True,
+        tenant_id=tenant.id,
+    )
+    db_session.add(user)
+    db_session.add(Product(
+        slug="tawala", name="Tawala", audience="tawala-api",
+        is_active=True, claim_profile="tawala",
+    ))
+    await db_session.commit()
+
+    monkeypatch.setattr(auth, "exchange_enabled", lambda: True)
+    monkeypatch.setattr(auth, "check_entitled", AsyncMock(return_value=False))
+    mint = AsyncMock()
+    monkeypatch.setattr(auth, "mint_product_access_token", mint)
+    response = await client.post(
+        "/api/v1/auth/exchange",
+        headers={"Authorization": f"Bearer {make_kc_token(email=user.email)}"},
+        json={"product": "tawala"},
+    )
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Tenant is not entitled to tawala"
+    mint.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_exchange_unknown_product_returns_404(
+    client: AsyncClient, make_kc_token, patch_kc_decode, monkeypatch
+):
+    from app.api.v1.routes import auth
+
+    monkeypatch.setattr(auth, "exchange_enabled", lambda: True)
+    response = await client.post(
+        "/api/v1/auth/exchange",
+        headers={"Authorization": f"Bearer {make_kc_token()}"},
+        json={"product": "unknown-product"},
+    )
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Unknown product: unknown-product"
