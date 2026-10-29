@@ -6,7 +6,12 @@ from pydantic import BaseModel, Field
 
 from app.api.deps import SessionDep, require_scopes
 from app.db.schemas.schemas import TokenData
-from app.services.tawala_token import rotate_signing_key, prune_expired_retiring_keys, build_jwks_document
+from app.services.tawala_token import (
+    rotate_signing_key,
+    emergency_revoke_signing_key,
+    prune_expired_retiring_keys,
+    build_jwks_document,
+)
 from app.utils.logging import logger
 
 router = APIRouter()
@@ -49,7 +54,7 @@ async def ops_rotate_signing_key(
     """
     _require_admin(token_data)
     hours = body.retire_after_hours if body else 24
-    result = await rotate_signing_key(db, retire_after_hours=hours)
+    result = await rotate_signing_key(db, retire_after_hours=hours, actor_sub=token_data.sub)
     logger.info(f"Ops key rotation by sub={token_data.sub} result={result}")
     return RotateResponse(**result)
 
@@ -73,3 +78,14 @@ async def ops_jwks_preview(
     """Admin visibility into current JWKS document (same as public /auth/jwks.json)."""
     _require_admin(token_data)
     return await build_jwks_document(db)
+
+
+@router.post("/signing-keys/{kid}/emergency-revoke")
+async def ops_emergency_revoke_signing_key(
+    kid: str,
+    db: SessionDep,
+    token_data: TokenData = Depends(require_scopes(["user:write"])),
+):
+    """Immediately retire a compromised key; replacement is created if it was active."""
+    _require_admin(token_data)
+    return await emergency_revoke_signing_key(db, kid=kid, actor_sub=token_data.sub)
