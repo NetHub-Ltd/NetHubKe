@@ -154,6 +154,7 @@ async def test_build_jwks_empty_db_env_fallback(rsa_pem):
                     MagicMock(
                         tawala_jwt_private_key=pem,
                         tawala_jwt_allow_env_pem=True,
+                        tawala_exchange_enabled=False,
                         jwks_redis_ttl_sec=60,
                     ),
                 ):
