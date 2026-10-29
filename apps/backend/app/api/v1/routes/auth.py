@@ -54,8 +54,8 @@ class ExchangeResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     expires_at: int
-    org_id: UUID
-    principal: str
+    org_id: Optional[UUID] = None
+    principal: Optional[str] = None
     audience: str
     product: str
 
