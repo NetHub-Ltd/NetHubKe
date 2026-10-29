@@ -8,4 +8,4 @@
 - Before encrypting existing rows, take and verify a PostgreSQL backup. The rollout helper defaults to dry-run; use `--apply` only after reviewing the count and confirming the encryption key is safely stored.
 - If encryption rollout fails, keep exchange disabled. Restore the verified database backup or rerun the idempotent helper after correcting the issue. Never restore plaintext rows into a production runtime that expects encrypted rows and claims production readiness.
 - The schema stays compatible because ciphertext uses the existing text column with an `enc:v1:` prefix. Downgrading application code does not decrypt ciphertext; preserve the encryption key and use a compatible application version or restore the pre-migration backup.
-- No merge without explicit user approval.
+- No merge without explicit user approval. Current PR CI evidence: backend CI #71 passed; Docker/Postgres/Redis readiness #32 passed.
