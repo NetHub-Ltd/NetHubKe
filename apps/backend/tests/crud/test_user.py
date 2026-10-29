@@ -34,8 +34,8 @@ async def test_get_or_create_by_email_idempotent(db_session):
     assert user.id is not None
     assert not hasattr(user, "keycloak_id") or getattr(user, "keycloak_id", None) is None
 
-    # Same email, different IdP sub → same NetHub user
-    td2 = _td("alice@example.com", sub="999999999999999999")
+    # The same stable upstream identity is idempotent.
+    td2 = _td("alice@example.com", sub="111")
     again = await user_crud.get_or_create(db_session, obj_in=td2)
     assert again.id == user.id
 
@@ -45,12 +45,28 @@ async def test_get_or_create_by_email_idempotent(db_session):
 
 
 @pytest.mark.asyncio
+async def test_get_or_create_rejects_same_email_with_different_subject(db_session):
+    from fastapi import HTTPException
+
+    user = await user_crud.get_or_create(
+        db_session, obj_in=_td("alice-conflict@example.com", sub="subject-a")
+    )
+    with pytest.raises(HTTPException) as error:
+        await user_crud.get_or_create(
+            db_session, obj_in=_td("alice-conflict@example.com", sub="subject-b")
+        )
+    assert error.value.status_code == 409
+    assert "Explicitly link" in error.value.detail
+    assert user.id is not None
+
+
+@pytest.mark.asyncio
 async def test_get_or_create_normalizes_email(db_session):
     td = _td("Bob@Example.COM", sub="zitadel-long-int-1")
     user = await user_crud.get_or_create(db_session, obj_in=td)
     assert user.email == "bob@example.com"
     again = await user_crud.get_or_create(
-        db_session, obj_in=_td("bob@example.com", sub="other")
+        db_session, obj_in=_td("bob@example.com", sub="zitadel-long-int-1")
     )
     assert again.id == user.id
 
