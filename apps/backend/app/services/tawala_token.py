@@ -651,14 +651,17 @@ async def mint_product_access_token(
     org_id: UUID,
     principal: str,
     email: Optional[str] = None,
+    claim_profile: str = "tawala",
 ) -> tuple[str, int]:
-    """Mint RS256 product access token using managed signing key."""
+    """Mint RS256 product access token using the registered server-side claim profile."""
     if not exchange_enabled():
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Token exchange is not enabled",
         )
-    if principal not in ("owner", "terminal"):
+    if claim_profile not in {"tawala", "standard"}:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Unsupported claim profile")
+    if claim_profile == "tawala" and principal not in ("owner", "terminal"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="principal must be owner or terminal",
@@ -670,8 +673,6 @@ async def mint_product_access_token(
     exp = now + ttl
     claims: dict[str, Any] = {
         "sub": str(sub),
-        "org_id": str(org_id),
-        "principal": principal,
         "product": product_slug,
         "iss": settings.tawala_jwt_issuer,
         "aud": audience,
@@ -679,6 +680,11 @@ async def mint_product_access_token(
         "exp": exp,
         "jti": uuid.uuid4().hex,
     }
+    if claim_profile == "tawala":
+        if org_id is None:
+            raise HTTPException(status_code=403, detail="Tawala claim profile requires an organization mapping")
+        claims["org_id"] = str(org_id)
+        claims["principal"] = principal
     if email:
         claims["email"] = email
 
