@@ -347,7 +347,7 @@ async def bootstrap_signing_key(db: AsyncSession) -> SigningKey:
         kid=kid,
         status="active",
         algorithm="RS256",
-        private_pem=pem,
+        private_pem=_protect_private_pem(pem),
         public_jwk=jwk,
     )
     db.add(row)
@@ -367,7 +367,7 @@ async def get_active_signing_key(db: AsyncSession) -> Tuple[Any, str]:
     stmt = select(SigningKey).where(
         SigningKey.status == "active",
         SigningKey.deleted_at.is_(None),
-    )
+    ).order_by(SigningKey.created_at, SigningKey.kid)
     row = (await db.exec(stmt)).first()
     if row is None:
         row = await ensure_signing_keys_ready(db)
