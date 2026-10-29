@@ -97,22 +97,6 @@ class UserCRUD(BaseCRUD[User, UserCreate, UserUpdate]):
         if not email:
             raise ValueError("email is required to sync a user")
 
-        existing = await self.get_by_email(db, email)
-        if existing:
-            logger.info(f"existing user: {existing.email}")
-            # Light profile refresh from IdP claims when blank
-            dirty = False
-            if obj_in.full_name and not (existing.full_name or "").strip():
-                existing.full_name = obj_in.full_name
-                dirty = True
-            if obj_in.username and not (existing.username or "").strip():
-                existing.username = obj_in.username
-                dirty = True
-            if dirty:
-                db.add(existing)
-                await db.commit()
-                await db.refresh(existing)
-            return existing
 
         try:
             personal_tenant = await self.get_or_create_tenancy(email, db)
@@ -132,14 +116,15 @@ class UserCRUD(BaseCRUD[User, UserCreate, UserUpdate]):
             await db.commit()
             logger.info(f"created user: {db_obj.id} issuer={issuer} subject_mapping_created=true")
             return db_obj
-        except IntegrityError:
+        except IntegrityError as exc:
             await db.rollback()
-            user = await self.get_by_email(db, email)
-            if not user:
-                raise Exception(
-                    f"IntegrityError for {email} but user not found by email"
-                )
-            return user
+            mapped = await self.get_by_upstream_identity(db, issuer=issuer, subject=subject)
+            if mapped:
+                return mapped
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Identity or account creation conflicted; explicit identity linking is required",
+            ) from exc
 
 
 user_crud = UserCRUD(User)
