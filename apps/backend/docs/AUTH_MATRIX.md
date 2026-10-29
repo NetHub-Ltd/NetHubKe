@@ -86,5 +86,5 @@ Evaluate separately: service exists/enabled and public availability; whether aut
 - Product JWTs include `jti`; required common claims and cross-product audience rejection must be tested.
 - Rotation uses a PostgreSQL advisory lock; manual/automatic rotation emits durable `security_audit_events` records. Emergency revoke retires a compromised key immediately, creates a replacement if the active key is targeted, and invalidates Redis caches.
 - Standard claim profile omits Tawala-only `org_id` and `principal`; Tawala retains its compatibility profile. Unsupported profiles fail closed.
-- Redis helpers degrade to cache misses/no-op writes; policy decisions still require authoritative PostgreSQL reads where cache invalidation can affect security. A positive entitlement cache remains a freshness risk until replaced/invalidated on every policy change.
+- Redis helpers degrade to cache misses/no-op writes. Entitlement decisions now read PostgreSQL rather than trusting cached positive/negative decisions; Redis writes are advisory only. This avoids stale positive grants at the cost of a database query per exchange.
 - The five-minute stale-access bound and live Zitadel staging readiness remain unproven until measured end-to-end evidence is recorded.
