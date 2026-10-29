@@ -1,8 +1,11 @@
-# Task: NetHubKe SSO architecture reconciliation (planning-only)
-- Issue: #142 — docs: reconcile SSO architecture contract, Path A, and N0–N10 roadmap
-- Umbrella: #57; conflicting Path A issue: #135
-- Branch: docs/n0-sso-contract-reconciliation → PR to dev
-- Approved target: Zitadel authenticates; NetHubKe owns canonical ecosystem identity/policy and issues short-lived product JWTs; product APIs validate NetHubKe JWKS locally.
-- Approved policy: users + organizations/tenants; explicit grant evaluation; public availability separated from authentication; centralized admin; maximum five-minute stale-access window.
-- Current work is documentation, issue reconciliation, and trackers only. No runtime/code/schema/flag/deployment changes.
-- Before implementation: obtain separate user approval for the implementation issue/acceptance plan. Never merge without explicit approval.
+# Task: N2 managed signing keys and JWKS reliability
+- Issue: #146 — implementation contract approved by user on 2026-10-29.
+- Programme: #57; approved architecture: `docs/SSO_ARCHITECTURE_CONTRACT.md`.
+- Branch: `feat/n2-managed-signing-keys` → PR to `dev`.
+- Baseline: `dev` as inspected 2026-10-29; N0 planning PR #143 and N1 implementation PR #145 reported merged by user. N1 PR reports 152 passed, 75.22% coverage and readiness CI passed.
+- Scope: key persistence/bootstrap correctness, public JWKS filtering/cache behavior, encryption-at-rest rollout, regression tests, AUTH_MATRIX and trackers.
+- Decisions: PostgreSQL remains durable source of truth; Redis is disposable cache; disabled exchange must not bootstrap; production signing requires `SIGNING_KEY_ENCRYPTION_KEY` and encrypted key rows.
+- Rollout guide: `apps/backend/docs/SIGNING_KEY_CUSTODY.md`; helper: `apps/backend/scripts/encrypt_signing_keys.py`.
+- Exchange remains default-off. No deployment, staging-readiness or production-flag claims.
+- Tests-first: N2 regression test file was committed before implementation changes. CI results still pending verification.
+- No merge without explicit user approval. Do not rebase, squash, reset, force-push or rewrite history.
