@@ -1,11 +1,10 @@
-# Rollback: N2 managed signing keys
-
-- Branch/issue: `feat/n2-managed-signing-keys` / #146; PR target `dev`.
-- No schema migration, deployment change, or feature-flag change is included.
-- Revert the implementation PR as one unit if tests or review fail. Do not reset, rebase, squash, force-push, or rewrite existing history.
-- Keep token exchange disabled throughout rollout and rollback.
-- `SIGNING_KEY_ENCRYPTION_KEY` must be backed up independently of PostgreSQL. Loss of this key makes encrypted private keys unusable; do not rotate or discard it casually.
-- Before encrypting existing rows, take and verify a PostgreSQL backup. The rollout helper defaults to dry-run; use `--apply` only after reviewing the count and confirming the encryption key is safely stored.
-- If encryption rollout fails, keep exchange disabled. Restore the verified database backup or rerun the idempotent helper after correcting the issue. Never restore plaintext rows into a production runtime that expects encrypted rows and claims production readiness.
-- The schema stays compatible because ciphertext uses the existing text column with an `enc:v1:` prefix. Downgrading application code does not decrypt ciphertext; preserve the encryption key and use a compatible application version or restore the pre-migration backup.
-- No merge without explicit user approval. Current PR CI evidence: backend CI #71 passed; Docker/Postgres/Redis readiness #32 passed.
+# Rollback: consolidated N3–N5 implementation
+- Branch/issue: `feat/n3-n5-token-policy-rotation` / #148; PR target `dev`.
+- Predecessor N2 PR #147 is merged. This branch must remain separate and reviewable.
+- Keep all token exchange/issuer flags default-off; no deployment or runtime flag changes are authorized.
+- If tests or review fail, revert this PR as one unit. Do not reset, rebase, squash, force-push, or rewrite history.
+- Any schema migration must include tested PostgreSQL upgrade/downgrade behavior and an explicit data compatibility plan before review.
+- PostgreSQL is authoritative for identity, products, links, entitlements and signing-key state. Redis is disposable cache; Redis failures must not become authorization grants or make durable state unrecoverable.
+- Signing-key emergency response must preserve the key custody secret independently of the database; never log or expose private material. Keep the documented N2 backup/encryption process intact.
+- If rollout behavior is uncertain, leave exchange disabled and revert the application change; do not claim five-minute revocation or staging readiness without evidence.
+- No merge without explicit user approval.
