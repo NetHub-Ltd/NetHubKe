@@ -179,6 +179,8 @@ async def rotate_signing_key(
     hours = max(1, int(retire_after_hours))
     retire_at = datetime.now(timezone.utc) + timedelta(hours=hours)
 
+    # Serialize concurrent rotations so only one rotation operation proceeds at a time.
+    await db.exec(text("SELECT pg_advisory_xact_lock(732104219)"))
     active_rows = list(
         await db.exec(
             select(SigningKey).where(
@@ -281,12 +283,7 @@ async def ensure_fresh_signing_key(db: AsyncSession) -> None:
 
 
 async def ensure_signing_keys_ready(db: AsyncSession) -> SigningKey:
-    """
-    Ensure at least one active signing key exists (backend-generated).
-
-    Not gated on exchange flag — JWKS must publish keys so product apps can
-    configure trust before the first exchange. Generates RSA in Postgres if empty.
-    """
+    """Ensure an active signing key exists while token exchange is enabled."""
     if not exchange_enabled():
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -591,6 +588,7 @@ async def mint_product_access_token(
         "aud": audience,
         "iat": now,
         "exp": exp,
+        "jti": uuid.uuid4().hex,
     }
     if email:
         claims["email"] = email
