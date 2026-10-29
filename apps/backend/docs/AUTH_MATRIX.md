@@ -82,7 +82,9 @@ Evaluate separately: service exists/enabled and public availability; whether aut
 ## Consolidated N3–N5 implementation (#148)
 
 - Generic exchange and Tawala compatibility alias exist; exchange remains feature-flagged default-off. Product audience/profile and canonical identity behavior require contract tests.
-- Product/org policy must fail closed for inactive products/services, disabled users and missing explicit external organization links. Email remains a compatibility lookup until issuer+immutable-sub identity mapping is delivered and migrated safely.
+- Product/org policy must fail closed for inactive products/services, disabled users and missing explicit external organization links. PR #152 adds a durable `(issuer, subject) → user UUID` mapping and stops email-only account linking; existing email-owned accounts require an explicit linking path.
 - Product JWTs include `jti`; required common claims and cross-product audience rejection must be tested.
 - Rotation uses a PostgreSQL advisory lock; manual/automatic rotation emits durable `security_audit_events` records. Emergency revoke retires a compromised key immediately, creates a replacement if the active key is targeted, and invalidates Redis caches.
+- Standard claim profile omits Tawala-only `org_id` and `principal`; Tawala retains its compatibility profile. Unsupported profiles fail closed.
+- Redis helpers degrade to cache misses/no-op writes. Entitlement decisions now read PostgreSQL rather than trusting cached positive/negative decisions; Redis writes are advisory only. This avoids stale positive grants at the cost of a database query per exchange.
 - The five-minute stale-access bound and live Zitadel staging readiness remain unproven until measured end-to-end evidence is recorded.

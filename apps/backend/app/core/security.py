@@ -131,6 +131,7 @@ def _decode_token(token: str) -> TokenData:
 
         validate_data = {
             "sub": str(payload.get("sub") or ""),
+            "iss": str(payload.get("iss") or issuer),
             "email": email,
             "preferred_username": preferred,
             "name": name,

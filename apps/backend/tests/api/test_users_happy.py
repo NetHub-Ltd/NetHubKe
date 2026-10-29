@@ -41,7 +41,7 @@ async def test_sync_with_zitadel_style_sub(
     body = r.json()
     assert body["email"] == "zitadel-user@example.com"
     assert body["id"]  # NetHub UUID
-    # Second sync same email different sub → same id
+    # A different upstream subject must not inherit an account by email.
     token2 = make_kc_token(
         sub="999999999999999999",
         email="zitadel-user@example.com",
@@ -50,5 +50,4 @@ async def test_sync_with_zitadel_style_sub(
     r2 = await client.post(
         "/api/v1/users/sync", headers={"Authorization": f"Bearer {token2}"}
     )
-    assert r2.status_code == 200, r2.text
-    assert r2.json()["id"] == body["id"]
+    assert r2.status_code == 409, r2.text

@@ -20,6 +20,12 @@ NetHubKe validates the configured upstream IdP access token and issues a short-l
 
 Tokens for one product must not be accepted by another product. Audience, issuer, algorithm, expiry, required claims and key id must all be verified by resource servers.
 
+## Profile: `standard`
+
+- Contains only the common claims (`iss, sub, aud, iat, exp, jti, product`) plus optional email.
+- Does not inherit Tawala-specific `org_id` or `principal` claims.
+- Organization context must be added only by a future explicitly defined product profile.
+
 ## Profile: `tawala`
 
 - Audience: registered product audience; the legacy `TAWALA_JWT_AUDIENCE` setting is server-side configuration.

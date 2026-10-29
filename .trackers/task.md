@@ -21,3 +21,30 @@
 - Backend CI run #75 passed: https://github.com/NetHub-Ltd/NetHubKe/actions/runs/40957949078
 - Docker/Postgres/Redis readiness run #36 passed: https://github.com/NetHub-Ltd/NetHubKe/actions/runs/40957949058
 - Vercel check passed for the current draft head. These results validate current tested paths only; N3–N5 remains incomplete until canonical identity mapping, explicit grant precedence, generic claim-profile behavior, and comprehensive freshness/emergency tests are resolved.
+
+
+## Follow-up to merged PR #151 — issue #152
+- User confirmed PR #151 merged to `dev`; acceptance gaps were not closed by merge. Work continues on `fix/n3-n5-acceptance-gaps` before N6–N7 (#149) starts.
+- Added `UserIdentity` with unique issuer+subject mapping and a PostgreSQL migration; validated token claims now carry issuer; sync creates identity mapping for new users and refuses email-only linking to an existing local account (409 requiring explicit linking); exchange looks up the canonical identity mapping.
+- Added `standard` product claim profile support that omits Tawala-only `org_id` and `principal`, and fails closed on unsupported profiles. Tawala retains its compatibility profile.
+- Removed trust in cached positive/negative entitlement decisions; PostgreSQL remains authoritative for each exchange decision, Redis writes are advisory only.
+- Added regression tests for identity constraints, issuer+subject lookup, refusing email-only account linking, standard JWT claims, and unknown claim profiles.
+- Important gaps still open: implement and test explicit organization/individual grant precedence and narrowly authorized admin override; provide a safe audited admin linking workflow for existing accounts; comprehensive emergency revocation/JWKS-cache behavior tests and measured end-to-end freshness bound. Do not start N6–N7 until those are closed and verified.
+- CI not yet checked for this branch; local tests not run.
+
+
+## CI repair checkpoint — 2026-10-29 23:08 UTC
+- PR #153 latest head: `efab03f2af994931aa04ae6e2d15f8d51b9f8d51f6` (branch `fix/n3-n5-acceptance-gaps`).
+- Corrected exchange fixtures to persist `UserIdentity` rows matching the exact token issuer and subject for success, inactive-user, no-tenant and entitlement-denied cases.
+- Corrected CRUD expectations: repeated same issuer+subject is idempotent; same email with a different subject raises 409. Added explicit regression coverage.
+- Corrected entitlement regression: stale Redis deny is ignored; database policy is recomputed and the advisory cache refreshed.
+- Latest CI runs triggered on this head: backend CI #86 and readiness #47. Both were in progress at checkpoint; do not mark tests green until completed.
+- Previous run #83: 7 failed / 164 passed, 72.93% coverage; readiness #44 passed. No merge authorized.
+
+
+## CI result — 2026-10-29 23:09 UTC
+- Backend CI run #86 PASSED: 172 tests passed, 73.38% coverage (70% threshold satisfied); per-file coverage check passed. https://github.com/NetHub-Ltd/NetHubKe/actions/runs/40970942410
+- Docker/PostgreSQL/Redis readiness run #47 PASSED. https://github.com/NetHub-Ltd/NetHubKe/actions/runs/40970942458
+- These runs checked code commit `efab03f2af994931aa04ae6e2d15f8d51b9f8d51f6`; later commits only append tracker documentation.
+- Codecov upload reports `Repository not found` but is configured non-blocking; workflow remains successful.
+- Green CI closes these test regressions only. Explicit grant precedence/admin override, safe audited account linking, emergency revocation/JWKS-cache tests, and measured end-to-end freshness remain open. PR #153 stays draft/unmerged; exchange remains default-off.

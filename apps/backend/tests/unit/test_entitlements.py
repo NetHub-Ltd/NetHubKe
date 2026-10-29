@@ -32,14 +32,18 @@ async def test_check_entitled_from_cache_hit_true():
 
 
 @pytest.mark.asyncio
-async def test_check_entitled_from_cache_hit_false():
+async def test_check_entitled_ignores_stale_cached_deny_and_recomputes_from_database():
     db = AsyncMock()
     tid = uuid4()
     result = MagicMock()
     result.first.return_value = MagicMock(is_active=True)
     db.exec = AsyncMock(return_value=result)
     with patch.object(ent, "redis_get", new_callable=AsyncMock, return_value="0"):
-        assert await ent.check_entitled(db, tenant_id=tid, product_slug="tawala") is False
+        with patch.object(ent, "redis_set", new_callable=AsyncMock) as cache_set:
+            with patch.object(ent.settings, "tawala_exchange_require_subscription", False):
+                assert await ent.check_entitled(db, tenant_id=tid, product_slug="tawala") is True
+    cache_set.assert_awaited_once()
+    assert cache_set.await_args.args[1] == "1"
 
 
 @pytest.mark.asyncio

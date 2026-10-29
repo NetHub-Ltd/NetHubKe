@@ -51,10 +51,17 @@ async def check_entitled(
         return False
 
     key = _entitle_cache_key(tenant_id, product_slug)
-    cached = await redis_get(key)
-    if cached is not None:
-        return cached == "1"
+    # A missing service catalogue entry is not an authorization grant. Tawala's
+    # explicit legacy compatibility mode is the only exception.
+    if service is None and not (
+        product_slug == "tawala"
+        and not bool(getattr(settings, "tawala_exchange_require_subscription", False))
+    ):
+        return False
 
+    # Authorization decisions must use the durable source of truth. Redis remains
+    # useful for observability/future optimization, but a positive cache hit must
+    # never outlive a grant revocation or account/service state change.
     entitled = await _compute_entitled(db, tenant_id=tenant_id, product_slug=product_slug)
     await redis_set(key, "1" if entitled else "0", ENTITLE_TTL_SEC)
     return entitled
@@ -110,7 +117,7 @@ async def resolve_org_id(
     tenant_tawala_org_id: Optional[UUID],
     tenant_id_fallback: UUID,
 ) -> UUID:
-    """Prefer product_links.external_org_id, then legacy tenant.tawala_organization_id, else tenant.id."""
+    """Resolve a product org only from an active explicit link or approved Tawala legacy mapping."""
     link = (
         await db.exec(
             select(ProductLink).where(

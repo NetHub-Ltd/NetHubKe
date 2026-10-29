@@ -16,3 +16,17 @@
 ## Validation checkpoint
 - Draft PR #151 CI: backend run #75 passed; Docker/Postgres/Redis readiness run #36 passed; Vercel check passed.
 - The new audit migration ran through the readiness workflow successfully, but explicit migration upgrade/downgrade assertions and the remaining identity/policy acceptance work still need review. Keep exchange disabled and PR in draft until all gates pass.
+
+
+## PR #151 acceptance-gap follow-up (#152)
+- Branch: `fix/n3-n5-acceptance-gaps`; target `dev`.
+- New migration `k4e5f6a7b8c9_add_user_identities.py` creates an empty identity map; it deliberately does not auto-link existing accounts by email. Existing email collisions fail closed until an explicitly authorized linking workflow is implemented.
+- If migration/tests fail, keep exchange disabled and revert the follow-up PR as one unit. Do not backfill identity links from email or rewrite Git history.
+- Standard claim profile emits no Tawala-specific organization/principal claims. Confirm resource servers accept that contract before enabling any non-Tawala exchange.
+
+
+## PR #153 CI repair checkpoint — 2026-10-29 23:08 UTC
+- Test-only follow-up commits added to `fix/n3-n5-acceptance-gaps` at head `efab03f2af994931aa04ae6e2d15f8d51b9f8d51f6`.
+- If these tests expose a real application defect, fix the underlying behavior without weakening issuer+subject identity or database-authoritative entitlement checks.
+- Backend CI #86 and readiness #47 were in progress; do not claim success until confirmed. PR remains draft/unmerged; exchange remains default-off.
+- Existing rollback policy unchanged: no history rewrite, no deployment/flag changes, and no merge without explicit user approval.
