@@ -6,6 +6,7 @@ from hashlib import sha256
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlmodel import select
+from sqlalchemy.exc import IntegrityError
 
 from app.api.deps import SessionDep, require_scopes
 from app.core.config import settings
@@ -176,5 +177,9 @@ async def ops_link_upstream_identity(
             "proof_email_verified": True,
         },
     ))
-    await db.commit()
+    try:
+        await db.commit()
+    except IntegrityError as exc:
+        await db.rollback()
+        raise HTTPException(status_code=409, detail="Identity link conflicts with an existing mapping") from exc
     return {"linked": True, "user_id": str(user_id), "already_linked": False}
