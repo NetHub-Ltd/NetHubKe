@@ -31,3 +31,12 @@
 - Added regression tests for identity constraints, issuer+subject lookup, refusing email-only account linking, standard JWT claims, and unknown claim profiles.
 - Important gaps still open: implement and test explicit organization/individual grant precedence and narrowly authorized admin override; provide a safe audited admin linking workflow for existing accounts; comprehensive emergency revocation/JWKS-cache behavior tests and measured end-to-end freshness bound. Do not start N6–N7 until those are closed and verified.
 - CI not yet checked for this branch; local tests not run.
+
+
+## CI repair checkpoint — 2026-10-29 23:08 UTC
+- PR #153 latest head: `efab03f2af994931aa04ae6e2d15f8d51b9f8d51f6` (branch `fix/n3-n5-acceptance-gaps`).
+- Corrected exchange fixtures to persist `UserIdentity` rows matching the exact token issuer and subject for success, inactive-user, no-tenant and entitlement-denied cases.
+- Corrected CRUD expectations: repeated same issuer+subject is idempotent; same email with a different subject raises 409. Added explicit regression coverage.
+- Corrected entitlement regression: stale Redis deny is ignored; database policy is recomputed and the advisory cache refreshed.
+- Latest CI runs triggered on this head: backend CI #86 and readiness #47. Both were in progress at checkpoint; do not mark tests green until completed.
+- Previous run #83: 7 failed / 164 passed, 72.93% coverage; readiness #44 passed. No merge authorized.
