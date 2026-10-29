@@ -181,6 +181,7 @@ def patch_kc_decode(rsa_keys, monkeypatch):
         return TokenData.model_validate(
             {
                 "sub": str(payload.get("sub") or ""),
+                "issuer": str(payload.get("iss") or settings.idp_issuer),
                 "email": payload.get("email"),
                 "preferred_username": payload.get("preferred_username"),
                 "name": payload.get("name"),
