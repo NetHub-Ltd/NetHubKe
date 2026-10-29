@@ -195,7 +195,8 @@ async def test_exchange_success_uses_server_resolved_identity_and_product_audien
     import uuid
 
     from app.api.v1.routes import auth
-    from app.db.models.models import Product, Tenant, User
+    from app.db.models.models import Product, Tenant, User, UserIdentity
+    from app.core.config import settings
 
     tenant = Tenant(name="Exchange Test Tenant", email=f"tenant-{uuid.uuid4()}@example.com")
     db_session.add(tenant)
@@ -215,7 +216,9 @@ async def test_exchange_success_uses_server_resolved_identity_and_product_audien
         is_active=True,
         claim_profile="tawala",
     )
+    subject = f"exchange-{uuid.uuid4()}"
     db_session.add(user)
+    db_session.add(UserIdentity(issuer=settings.idp_issuer, subject=subject, user_id=user.id))
     db_session.add(product)
     await db_session.commit()
     await db_session.refresh(user)
@@ -227,7 +230,7 @@ async def test_exchange_success_uses_server_resolved_identity_and_product_audien
     monkeypatch.setattr(auth, "resolve_org_id", AsyncMock(return_value=tenant.id))
     monkeypatch.setattr(auth, "mint_product_access_token", minted)
 
-    token = make_kc_token(email=user.email, roles=["org_owner"])
+    token = make_kc_token(sub=subject, email=user.email, roles=["org_owner"])
     response = await client.post(
         "/api/v1/auth/exchange",
         headers={"Authorization": f"Bearer {token}"},
@@ -280,7 +283,8 @@ async def test_exchange_rejects_inactive_local_user(
     import uuid
 
     from app.api.v1.routes import auth
-    from app.db.models.models import Product, Tenant, User
+    from app.db.models.models import Product, Tenant, User, UserIdentity
+    from app.core.config import settings
 
     tenant = Tenant(name="Inactive User Tenant", email=f"tenant-{uuid.uuid4()}@example.com")
     db_session.add(tenant)
@@ -292,7 +296,9 @@ async def test_exchange_rejects_inactive_local_user(
         is_active=False,
         tenant_id=tenant.id,
     )
+    subject = f"inactive-{uuid.uuid4()}"
     db_session.add(user)
+    db_session.add(UserIdentity(issuer=settings.idp_issuer, subject=subject, user_id=user.id))
     db_session.add(Product(
         slug="tawala", name="Tawala", audience="tawala-api",
         is_active=True, claim_profile="tawala",
@@ -304,7 +310,7 @@ async def test_exchange_rejects_inactive_local_user(
     monkeypatch.setattr(auth, "check_entitled", entitlement)
     response = await client.post(
         "/api/v1/auth/exchange",
-        headers={"Authorization": f"Bearer {make_kc_token(email=user.email)}"},
+        headers={"Authorization": f"Bearer {make_kc_token(sub=subject, email=user.email)}"},
         json={"product": "tawala"},
     )
     assert response.status_code == 403
@@ -319,7 +325,8 @@ async def test_exchange_rejects_user_without_tenant(
     import uuid
 
     from app.api.v1.routes import auth
-    from app.db.models.models import Product, User
+    from app.db.models.models import Product, User, UserIdentity
+    from app.core.config import settings
 
     user = User(
         username=f"orphan-{uuid.uuid4().hex[:8]}",
@@ -328,7 +335,9 @@ async def test_exchange_rejects_user_without_tenant(
         is_active=True,
         tenant_id=None,
     )
+    subject = f"orphan-{uuid.uuid4()}"
     db_session.add(user)
+    db_session.add(UserIdentity(issuer=settings.idp_issuer, subject=subject, user_id=user.id))
     db_session.add(Product(
         slug="tawala", name="Tawala", audience="tawala-api",
         is_active=True, claim_profile="tawala",
@@ -338,7 +347,7 @@ async def test_exchange_rejects_user_without_tenant(
     monkeypatch.setattr(auth, "exchange_enabled", lambda: True)
     response = await client.post(
         "/api/v1/auth/exchange",
-        headers={"Authorization": f"Bearer {make_kc_token(email=user.email)}"},
+        headers={"Authorization": f"Bearer {make_kc_token(sub=subject, email=user.email)}"},
         json={"product": "tawala"},
     )
     assert response.status_code == 403
@@ -352,7 +361,8 @@ async def test_exchange_fails_closed_when_entitlement_denied(
     import uuid
 
     from app.api.v1.routes import auth
-    from app.db.models.models import Product, Tenant, User
+    from app.db.models.models import Product, Tenant, User, UserIdentity
+    from app.core.config import settings
 
     tenant = Tenant(name="Unentitled Tenant", email=f"tenant-{uuid.uuid4()}@example.com")
     db_session.add(tenant)
@@ -364,7 +374,9 @@ async def test_exchange_fails_closed_when_entitlement_denied(
         is_active=True,
         tenant_id=tenant.id,
     )
+    subject = f"unentitled-{uuid.uuid4()}"
     db_session.add(user)
+    db_session.add(UserIdentity(issuer=settings.idp_issuer, subject=subject, user_id=user.id))
     db_session.add(Product(
         slug="tawala", name="Tawala", audience="tawala-api",
         is_active=True, claim_profile="tawala",
@@ -377,7 +389,7 @@ async def test_exchange_fails_closed_when_entitlement_denied(
     monkeypatch.setattr(auth, "mint_product_access_token", mint)
     response = await client.post(
         "/api/v1/auth/exchange",
-        headers={"Authorization": f"Bearer {make_kc_token(email=user.email)}"},
+        headers={"Authorization": f"Bearer {make_kc_token(sub=subject, email=user.email)}"},
         json={"product": "tawala"},
     )
     assert response.status_code == 403
