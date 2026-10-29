@@ -1,32 +1,46 @@
 # SSO Programme Milestone Tracker
-**Umbrella:** #57
-**Architecture contract:** `docs/SSO_ARCHITECTURE_CONTRACT.md`
-**Last inspected:** 2026-10-29
+**Umbrella:** #57  
+**Architecture contract:** `docs/SSO_ARCHITECTURE_CONTRACT.md`  
+**Last inspected:** 2026-10-29  
 **Rule:** issue closure is not acceptance evidence; record CI/staging evidence separately.
 
+## Delivery plan — three PRs
+| PR group | Milestones | Tracking issue | Existing milestone issues | State |
+|---|---|---|---|---|
+| PR 1 | N3–N5 | #148 | #46–#50 | In progress on `feat/n3-n5-token-policy-rotation` |
+| PR 2 | N6–N7 | #149 | #51–#53 | Planned; depends on PR 1 acceptance |
+| PR 3 | N8–N10 | #150 | #54–#56 | Planned; depends on PRs 1 and 2 acceptance |
+
+## Milestone status
 | Milestone | Issues | Current state | Acceptance / next action |
 |---|---|---|---|
-| N0 | #40, #41; reconciliation #142 / PR #143 | User reports PR #143 merged to dev | Approved Zitadel/NetHubKe token-issuer architecture and trackers are the baseline. |
-| N1 | #42, #43; implementation #144 / PR #145 | User reports PR #145 merged to dev | PR body reports 152 tests passed, 75.22% coverage and readiness workflow passed. No live Zitadel staging verification claimed. |
-| N2 | #44, #45; approved implementation #146 | In progress on `feat/n2-managed-signing-keys` | PR #147 open to dev; Backend CI #71 and readiness #32 passed; review encrypted private-key custody, JWKS/cache coverage and rollout behavior before acceptance. |
-| N3 | #46, #47 | Not started | Generic product exchange and claim profiles; only after N2 acceptance. |
-| N4 | #48, #49 | Not started | Product/org links, generic memberships and explicit entitlement precedence. |
-| N5 | #50 | Not started | Rotation and invalidation, including compromised-key response. N2 must not claim N5 acceptance. |
-| N6 | #51, #52 | Not started | Service catalogue API/UI and connected/trial/not-connected status. |
-| N7 | #53 | Not started | Feature-flagged launch hop and redirect/error/token-leakage controls. |
-| N8 | #54 | Not started | Read-only billing UI/API; NetHub remains billing source of truth. |
-| N9 | #55 | Open | Settings route/toggles/profile polish after prior milestones are evidenced. |
-| N10 | #56 | Open | Flag matrix, staging soak and end-to-end success criteria. |
+| N0 | #40, #41; reconciliation #142 / PR #143 | User reports PR #143 merged to dev | Architecture baseline established; staging evidence remains distinct. |
+| N1 | #42, #43; implementation #144 / PR #145 | User reports PR #145 merged to dev | Prior PR reports 152 tests passed, 75.22% coverage and readiness success; verify end-to-end compatibility as later changes land. |
+| N2 | #44, #45; implementation #146 / PR #147 | PR #147 merged to dev at `31f61ded9a124009db8bdecf2c251d2628ade756` | Managed keys/JWKS baseline merged. Encryption rollout/staging and five-minute freshness are not proven by merge alone. |
+| N3 | #46, #47 | In progress under #148 | Generic exchange route exists; JWT now adds jti and docs correct canonical subject claims. Stable upstream (issuer, sub) mapping remains unresolved; feature remains default-off. |
+| N4 | #48, #49 | In progress under #148 | Inactive service denies and external org resolution fails closed without explicit link/approved Tawala mapping. Full grant-precedence model remains to audit/implement. |
+| N5 | #50 | In progress under #148 | Rotation serialized; durable audit model + emergency key revocation implemented; CI/migration/test verification pending. |
+| N6 | #51, #52 | Planned under #149 | Service catalogue and connected/trial/not-connected status. |
+| N7 | #53 | Planned under #149 | Secure feature-flagged launch hop; redirect/token-leakage controls. |
+| N8 | #54 | Planned under #150 | Read-only billing API/UI; NetHub remains source of truth. |
+| N9 | #55 | Planned under #150 | Settings UI with real behavior and server-side authorization. |
+| N10 | #56 | Planned under #150 | Operational runbook, staging soak, end-to-end acceptance and freshness bound. |
 
-## N2 implementation record
-- User approved issue #146 on 2026-10-29.
-- Branch: `feat/n2-managed-signing-keys`; PR target `dev`.
-- Tests-first regression suite added before implementation edits. PR #147 open to dev; backend CI results remain pending.
-- Private-key custody decision: Fernet encryption using externally supplied `SIGNING_KEY_ENCRYPTION_KEY`; production refuses legacy plaintext rows and missing/invalid encryption config. Existing rows require the documented backup + encryption helper rollout.
-- Exchange remains default-off. No deployment change or staging readiness claim.
-- N2 acceptance is not complete until CI, migration checks, Postgres/Redis behavior and test evidence are reviewed.
+## N2 record
+- User-approved implementation contract #146 was delivered in PR #147 and is now merged.
+- Private-key custody uses Fernet encryption with external `SIGNING_KEY_ENCRYPTION_KEY`; production refuses missing/invalid key or legacy plaintext rows. Existing data still requires documented, backed-up conversion before production signing.
+- Exchange remains default-off; no deployment/flag change or staging-readiness claim.
+- PR merge does not itself establish live Zitadel staging readiness or the five-minute end-to-end stale-access guarantee.
 
-## Remaining architectural gaps (not silently closed by N2)
-- Canonical identity mapping uses `(issuer, immutable sub)`.
-- Maximum stale-access/revocation window is five minutes end-to-end.
-- Live Zitadel staging verification and N10 operational readiness.
+## Remaining programme gaps
+- Canonical identity must be keyed by `(issuer, immutable sub)`; email is not a stable identity key.
+- Organization and individual grants require explicit, tested precedence.
+- Five-minute maximum stale-access/revocation window must be demonstrated end-to-end.
+- Live Zitadel staging verification and N10 operational readiness remain open.
+
+
+## Current PR 1 implementation notes
+- Branch `feat/n3-n5-token-policy-rotation`; issue #148.
+- A PostgreSQL migration adds durable `security_audit_events` (down revision `i2c3d4e5f6a7`); verify this is the active migration head in CI before merge.
+- Key remaining gaps to resolve before acceptance: canonical upstream identity mapping by (issuer, immutable sub); explicit org/individual grant precedence and a complete policy decision model; claim-profile behavior for non-Tawala products; comprehensive Redis failure, migration and end-to-end freshness tests.
+- Backend CI #75, Docker/Postgres/Redis readiness #36, and Vercel check passed on draft PR #151. These checks do not close the remaining acceptance gaps. No flag enablement or merge is authorized.

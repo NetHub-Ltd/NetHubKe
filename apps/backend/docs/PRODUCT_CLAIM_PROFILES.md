@@ -1,53 +1,44 @@
 # Product claim profiles (N3)
 
-NetHubKe mints product access tokens after a successful Keycloak session exchange.
-Each **product** row has a `claim_profile` that documents expected JWT claims.
+NetHubKe validates the configured upstream IdP access token and issues a short-lived product token only after server-side identity and access-policy checks. Product APIs validate NetHubKe JWTs locally through `GET /api/v1/auth/jwks.json`; they must not accept upstream Zitadel tokens as product API credentials by default.
 
-Issuer (`iss`) is always the NetHubKe AS issuer (`TAWALA_JWT_ISSUER` / settings).
-Audience (`aud`) comes from the product registry (overridable for Tawala via `TAWALA_JWT_AUDIENCE`).
+## Common product JWT contract
 
-## Profile: `tawala` (first product)
+| Claim/header | Required | Meaning |
+|---|---|---|
+| `iss` | yes | NetHubKe token issuer |
+| `sub` | yes | Stable NetHubKe canonical user identifier; currently the local user UUID. Upstream identity mapping by `(issuer, immutable sub)` remains a tracked gap and must not be replaced with email as a primary key. |
+| `aud` | yes | Exact audience from the registered product configuration |
+| `iat`, `exp` | yes | Issue and expiry times; keep access tokens short-lived and design freshness end-to-end |
+| `jti` | yes | Unique token identifier |
+| JOSE `kid` | yes | Managed signing-key identifier |
+| JOSE `alg` | yes | Fixed allowlisted algorithm (currently RS256) |
+| `product` | yes | Registered product slug |
+| `org_id` | profile-specific | External product organization ID resolved from an explicit product link or approved legacy mapping |
+| `principal` | Tawala profile | `owner` or `terminal`, derived from verified upstream claims; never caller-selected |
+| `email` | optional | Profile/contact attribute, never the canonical identity key |
 
-| Claim | Required | Description |
-|-------|----------|-------------|
-| `sub` | yes | Keycloak subject (stable IdP user id), **not** NetHub internal UUID |
-| `org_id` | yes | Tawala organization UUID: `tenant.tawala_organization_id` if set, else `tenant.id` |
-| `principal` | yes | `owner` or `terminal` (POS shared session) |
-| `aud` | yes | Default `tawala-api` (`TAWALA_JWT_AUDIENCE`) |
-| `iss` | yes | NetHubKe AS issuer |
-| `iat` / `exp` | yes | Issued / expiry (TTL `TAWALA_JWT_TTL_SEC`, default 8h) |
-| `email` | optional | User email when available |
-| `product` | yes (N3+) | Product slug, e.g. `tawala` |
+Tokens for one product must not be accepted by another product. Audience, issuer, algorithm, expiry, required claims and key id must all be verified by resource servers.
 
-### Alignment notes
+## Profile: `tawala`
 
-- Product apps (Tawala) must validate signature via NetHubKe **JWKS** (`GET /api/v1/auth/jwks.json`), not Keycloak JWKS.
-- Do not put NetHub private signing keys in product frontends or repos.
-- Exchange remains **off** until `TAWALA_EXCHANGE_ENABLED=true` and signing keys are available (N2).
+- Audience: registered product audience; the legacy `TAWALA_JWT_AUDIENCE` setting is server-side configuration.
+- `org_id`: active `product_links.external_org_id`, then the explicitly configured legacy `tenant.tawala_organization_id`. There is no implicit fallback to `tenant.id`.
+- `principal`: `owner` or `terminal`, derived by NetHubKe from verified upstream roles. Client-supplied hints can only match the derived value.
+- Exchange endpoints: `POST /api/v1/auth/exchange` with `{"product":"tawala"}`; compatibility alias `POST /api/v1/auth/exchange/tawala`.
+- Requires a verified upstream Bearer token, an active local user, tenant association, active product and entitlement decision.
 
-### Endpoint
+## Adding another product
 
-- Generic: `POST /api/v1/auth/exchange` body `{"product":"tawala"}`
-- Alias: `POST /api/v1/auth/exchange/tawala`
+1. Register its stable slug, exact audience, active state and claim profile in the PostgreSQL `products` registry.
+2. Document its required claims here and add positive/negative contract tests.
+3. Resolve any external organization identifier through a product-specific link; never assume the NetHub tenant UUID is valid in another product.
+4. Keep exchange disabled until the rollout and staging acceptance gate is met.
 
-Both require `Authorization: Bearer <Keycloak access token>` and a synced local user with tenant.
+## Entitlement and organization policy
 
-## Adding a product later
-
-1. Insert `products` row (`slug`, `audience`, `claim_profile`, `is_active`).
-2. Document a new profile section here (required claims).
-3. N4+ may add `product_links` / entitlement checks before mint.
-
-## N4: product_links
-
-`org_id` resolution order on exchange:
-
-1. Active `product_links` row for `(tenant, product)` → `external_org_id`
-2. Else for Tawala: `tenant.tawala_organization_id` (legacy)
-3. Else `tenant.id`
-
-Owners/admins set links via `PUT /api/v1/users/me/product-links`  
-`{"product":"tawala","external_org_id":"<uuid>"}`.
-
-Entitlement cache key: `nethub:as:entitle:{tenant_id}:{product_slug}` (TTL 120s).  
-When `TAWALA_EXCHANGE_REQUIRE_SUBSCRIPTION=true`, missing entitlement **fails closed**.
+- PostgreSQL is authoritative; Redis is disposable cache.
+- A globally inactive product/service and a disabled identity are hard denials.
+- When subscription enforcement is required, missing service/subscription data fails closed.
+- Product/org links are authorization-sensitive; only centrally authorized owners/admins may manage them.
+- A five-minute stale-access bound is an end-to-end requirement, not a claim implied by the 120-second cache TTL.

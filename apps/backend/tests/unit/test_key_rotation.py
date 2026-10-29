@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from app.services.tawala_token import _generate_rsa_keypair, public_jwk_from_private
+from app.db.models.models import SecurityAuditEvent
 from app.services import tawala_token as tt
 
 
@@ -36,6 +37,7 @@ async def test_rotate_signing_key_marks_previous_retiring():
     assert "new_kid" in out
     assert out["retiring_kids"] == ["old"]
     assert old.status == "retiring"
+    assert any(isinstance(call.args[0], SecurityAuditEvent) for call in db.add.call_args_list)
 
 
 @pytest.mark.asyncio
@@ -54,3 +56,26 @@ async def test_prune_expired_retiring_keys():
     assert n == 1
     assert expired.status == "retired"
     inv.assert_awaited()
+
+
+@pytest.mark.asyncio
+async def test_emergency_revoke_active_key_replaces_and_audits():
+    target = MagicMock(kid="compromised", status="active", deleted_at=None)
+    target_result = MagicMock()
+    target_result.first.return_value = target
+    active_result = MagicMock()
+    active_result.__iter__ = lambda self: iter([target])
+    db = AsyncMock()
+    db.exec = AsyncMock(side_effect=[MagicMock(), target_result, active_result])
+    db.add = MagicMock()
+    db.commit = AsyncMock()
+    with patch.object(tt, "invalidate_jwks_cache", new_callable=AsyncMock) as invalidate:
+        result = await tt.emergency_revoke_signing_key(
+            db, kid="compromised", actor_sub="operator-sub"
+        )
+    assert target.status == "retired"
+    assert result["status"] == "retired"
+    assert result["replacement_kid"]
+    assert any(isinstance(call.args[0], SecurityAuditEvent) for call in db.add.call_args_list)
+    db.commit.assert_awaited_once()
+    invalidate.assert_awaited_once()

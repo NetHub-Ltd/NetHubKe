@@ -38,10 +38,22 @@ Marks retiring rows with `retire_after <= now` as `retired` and purges JWKS cach
 
 Schedule this as a cron/job if desired; rotate alone is enough for dual publish during the window.
 
+## Emergency compromise response
+
+For a suspected compromised key, use the operator-only emergency endpoint:
+
+```http
+POST /api/v1/ops/signing-keys/{kid}/emergency-revoke
+Authorization: Bearer <NetHubKe admin/ops token with user:write>
+```
+
+The operation takes the PostgreSQL advisory lock. If the target is active, it creates a replacement active key in the same database transaction and immediately marks the compromised key retired (not retiring), records a durable `security_audit_events` entry, commits, and invalidates the JWKS/active-kid Redis caches. A non-active target is marked retired. Unknown key IDs return 404. Resource servers must refresh JWKS promptly; this endpoint alone does not prove the end-to-end five-minute stale-access bound.
+
 ## Security
 
 - Private PEMs never leave NetHubKe / this database.
-- Rotation requires elevated Keycloak roles (`admin`, `super_admin`, or `ops`) plus `user:write` scope.
+- Rotation requires elevated upstream roles (`admin`, `super_admin`, or `ops`) plus `user:write` scope.
+- Manual and automatic rotations create durable audit events; structured logs complement but do not replace those records.
 
 ## Auto-rotation (max age)
 
@@ -64,6 +76,6 @@ On application start the lifespan **hard-stops** unless:
 2. Redis answers `PING`
 3. At least one **active** signing key exists (generated into Postgres if the table was empty)
 
-JWKS (`GET /api/v1/auth/jwks.json`) also bootstraps if the key table is empty, so `{"keys":[]}` should not persist after a healthy start.
+JWKS reads do not create signing state while exchange is disabled; an empty `{"keys":[]}` response is valid when no key exists and exchange is off.
 
 k3s: use `/ready` for readinessProbe and `/health` for livenessProbe.

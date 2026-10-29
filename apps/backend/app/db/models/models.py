@@ -211,3 +211,17 @@ class Membership(BaseMixin, table=True):
     external_user_id: Optional[uuid.UUID] = Field(default=None, index=True)
     is_active: bool = Field(default=True, index=True)
 
+
+
+
+class SecurityAuditEvent(BaseMixin, table=True):
+    """Durable audit trail for sensitive identity and signing-key operations."""
+
+    __tablename__ = "security_audit_events"
+
+    actor_sub: str = Field(max_length=255, index=True)
+    action: str = Field(max_length=100, index=True)
+    target_type: str = Field(max_length=100, index=True)
+    target_id: str = Field(max_length=255, index=True)
+    outcome: str = Field(max_length=32, default="success", index=True)
+    details: dict = Field(default_factory=dict, sa_column=Column(JSONB, nullable=False))

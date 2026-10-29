@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
 import pytest
+from fastapi import HTTPException
 
 from app.services import entitlements as ent
 from app.db.models.models import ProductLink
@@ -23,6 +24,9 @@ def test_product_link_tablename():
 async def test_check_entitled_from_cache_hit_true():
     db = AsyncMock()
     tid = uuid4()
+    result = MagicMock()
+    result.first.return_value = MagicMock(is_active=True)
+    db.exec = AsyncMock(return_value=result)
     with patch.object(ent, "redis_get", new_callable=AsyncMock, return_value="1"):
         assert await ent.check_entitled(db, tenant_id=tid, product_slug="tawala") is True
 
@@ -31,6 +35,9 @@ async def test_check_entitled_from_cache_hit_true():
 async def test_check_entitled_from_cache_hit_false():
     db = AsyncMock()
     tid = uuid4()
+    result = MagicMock()
+    result.first.return_value = MagicMock(is_active=True)
+    db.exec = AsyncMock(return_value=result)
     with patch.object(ent, "redis_get", new_callable=AsyncMock, return_value="0"):
         assert await ent.check_entitled(db, tenant_id=tid, product_slug="tawala") is False
 
@@ -39,6 +46,9 @@ async def test_check_entitled_from_cache_hit_false():
 async def test_check_entitled_computes_when_require_off():
     db = AsyncMock()
     tid = uuid4()
+    result = MagicMock()
+    result.first.return_value = MagicMock(is_active=True)
+    db.exec = AsyncMock(return_value=result)
     with patch.object(ent, "redis_get", new_callable=AsyncMock, return_value=None):
         with patch.object(ent, "redis_set", new_callable=AsyncMock) as rs:
             with patch.object(
@@ -73,7 +83,7 @@ async def test_resolve_org_id_prefers_link():
 
 
 @pytest.mark.asyncio
-async def test_resolve_org_id_falls_back_to_tenant():
+async def test_resolve_org_id_fails_closed_without_explicit_mapping():
     db = AsyncMock()
     tid = uuid4()
     product = MagicMock()
@@ -82,11 +92,25 @@ async def test_resolve_org_id_falls_back_to_tenant():
     result = MagicMock()
     result.first = MagicMock(return_value=None)
     db.exec = AsyncMock(return_value=result)
-    org = await ent.resolve_org_id(
-        db,
-        tenant_id=tid,
-        product=product,
-        tenant_tawala_org_id=None,
-        tenant_id_fallback=tid,
-    )
-    assert org == tid
+    with pytest.raises(HTTPException) as error:
+        await ent.resolve_org_id(
+            db,
+            tenant_id=tid,
+            product=product,
+            tenant_tawala_org_id=None,
+            tenant_id_fallback=tid,
+        )
+    assert error.value.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_inactive_service_denies_even_when_entitlement_cache_allows():
+    db = AsyncMock()
+    result = MagicMock()
+    result.first.return_value = MagicMock(is_active=False)
+    db.exec = AsyncMock(return_value=result)
+    with patch.object(ent, "redis_set", new_callable=AsyncMock) as cache_set:
+        allowed = await ent.check_entitled(db, tenant_id=uuid4(), product_slug="tawala")
+    assert allowed is False
+    cache_set.assert_awaited_once()
+    assert cache_set.await_args.args[1] == "0"

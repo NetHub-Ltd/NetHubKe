@@ -32,7 +32,7 @@ from app.core.redis_client import (
     redis_get,
     redis_set,
 )
-from app.db.models.models import SigningKey
+from app.db.models.models import SecurityAuditEvent, SigningKey
 from app.utils.logging import logger
 
 
@@ -168,6 +168,7 @@ async def rotate_signing_key(
     db: AsyncSession,
     *,
     retire_after_hours: int = 24,
+    actor_sub: str | None = None,
 ) -> dict[str, Any]:
     """
     N5: Create a new active signing key; mark previous active key(s) as retiring.
@@ -179,6 +180,8 @@ async def rotate_signing_key(
     hours = max(1, int(retire_after_hours))
     retire_at = datetime.now(timezone.utc) + timedelta(hours=hours)
 
+    # Serialize concurrent rotations so only one rotation operation proceeds at a time.
+    await db.exec(text("SELECT pg_advisory_xact_lock(732104219)"))
     active_rows = list(
         await db.exec(
             select(SigningKey).where(
@@ -201,6 +204,18 @@ async def rotate_signing_key(
         public_jwk=jwk,
     )
     db.add(new_row)
+    db.add(SecurityAuditEvent(
+        actor_sub=actor_sub or "system:auto-rotation",
+        action="signing_key.rotate",
+        target_type="signing_key",
+        target_id=kid,
+        outcome="success",
+        details={
+            "new_kid": kid,
+            "retiring_kids": [r.kid for r in active_rows],
+            "retire_after": retire_at.isoformat(),
+        },
+    ))
     await db.commit()
     await db.refresh(new_row)
     await invalidate_jwks_cache()
@@ -212,6 +227,82 @@ async def rotate_signing_key(
         "retiring_kids": [r.kid for r in active_rows],
         "retire_after": retire_at.isoformat(),
     }
+
+
+async def emergency_revoke_signing_key(
+    db: AsyncSession,
+    *,
+    kid: str,
+    actor_sub: str,
+) -> dict[str, Any]:
+    """Immediately retire a compromised key, replacing it first if it is active."""
+    await db.exec(text("SELECT pg_advisory_xact_lock(732104219)"))
+    target = (
+        await db.exec(
+            select(SigningKey).where(
+                SigningKey.kid == kid,
+                SigningKey.deleted_at.is_(None),
+            )
+        )
+    ).first()
+    if target is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Signing key not found")
+
+    now = datetime.now(timezone.utc)
+    previous_status = target.status
+    replacement_kid: str | None = None
+    if target.status == "active":
+        overlap_hours = max(1, int(getattr(settings, "signing_key_retire_overlap_hours", 24) or 24))
+        retire_at = now + timedelta(hours=overlap_hours)
+        active_rows = list(
+            await db.exec(
+                select(SigningKey).where(
+                    SigningKey.status == "active",
+                    SigningKey.deleted_at.is_(None),
+                )
+            )
+        )
+        for row in active_rows:
+            if row.kid == kid:
+                row.status = "retired"
+                row.retire_after = now
+            else:
+                row.status = "retiring"
+                row.retire_after = retire_at
+            db.add(row)
+        new_kid, pem, jwk, _ = _generate_rsa_keypair()
+        db.add(SigningKey(
+            kid=new_kid,
+            status="active",
+            algorithm="RS256",
+            private_pem=_protect_private_pem(pem),
+            public_jwk=jwk,
+        ))
+        replacement_kid = new_kid
+    else:
+        target.status = "retired"
+        target.retire_after = now
+        db.add(target)
+
+    db.add(SecurityAuditEvent(
+        actor_sub=actor_sub,
+        action="signing_key.emergency_revoke",
+        target_type="signing_key",
+        target_id=kid,
+        outcome="success",
+        details={
+            "previous_status": previous_status,
+            "replacement_kid": replacement_kid,
+            "revoked_at": now.isoformat(),
+        },
+    ))
+    await db.commit()
+    await invalidate_jwks_cache()
+    logger.warning(
+        f"Emergency signing-key revocation kid={kid} previous_status={previous_status} "
+        f"replacement_kid={replacement_kid} actor_sub={actor_sub}"
+    )
+    return {"kid": kid, "status": "retired", "replacement_kid": replacement_kid}
 
 
 async def prune_expired_retiring_keys(db: AsyncSession) -> int:
@@ -281,12 +372,7 @@ async def ensure_fresh_signing_key(db: AsyncSession) -> None:
 
 
 async def ensure_signing_keys_ready(db: AsyncSession) -> SigningKey:
-    """
-    Ensure at least one active signing key exists (backend-generated).
-
-    Not gated on exchange flag — JWKS must publish keys so product apps can
-    configure trust before the first exchange. Generates RSA in Postgres if empty.
-    """
+    """Ensure an active signing key exists while token exchange is enabled."""
     if not exchange_enabled():
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -591,6 +677,7 @@ async def mint_product_access_token(
         "aud": audience,
         "iat": now,
         "exp": exp,
+        "jti": uuid.uuid4().hex,
     }
     if email:
         claims["email"] = email

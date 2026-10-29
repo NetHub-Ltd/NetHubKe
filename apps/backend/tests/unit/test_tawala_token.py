@@ -270,6 +270,7 @@ async def test_mint_product_success_token_claims_and_signature(rsa_pem):
     assert claims["principal"] == "terminal"
     assert claims["product"] == "netpay"
     assert claims["iat"] >= now
+    assert isinstance(claims["jti"], str) and len(claims["jti"]) >= 32
     assert claims["exp"] == exp
     assert 0 < claims["exp"] - claims["iat"] <= 60
     assert claims["email"] == "user@example.com"

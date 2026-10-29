@@ -77,4 +77,12 @@ Evaluate separately: service exists/enabled and public availability; whether aut
 - JWKS sanitization permits only public RSA RS256 fields, deduplicates `kid`, and excludes retiring keys whose `retire_after` has elapsed.
 - Private PEM values can be stored as `enc:v1:` Fernet ciphertext with `SIGNING_KEY_ENCRYPTION_KEY`. Production fails closed when the key is absent/invalid or a legacy plaintext row is used for signing.
 - Existing plaintext rows require the documented, backed-up rollout in [SIGNING_KEY_CUSTODY.md](SIGNING_KEY_CUSTODY.md) using `scripts/encrypt_signing_keys.py`. No deployment or exchange flag change is authorized by this PR.
-- CI evidence is pending. This does not establish live Zitadel staging readiness, N5 emergency rotation acceptance, or the five-minute revocation bound.
+- N2 PR #147 is merged to `dev`; merge is not evidence of live Zitadel staging readiness or the five-minute revocation bound.
+
+## Consolidated N3–N5 implementation (#148)
+
+- Generic exchange and Tawala compatibility alias exist; exchange remains feature-flagged default-off. Product audience/profile and canonical identity behavior require contract tests.
+- Product/org policy must fail closed for inactive products/services, disabled users and missing explicit external organization links. Email remains a compatibility lookup until issuer+immutable-sub identity mapping is delivered and migrated safely.
+- Product JWTs include `jti`; required common claims and cross-product audience rejection must be tested.
+- Rotation uses a PostgreSQL advisory lock; manual/automatic rotation emits durable `security_audit_events` records. Emergency revoke retires a compromised key immediately, creates a replacement if the active key is targeted, and invalidates Redis caches.
+- The five-minute stale-access bound and live Zitadel staging readiness remain unproven until measured end-to-end evidence is recorded.
