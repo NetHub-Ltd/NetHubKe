@@ -34,9 +34,22 @@ async def check_entitled(
     Return whether tenant may exchange tokens for product.
 
     - Cached in Redis as nethub:as:entitle:{tenant}:{product} ("1" / "0")
-    - When tawala_exchange_require_subscription is false: allow (still requires active product)
-    - When true: fail closed unless an active subscription path is found (or service missing → allow with warning for now)
+    - An explicitly inactive service is always denied.
+    - When subscription enforcement is enabled, missing/inactive service or active subscription denies.
     """
+    # Global service disable is a hard denial, independent of subscription policy.
+    service = (
+        await db.exec(
+            select(Service).where(
+                Service.slug == product_slug,
+                Service.deleted_at.is_(None),  # type: ignore[union-attr]
+            )
+        )
+    ).first()
+    if service is not None and not service.is_active:
+        await redis_set(_entitle_cache_key(tenant_id, product_slug), "0", ENTITLE_TTL_SEC)
+        return False
+
     key = _entitle_cache_key(tenant_id, product_slug)
     cached = await redis_get(key)
     if cached is not None:
@@ -60,7 +73,7 @@ async def _compute_entitled(
     if not require:
         return True
 
-    # Fail-closed path: require active service catalog entry; subscriptions optional until N8
+    # Subscription-enforced products require an active service catalogue entry.
     svc = (
         await db.exec(
             select(Service).where(
@@ -112,7 +125,11 @@ async def resolve_org_id(
         return link.external_org_id
     if product.slug == "tawala" and tenant_tawala_org_id:
         return tenant_tawala_org_id
-    return tenant_id_fallback
+    # Never silently treat a NetHub tenant UUID as an external product organization ID.
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail=f"No active organization link is configured for product {product.slug}",
+    )
 
 
 async def upsert_product_link(
