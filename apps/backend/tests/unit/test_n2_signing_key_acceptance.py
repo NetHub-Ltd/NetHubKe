@@ -113,3 +113,66 @@ def test_private_key_storage_policy_is_explicit_and_production_fails_closed():
         with pytest.raises(HTTPException) as error:
             tt._require_signing_key_encryption()
     assert error.value.status_code == 503
+
+
+
+def test_private_key_encryption_round_trip(rsa_pem):
+    from cryptography.fernet import Fernet
+
+    pem, _ = rsa_pem
+    key = Fernet.generate_key().decode("ascii")
+    with patch.object(
+        tt, "settings",
+        MagicMock(environment="development", signing_key_encryption_key=key),
+    ):
+        protected = tt._protect_private_pem(pem)
+        assert protected.startswith("enc:v1:")
+        assert pem not in protected
+        assert tt._unprotect_private_pem(protected) == pem
+
+
+def test_production_refuses_legacy_plaintext_key(rsa_pem):
+    pem, _ = rsa_pem
+    from cryptography.fernet import Fernet
+
+    key = Fernet.generate_key().decode("ascii")
+    with patch.object(
+        tt, "settings",
+        MagicMock(environment="production", signing_key_encryption_key=key),
+    ):
+        with pytest.raises(HTTPException) as error:
+            tt._unprotect_private_pem(pem)
+    assert error.value.status_code == 503
+
+
+@pytest.mark.asyncio
+async def test_jwks_cache_miss_uses_configured_ttl():
+    db = AsyncMock()
+    row = MagicMock(status="active", retire_after=None, public_jwk={
+        "kty": "RSA", "use": "sig", "alg": "RS256", "kid": "durable", "n": "AQ", "e": "AQAB"
+    })
+    db.exec = AsyncMock(return_value=_result([row]))
+    cache_set = AsyncMock()
+    with (
+        patch.object(tt, "exchange_enabled", return_value=False),
+        patch.object(tt, "ensure_fresh_signing_key", new_callable=AsyncMock),
+        patch.object(tt, "redis_get", new_callable=AsyncMock, return_value=None),
+        patch.object(tt, "redis_set", cache_set),
+        patch.object(tt, "settings", MagicMock(jwks_redis_ttl_sec=17)),
+    ):
+        document = await tt.build_jwks_document(db)
+    assert document["keys"][0]["kid"] == "durable"
+    cache_set.assert_awaited_once()
+    assert cache_set.await_args.args[0] == tt.JWKS_CACHE_KEY
+    assert cache_set.await_args.args[2] == 17
+
+
+@pytest.mark.asyncio
+async def test_bootstrap_rechecks_active_key_after_acquiring_lock():
+    existing = MagicMock(kid="already-active", status="active")
+    db = AsyncMock()
+    db.exec = AsyncMock(side_effect=[MagicMock(), _result([existing])])
+    result = await tt.bootstrap_signing_key(db)
+    assert result is existing
+    db.add.assert_not_called()
+    db.commit.assert_not_awaited()
