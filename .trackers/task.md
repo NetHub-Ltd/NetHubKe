@@ -40,3 +40,11 @@
 - Corrected entitlement regression: stale Redis deny is ignored; database policy is recomputed and the advisory cache refreshed.
 - Latest CI runs triggered on this head: backend CI #86 and readiness #47. Both were in progress at checkpoint; do not mark tests green until completed.
 - Previous run #83: 7 failed / 164 passed, 72.93% coverage; readiness #44 passed. No merge authorized.
+
+
+## CI result — 2026-10-29 23:09 UTC
+- Backend CI run #86 PASSED: 172 tests passed, 73.38% coverage (70% threshold satisfied); per-file coverage check passed. https://github.com/NetHub-Ltd/NetHubKe/actions/runs/40970942410
+- Docker/PostgreSQL/Redis readiness run #47 PASSED. https://github.com/NetHub-Ltd/NetHubKe/actions/runs/40970942458
+- These runs checked code commit `efab03f2af994931aa04ae6e2d15f8d51b9f8d51f6`; later commits only append tracker documentation.
+- Codecov upload reports `Repository not found` but is configured non-blocking; workflow remains successful.
+- Green CI closes these test regressions only. Explicit grant precedence/admin override, safe audited account linking, emergency revocation/JWKS-cache tests, and measured end-to-end freshness remain open. PR #153 stays draft/unmerged; exchange remains default-off.
