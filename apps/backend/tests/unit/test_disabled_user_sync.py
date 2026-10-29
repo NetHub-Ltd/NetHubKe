@@ -17,6 +17,7 @@ async def test_get_or_create_does_not_reactivate_disabled_user():
     )
     token = TokenData(
         sub="immutable-subject",
+        issuer="https://idp.example",
         email="disabled@example.com",
         username="disabled",
         full_name="Disabled User",
@@ -24,7 +25,7 @@ async def test_get_or_create_does_not_reactivate_disabled_user():
         roles=["user"],
         scope="",
     )
-    with patch.object(user_crud, "get_by_email", new_callable=AsyncMock, return_value=existing):
+    with patch.object(user_crud, "get_by_upstream_identity", new_callable=AsyncMock, return_value=existing):
         result = await user_crud.get_or_create(db, token)
 
     assert result is existing
