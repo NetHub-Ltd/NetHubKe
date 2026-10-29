@@ -121,13 +121,14 @@ async def _run_exchange(
 
     product = await get_product_by_slug(db, product_slug)
 
-    # NOTE: email lookup is the current compatibility behavior. The approved target
-    # is stable (issuer, subject) identity mapping; that needs its own migration/issue.
-    user = await user_crud.get_by_email(db, str(token_data.email))
+    # Resolve only by validated immutable upstream identity. Email is not an identity key.
+    user = await user_crud.get_by_upstream_identity(
+        db, issuer=token_data.issuer, subject=token_data.sub
+    )
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="User profile not initialized; call POST /users/sync first",
+            detail="Upstream identity is not linked; call POST /users/sync or request explicit account linking",
         )
     if not user.is_active:
         raise HTTPException(
@@ -159,18 +160,25 @@ async def _run_exchange(
             detail=f"Tenant is not entitled to {product.slug}",
         )
 
-    org_id = await resolve_org_id(
-        db,
-        tenant_id=tenant.id,
-        product=product,
-        tenant_tawala_org_id=tenant.tawala_organization_id,
-        tenant_id_fallback=tenant.id,
-    )
+    org_id = None
+    if (product.claim_profile or "").strip().lower() == "tawala":
+        org_id = await resolve_org_id(
+            db,
+            tenant_id=tenant.id,
+            product=product,
+            tenant_tawala_org_id=tenant.tawala_organization_id,
+            tenant_id_fallback=tenant.id,
+        )
 
     nethub_sub = str(user.id)
     audience = product.audience
     if product.slug == "tawala":
         audience = getattr(settings, "tawala_jwt_audience", None) or product.audience
+    claim_profile = (product.claim_profile or "").strip().lower()
+    if claim_profile not in {"tawala", "standard"}:
+        raise HTTPException(status_code=503, detail="Unsupported product claim profile")
+    if claim_profile == "standard":
+        principal = "user"
 
     access_token, exp = await mint_product_access_token(
         db,
@@ -180,6 +188,7 @@ async def _run_exchange(
         org_id=org_id,
         principal=principal,
         email=user.email,
+        claim_profile=claim_profile,
     )
     logger.info(
         f"Exchange ok product={product.slug} user={user.id} org_id={org_id} principal={principal}"
