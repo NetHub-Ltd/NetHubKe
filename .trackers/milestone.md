@@ -8,7 +8,7 @@
 |---|---|---|---|
 | N0 | #40, #41; reconciliation #142 / PR #143 | User reports PR #143 merged to dev | Approved Zitadel/NetHubKe token-issuer architecture and trackers are the baseline. |
 | N1 | #42, #43; implementation #144 / PR #145 | User reports PR #145 merged to dev | PR body reports 152 tests passed, 75.22% coverage and readiness workflow passed. No live Zitadel staging verification claimed. |
-| N2 | #44, #45; approved implementation #146 | In progress on `feat/n2-managed-signing-keys` | PR #147 open to dev; verify tests-first bootstrap, encrypted private-key custody, JWKS filtering/cache and rollout behavior in CI before acceptance. |
+| N2 | #44, #45; approved implementation #146 | In progress on `feat/n2-managed-signing-keys` | PR #147 open to dev; Backend CI #71 and readiness #32 passed; review encrypted private-key custody, JWKS/cache coverage and rollout behavior before acceptance. |
 | N3 | #46, #47 | Not started | Generic product exchange and claim profiles; only after N2 acceptance. |
 | N4 | #48, #49 | Not started | Product/org links, generic memberships and explicit entitlement precedence. |
 | N5 | #50 | Not started | Rotation and invalidation, including compromised-key response. N2 must not claim N5 acceptance. |
