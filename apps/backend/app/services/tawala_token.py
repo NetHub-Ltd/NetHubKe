@@ -20,6 +20,7 @@ from cryptography.fernet import Fernet, InvalidToken
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from fastapi import HTTPException, status
+from sqlalchemy import text
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -64,6 +65,8 @@ def _require_signing_key_encryption() -> str | None:
 
 
 def _protect_private_pem(private_pem: str) -> str:
+    if private_pem.startswith(_ENCRYPTED_PEM_PREFIX):
+        return private_pem
     key = _require_signing_key_encryption()
     if key is None:
         return private_pem
@@ -308,7 +311,21 @@ async def ensure_signing_keys_ready(db: AsyncSession) -> SigningKey:
 
 
 async def bootstrap_signing_key(db: AsyncSession) -> SigningKey:
-    """Create first active key if none exist. Prefer env PEM material if set."""
+    """Create the first active key under a PostgreSQL transaction advisory lock."""
+    # All bootstrap callers serialize on the same transaction lock, then recheck
+    # the durable source of truth to avoid duplicate active rows under concurrency.
+    await db.exec(text("SELECT pg_advisory_xact_lock(732104219)"))
+    existing = (
+        await db.exec(
+            select(SigningKey).where(
+                SigningKey.status == "active",
+                SigningKey.deleted_at.is_(None),
+            ).order_by(SigningKey.created_at, SigningKey.kid)
+        )
+    ).first()
+    if existing is not None:
+        return existing
+
     env_key = _load_env_private_key()
     if env_key is not None:
         kid = "nethub-env-bootstrap"
@@ -346,9 +363,18 @@ async def get_active_signing_key(db: AsyncSession) -> Tuple[Any, str]:
     if row is None:
         row = await ensure_signing_keys_ready(db)
 
-    private_key = serialization.load_pem_private_key(
-        _unprotect_private_pem(row.private_pem).encode("utf-8"), password=None
-    )
+    try:
+        private_key = serialization.load_pem_private_key(
+            _unprotect_private_pem(row.private_pem).encode("utf-8"), password=None
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        logger.error("Stored signing key is invalid; refusing to sign")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Stored signing key is invalid",
+        ) from exc
     await redis_set(ACTIVE_KID_CACHE_KEY, row.kid, int(getattr(settings, "jwks_redis_ttl_sec", 120)))
     return private_key, row.kid
 
