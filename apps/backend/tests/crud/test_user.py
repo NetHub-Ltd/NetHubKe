@@ -1,4 +1,4 @@
-"""User CRUD — email identity (IdP-agnostic)."""
+"""User CRUD — stable upstream issuer/subject identity."""
 from __future__ import annotations
 
 import pytest
@@ -9,6 +9,7 @@ from app.db.schemas.schemas import TokenData
 def _td(email: str, sub: str = "393246181909659787", **kw) -> TokenData:
     base = {
         "sub": sub,
+        "issuer": "https://idp.test/realms/nethub",
         "email": email,
         "preferred_username": kw.get("username", email.split("@")[0]),
         "name": kw.get("name", "Test User"),
