@@ -17,9 +17,9 @@
 | N0 | #40, #41; reconciliation #142 / PR #143 | User reports PR #143 merged to dev | Architecture baseline established; staging evidence remains distinct. |
 | N1 | #42, #43; implementation #144 / PR #145 | User reports PR #145 merged to dev | Prior PR reports 152 tests passed, 75.22% coverage and readiness success; verify end-to-end compatibility as later changes land. |
 | N2 | #44, #45; implementation #146 / PR #147 | PR #147 merged to dev at `31f61ded9a124009db8bdecf2c251d2628ade756` | Managed keys/JWKS baseline merged. Encryption rollout/staging and five-minute freshness are not proven by merge alone. |
-| N3 | #46, #47 | In progress under #148 | Generic product exchange and claim profiles; feature remains default-off. |
-| N4 | #48, #49 | In progress under #148 | Product/org links and explicit entitlement precedence. |
-| N5 | #50 | In progress under #148 | Rotation, cache invalidation and emergency response; tests required. |
+| N3 | #46, #47 | In progress under #148 | Generic exchange route exists; JWT now adds jti and docs correct canonical subject claims. Stable upstream (issuer, sub) mapping remains unresolved; feature remains default-off. |
+| N4 | #48, #49 | In progress under #148 | Inactive service denies and external org resolution fails closed without explicit link/approved Tawala mapping. Full grant-precedence model remains to audit/implement. |
+| N5 | #50 | In progress under #148 | Rotation serialized; durable audit model + emergency key revocation implemented; CI/migration/test verification pending. |
 | N6 | #51, #52 | Planned under #149 | Service catalogue and connected/trial/not-connected status. |
 | N7 | #53 | Planned under #149 | Secure feature-flagged launch hop; redirect/token-leakage controls. |
 | N8 | #54 | Planned under #150 | Read-only billing API/UI; NetHub remains source of truth. |
@@ -37,3 +37,10 @@
 - Organization and individual grants require explicit, tested precedence.
 - Five-minute maximum stale-access/revocation window must be demonstrated end-to-end.
 - Live Zitadel staging verification and N10 operational readiness remain open.
+
+
+## Current PR 1 implementation notes
+- Branch `feat/n3-n5-token-policy-rotation`; issue #148.
+- A PostgreSQL migration adds durable `security_audit_events` (down revision `i2c3d4e5f6a7`); verify this is the active migration head in CI before merge.
+- Key remaining gaps to resolve before acceptance: canonical upstream identity mapping by (issuer, immutable sub); explicit org/individual grant precedence and a complete policy decision model; claim-profile behavior for non-Tawala products; comprehensive Redis failure, migration and end-to-end freshness tests.
+- CI and staging evidence pending. No flag enablement or merge is authorized.
