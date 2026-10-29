@@ -4,7 +4,7 @@
 - Current branch: `feat/n2-managed-signing-keys`.
 - Implementation issue: #146; milestone N2.
 - N0 PR #143 and N1 PR #145: user confirmed both merged to `dev`.
-- PR target: `dev`; no merge without explicit user approval.
+- PR: #147 (https://github.com/NetHub-Ltd/NetHubKe/pull/147), open and ready for review; target `dev`. No merge without explicit user approval.
 - N2 changes so far:
   - Added tests-first regression suite `apps/backend/tests/unit/test_n2_signing_key_acceptance.py`.
   - Added exchange-gated bootstrap, PostgreSQL advisory-lock serialization, encrypted private PEM helpers, production fail-closed behavior and safer private-key loading in `app/services/tawala_token.py`.
@@ -14,4 +14,4 @@
 - Key format: legacy plaintext remains readable in non-production for migration; encrypted rows use `enc:v1:`. Production refuses to sign with legacy plaintext or without valid encryption configuration.
 - No schema migration, deployment or feature-flag change.
 - Validation status: tests have not been run locally; CI must verify tests, migration compatibility and Postgres/Redis behavior before review.
-- Remaining: inspect test results; resolve any failures; finish tracker/milestone/rollback updates; open PR to dev.
+- Remaining: obtain authoritative backend CI/test results, resolve failures, and review PR #147. Do not merge without explicit user approval.
