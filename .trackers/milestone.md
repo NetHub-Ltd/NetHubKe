@@ -49,3 +49,10 @@
 - Issue #152 / branch `fix/n3-n5-acceptance-gaps` addresses gaps explicitly acknowledged in PR #151.
 - Identity mapping and standard claim profile work is implemented but not CI-verified yet.
 - Do not start #149/N6–N7 until explicit grant precedence, safe existing-account linking, emergency-response tests and end-to-end freshness evidence are complete.
+
+
+## PR #153 CI repair checkpoint — 2026-10-29 23:08 UTC
+- Three test corrections committed to `fix/n3-n5-acceptance-gaps`: exchange tests add canonical identity mappings; CRUD tests enforce same-subject idempotency and cross-subject 409; entitlement test checks database-authoritative recomputation over stale Redis deny.
+- New head `efab03f2af994931aa04ae6e2d15f8d51b9f8d51f6`; backend CI #86 and readiness #47 were in progress when recorded.
+- Previous backend CI #83: 7 failed, 164 passed, 72.93% coverage. Previous readiness #44 passed. Await current run outcomes before assessing.
+- N3–N5 remains incomplete: explicit grant precedence/admin override, safe audited account linking, comprehensive emergency revocation/JWKS-cache tests, and measured freshness evidence remain outstanding. Do not begin N6–N7.
