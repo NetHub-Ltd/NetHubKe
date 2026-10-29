@@ -36,9 +36,9 @@ async def test_jwks_endpoint_returns_public_jwks_shape(client: AsyncClient, monk
 async def test_exchange_tawala_disabled_returns_503(
     client: AsyncClient, make_kc_token, patch_kc_decode, monkeypatch
 ):
-    from app.services import tawala_token as tt
+    from app.api.v1.routes import auth
 
-    monkeypatch.setattr(tt, "exchange_enabled", lambda: False)
+    monkeypatch.setattr(auth, "exchange_enabled", lambda: False)
     response = await client.post(
         "/api/v1/auth/exchange/tawala",
         headers={"Authorization": f"Bearer {make_kc_token()}"},
@@ -51,9 +51,9 @@ async def test_exchange_tawala_disabled_returns_503(
 async def test_exchange_generic_disabled_returns_503(
     client: AsyncClient, make_kc_token, patch_kc_decode, monkeypatch
 ):
-    from app.services import tawala_token as tt
+    from app.api.v1.routes import auth
 
-    monkeypatch.setattr(tt, "exchange_enabled", lambda: False)
+    monkeypatch.setattr(auth, "exchange_enabled", lambda: False)
     response = await client.post(
         "/api/v1/auth/exchange",
         headers={"Authorization": f"Bearer {make_kc_token()}"},
@@ -76,11 +76,11 @@ async def test_exchange_missing_bearer_returns_401(client: AsyncClient):
     [{}, {"product": ""}, {"product": "x" * 65}],
 )
 async def test_exchange_rejects_invalid_product_body(
-    client: AsyncClient, body: dict
+    client: AsyncClient, body: dict, make_kc_token, patch_kc_decode
 ):
     response = await client.post(
         "/api/v1/auth/exchange",
-        headers={"Authorization": "Bearer syntactically-present"},
+        headers={"Authorization": f"Bearer {make_kc_token()}"},
         json=body,
     )
     assert response.status_code == 422
@@ -165,18 +165,18 @@ async def test_jwks_with_malformed_env_pem_still_200(
     """Regression: non-PEM TAWALA_JWT_PRIVATE_KEY must not 500 JWKS."""
     from app.core import config as config_module
     from app.services import tawala_token as tt
-    from app.api.v1.routes import auth
 
     async def no_cache(_key):
         return None
 
-    async def public_key_only(_db):
-        return {"keys": []}
-
     monkeypatch.setattr(config_module.settings, "tawala_jwt_private_key", "TEST_NON_PEM_ENV_VALUE_NOT_A_SECRET")
     monkeypatch.setattr(tt.settings, "tawala_jwt_private_key", "TEST_NON_PEM_ENV_VALUE_NOT_A_SECRET")
-    monkeypatch.setattr(auth, "build_jwks_document", public_key_only)
+    monkeypatch.setattr(tt, "redis_get", no_cache)
+    monkeypatch.setattr(tt, "redis_set", AsyncMock())
 
     response = await client.get("/api/v1/auth/jwks.json")
-    assert response.status_code == 200
-    assert response.json() == {"keys": []}
+    assert response.status_code == 200, response.text
+    document = response.json()
+    assert isinstance(document.get("keys"), list)
+    for key in document["keys"]:
+        assert not ({"d", "p", "q", "dp", "dq", "qi", "oth", "private_pem"} & key.keys())
