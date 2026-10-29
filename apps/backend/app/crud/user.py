@@ -46,7 +46,7 @@ class UserCRUD(BaseCRUD[User, UserCreate, UserUpdate]):
         return tenant
 
     async def get_or_create(self, db: AsyncSession, obj_in: TokenData) -> User:
-        """Find or create user by email only. Local UUID is the primary key."""
+        """Legacy email-based JIT sync; never reactivate a disabled local identity implicitly."""
         email = _norm_email(str(obj_in.email))
         if not email:
             raise ValueError("email is required to sync a user")
@@ -61,9 +61,6 @@ class UserCRUD(BaseCRUD[User, UserCreate, UserUpdate]):
                 dirty = True
             if obj_in.username and not (existing.username or "").strip():
                 existing.username = obj_in.username
-                dirty = True
-            if not existing.is_active:
-                existing.is_active = True
                 dirty = True
             if dirty:
                 db.add(existing)
