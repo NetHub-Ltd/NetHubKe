@@ -1,9 +1,8 @@
-# Task: N1 exchange and JWT validation hardening
-- Implementation issue: #144
-- Programme umbrella: #57; architecture reconciliation PR: #143
-- Branch: test/n1-exchange-regression-coverage → PR to dev
-- Current milestone: N1. Follow N0 → N10; do not implement later milestones in this PR.
-- Scope: exchange flag-off behavior, required upstream JWT claims, principal elevation prevention, product token claims/signature tests, JWKS response safety.
-- Approved target: Zitadel authenticates; NetHubKe issues product-specific JWTs; products validate NetHubKe JWKS locally. Path A direct IdP bearer is not the ecosystem default.
-- No schema/migration/deployment changes. Run backend CI and review its actual result before claiming tests pass.
-- Do not merge without explicit user approval.
+# Task: NetHubKe SSO architecture reconciliation (planning-only)
+- Issue: #142 — docs: reconcile SSO architecture contract, Path A, and N0–N10 roadmap
+- Umbrella: #57; conflicting Path A issue: #135
+- Branch: docs/n0-sso-contract-reconciliation → PR to dev
+- Approved target: Zitadel authenticates; NetHubKe owns canonical ecosystem identity/policy and issues short-lived product JWTs; product APIs validate NetHubKe JWKS locally.
+- Approved policy: users + organizations/tenants; explicit grant evaluation; public availability separated from authentication; centralized admin; maximum five-minute stale-access window.
+- Current work is documentation, issue reconciliation, and trackers only. No runtime/code/schema/flag/deployment changes.
+- Before implementation: obtain separate user approval for the implementation issue/acceptance plan. Never merge without explicit approval.

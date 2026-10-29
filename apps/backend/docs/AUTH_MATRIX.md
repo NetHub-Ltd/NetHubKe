@@ -1,59 +1,70 @@
 # NetHubKe API — Authentication / Authorization Matrix
 
-## Trust boundary and status
+> This file describes current implementation plus the approved target boundary. See docs/SSO_ARCHITECTURE_CONTRACT.md. This documentation-only update does not assert that every target control is implemented or staging-verified.
 
-- IdP: Zitadel (OIDC). NetHubKe validates upstream bearer tokens against configured issuer, audience and JWKS.
-- Approved target: NetHubKe is the ecosystem-facing product token issuer. Product APIs validate short-lived, audience-specific NetHubKe JWTs locally via NetHubKe JWKS and enforce product-owned business permissions.
-- Important current-state distinction: the approved target is not yet fully delivered. Path A currently accepts an upstream IdP bearer and returns principal JSON; this conflicts with the ecosystem target and must not be generalized to new product APIs. See #135 and #142/#143.
-- Product APIs must not call NetHubKe for per-request introspection on hot paths.
+## Trust boundary
 
-## Upstream JWT validation
+- Zitadel is the OIDC identity provider. NetHubKe validates configured IdP tokens and resolves a canonical NetHubKe identity.
+- NetHubKe is the ecosystem-facing token issuer. Product APIs should accept short-lived, audience-specific NetHubKe JWTs, verify signatures locally using NetHubKe JWKS, and enforce product-owned business permissions.
+- Do not treat an IdP token as a product API credential by default. Any Path A direct IdP-bearer compatibility path requires an explicitly approved, narrowly scoped, time-bounded exception and must not become the ecosystem default.
+- Product APIs do not call NetHubKe for per-request introspection on hot paths.
 
-The resource-server validator checks configured issuer, audience, signature and expiry, and now explicitly requires exp, iat, and sub. The algorithm allowlist is configured by ALGORITHMS (default RS256). Missing or invalid credentials return 401. Tokens lacking email may trigger the configured OIDC UserInfo request.
+## Current API behavior (verify before claiming full target compliance)
 
-Configuration:
-- OIDC_ISSUER / legacy KEYCLOAK_ISSUER_URL
-- OIDC_JWKS_URL / legacy KEYCLOAK_JWKS; Zitadel default is issuer + /oauth/v2/keys
-- AUDIENCE (default nethub-api; CI overrides to nethub-backend)
+Resource server validation is configured by issuer/audience and JWKS; compatibility paths may remain. Confirm exact issuer configuration in the environment before rollout.
 
-## Scopes
+### Audience and scopes
+
+- Config / env: AUDIENCE (default nethub-backend)
+- Access tokens must include this value in aud (string or list)
 
 | Scope | Meaning |
 |---|---|
 | user:read | Read own profile (GET /users/me) |
 | user:write | Update own profile (PATCH /users/me) |
-| services:admin | Mutate service catalogue (seed/create) |
+| services:admin | Mutate services catalogue (seed / create) |
 
 OIDC noise scopes (openid, profile, email, …) are not authorization grants.
 
-## Route matrix
+### Route matrix
 
-| Method | Path | Auth | Notes |
+| Method | Path | Auth | Scopes | Notes |
+|---|---|---|---|---|
+| GET | /health | None | — | Liveness |
+| GET | /api/v1/services/get-services | None | — | Public catalogue; public availability is separate from auth policy |
+| POST | /api/v1/services/seed-services | Bearer JWT + active user | services:admin | Mutating |
+| POST | /api/v1/services/create-service | Bearer JWT + active user | services:admin | Mutating |
+| POST | /api/v1/users/sync | Bearer IdP JWT (current compatibility behavior) | — | JIT provision; must not silently reactivate disabled identities |
+| GET | /api/v1/users/me | Bearer JWT + active local user | user:read | |
+| PATCH | /api/v1/users/me | Bearer JWT + active local user | user:write | |
+
+Admin router is not mounted in the inspected API router.
+
+## Path A issue #135 — decision reconciliation
+
+Retain reusable membership concepts: authorization-only data in NetHubKe, no per-product operational staff tables, generic membership rather than per-product membership tables, and external_user_id links to a product-owned domain primary key.
+
+The original decision “forward IdP bearer once; no product JWT mint” conflicts with the approved ecosystem contract and is not the default target. Keep #135 open until scope is split or revised with an explicitly approved compatibility exception; do not silently close it.
+
+| Method | Path | Original issue description | Approved target |
 |---|---|---|---|
-| GET | /health | None | Liveness |
-| GET | /api/v1/services/get-services | None | Public catalogue; availability is separate from auth policy |
-| POST | /api/v1/users/sync | Bearer IdP JWT | JIT provision; disabled identities must not be silently reactivated |
-| GET | /api/v1/users/me | Bearer JWT + active local user | Requires user:read |
-| PATCH | /api/v1/users/me | Bearer JWT + active local user | Requires user:write |
-| GET | /api/v1/auth/jwks.json | None | Public product-token JWKS (public keys only) |
-| POST | /api/v1/auth/exchange | Bearer IdP JWT | Generic product exchange; default-off flag; active user/tenant and entitlement checks |
-| POST | /api/v1/auth/exchange/tawala | Bearer IdP JWT | Backward-compatible Tawala alias; same default-off flag |
+| GET | /api/v1/access/{product_slug} | IdP bearer → principal JSON | Membership/entitlement may feed NetHubKe token issuance; product APIs trust NetHubKe JWT locally |
+| POST | /api/v1/auth/exchange | NetHubKe issues product JWT (existing code/flags require verification) | Canonical product-token issuance boundary, audience-specific and policy-driven |
 
-Admin router is not mounted in the inspected router.
+## Explicit access decision
 
-## Exchange security requirements
+Evaluate separately: service exists/enabled and public availability; whether auth is required; canonical identity active/not blocked; organization/tenant entitlement; individual grant where required; centrally authorized admin grant/override. Global service disable and disabled/blocked identity are hard denials. Ordinary grants cannot bypass them. Products enforce their own business roles and permissions.
 
-- TAWALA_EXCHANGE_ENABLED defaults to false; disabled exchange returns 503 before product/user lookup, signing-key access or mutation.
-- Principal is derived from verified upstream roles (owner/org_owner/tenant_owner/admin/super_admin → owner, otherwise terminal). Legacy principal request hints are accepted only if they match this derived value; clients cannot elevate themselves by sending principal=owner.
-- Exchange currently resolves the local user by email for compatibility. This is not the final identity contract: canonical mapping by (issuer, immutable sub) and controlled account linking must be delivered separately; email alone must not be treated as a stable identity key.
-- Product token claims currently include sub, org_id, principal, product, iss, aud, iat, exp, optional email, and JOSE kid. The approved future contract additionally requires jti and a bounded short TTL; these remain follow-up work.
-- Product audience is server-selected from registered product configuration (Tawala may use its explicit audience setting). Callers cannot select an arbitrary audience.
-- Product-token signing uses RS256 and managed signing-key rows. Public JWKS must never expose private PEM or private RSA parameters.
+## JWT/JWKS requirements (target; evidence required)
 
-## Path A — issue #135
+- Validate signature/algorithm allowlist, exact issuer, intended audience, expiry, not-before if present, token type and required claims.
+- Required claims: iss, stable canonical sub, aud, iat, exp, jti; JOSE header contains kid. Authorization claims must be server-derived.
+- Managed signing keys and dual-publish rotation through JWKS; private signing material remains within NetHubKe and is not shipped to products/frontends.
+- Maximum stale-access window is five minutes end-to-end. Token TTL, entitlement/cache TTL, refresh behavior, clock skew and JWKS caches must be designed together rather than added independently. Emergency compromised-key/global-disable handling requires an explicitly tested faster path.
+- Public services can be available without requiring login; service availability and auth requirements are separate policy fields.
 
-GET /api/v1/access/{product_slug} currently accepts a bearer IdP JWT and returns principal JSON, without minting a product JWT. Generic membership and external_user_id links to product-owned domain primary keys remain reusable design concepts, but direct IdP-bearer forwarding is not the approved ecosystem default. Preserve #135 history; any compatibility exception needs a named consumer, feature flag, expiry/removal date and separate acceptance criteria.
+## Signing keys (existing N2 work; verify actual behavior)
 
-## Revocation target (not yet proven)
-
-Maximum stale-access window is five minutes end-to-end across product-token TTL, refresh, entitlement/policy caches, JWKS caching, clock skew and propagation. Current settings include an eight-hour product-token default and a 120-second entitlement cache, so the approved five-minute bound is not yet satisfied by configuration. Resolve in the ordered programme, including token refresh and emergency key-disable behavior, before rollout.
+- Signing key table and JWKS route exist in the repository.
+- Redis is cache/coordination; PostgreSQL is durable source of truth.
+- Do not treat issue closure alone as proof of key custody, rotation, invalidation or recovery acceptance.

@@ -1,6 +1,5 @@
 # Rollback
-- For implementation issue #144, revert its PR as one unit if regression or CI failures cannot be resolved.
-- No database schema/migration, runtime configuration, feature-flag default, or deployment behavior is intentionally changed.
-- Exchange remains disabled by default.
-- Do not reset/rebase/force-push or rewrite shared Git history.
-- Any later migration or runtime rollout needs a separate rollback plan and explicit approval.
+- This branch is planning-only: documentation, tracker, and issue metadata/comment changes; no schema migration, application code, runtime configuration, or feature-flag changes.
+- Preferred rollback: revert the planning PR as one unit. Do not reset/rebase/force-push or rewrite existing history.
+- If issue descriptions/comments are updated outside the PR, revert those edits separately while preserving the original issue history.
+- Before any later implementation PR, write a separate rollback plan for its concrete code/config/schema changes and migrations.
