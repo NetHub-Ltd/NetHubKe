@@ -11,6 +11,12 @@ from fastapi import HTTPException
 from app.services import tawala_token as tt
 
 
+@pytest.fixture
+def rsa_pem():
+    _, pem, _, key = tt._generate_rsa_keypair()
+    return pem, key
+
+
 def _result(rows):
     result = MagicMock()
     result.__iter__ = lambda self: iter(rows)
