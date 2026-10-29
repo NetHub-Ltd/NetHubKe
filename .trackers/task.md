@@ -7,5 +7,5 @@
 - Decisions: PostgreSQL remains durable source of truth; Redis is disposable cache; disabled exchange must not bootstrap; production signing requires `SIGNING_KEY_ENCRYPTION_KEY` and encrypted key rows.
 - Rollout guide: `apps/backend/docs/SIGNING_KEY_CUSTODY.md`; helper: `apps/backend/scripts/encrypt_signing_keys.py`.
 - Exchange remains default-off. No deployment, staging-readiness or production-flag claims.
-- Tests-first: N2 regression test file was committed before implementation changes. Initial CI exposed two compatibility failures plus readiness startup still bootstrapping keys while exchange was disabled. Follow-up fixes now skip startup bootstrap when exchange is off and make legacy tests state their flag assumptions explicitly; rerun CI is pending.
+- Tests-first: N2 regression test file was committed before implementation changes. Initial CI exposed two compatibility failures plus readiness startup still bootstrapping keys while exchange was disabled. Follow-up fixes now skip startup bootstrap when exchange is off and make legacy tests state their flag assumptions explicitly; backend CI and readiness are green on runs #71 and #32; PR remains open for review and explicit merge approval.
 - No merge without explicit user approval. Do not rebase, squash, reset, force-push or rewrite history.
