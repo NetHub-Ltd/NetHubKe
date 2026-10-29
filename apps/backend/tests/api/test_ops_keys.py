@@ -15,3 +15,9 @@ async def test_rotate_requires_auth(client: AsyncClient):
 async def test_prune_requires_auth(client: AsyncClient):
     r = await client.post("/api/v1/ops/signing-keys/prune")
     assert r.status_code in (401, 403)
+
+
+@pytest.mark.asyncio
+async def test_emergency_revoke_requires_auth(client: AsyncClient):
+    response = await client.post("/api/v1/ops/signing-keys/compromised-kid/emergency-revoke")
+    assert response.status_code in (401, 403)
