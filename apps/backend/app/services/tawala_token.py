@@ -648,7 +648,7 @@ async def mint_product_access_token(
     product_slug: str,
     audience: str,
     sub: str,
-    org_id: UUID,
+    org_id: Optional[UUID],
     principal: str,
     email: Optional[str] = None,
     claim_profile: str = "tawala",
