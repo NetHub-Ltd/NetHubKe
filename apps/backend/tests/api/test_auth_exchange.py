@@ -180,3 +180,94 @@ async def test_jwks_with_malformed_env_pem_still_200(
     assert isinstance(document.get("keys"), list)
     for key in document["keys"]:
         assert not ({"d", "p", "q", "dp", "dq", "qi", "oth", "private_pem"} & key.keys())
+
+
+@pytest.mark.asyncio
+async def test_exchange_success_uses_server_resolved_identity_and_product_audience(
+    client: AsyncClient,
+    db_session,
+    make_kc_token,
+    patch_kc_decode,
+    monkeypatch,
+):
+    """Exercise the enabled route against real test DB rows with external calls mocked."""
+    import time
+    import uuid
+
+    from app.api.v1.routes import auth
+    from app.db.models.models import Product, Tenant, User
+
+    tenant = Tenant(name="Exchange Test Tenant", email=f"tenant-{uuid.uuid4()}@example.test")
+    db_session.add(tenant)
+    await db_session.flush()
+
+    user = User(
+        username=f"exchange-{uuid.uuid4().hex[:8]}",
+        email=f"exchange-{uuid.uuid4().hex[:8]}@example.test",
+        full_name="Exchange Test User",
+        is_active=True,
+        tenant_id=tenant.id,
+    )
+    product = Product(
+        slug="tawala",
+        name="Tawala",
+        audience="tawala-api-db-row",
+        is_active=True,
+        claim_profile="tawala",
+    )
+    db_session.add(user)
+    db_session.add(product)
+    await db_session.commit()
+    await db_session.refresh(user)
+    await db_session.refresh(tenant)
+
+    minted = AsyncMock(return_value=("signed-product-token", int(time.time()) + 60))
+    monkeypatch.setattr(auth, "exchange_enabled", lambda: True)
+    monkeypatch.setattr(auth, "check_entitled", AsyncMock(return_value=True))
+    monkeypatch.setattr(auth, "resolve_org_id", AsyncMock(return_value=tenant.id))
+    monkeypatch.setattr(auth, "mint_product_access_token", minted)
+
+    token = make_kc_token(email=user.email, roles=["org_owner"])
+    response = await client.post(
+        "/api/v1/auth/exchange",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"product": "tawala", "principal": "owner"},
+    )
+
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    assert payload["access_token"] == "signed-product-token"
+    assert payload["product"] == "tawala"
+    assert payload["audience"] == "tawala-api"
+    assert payload["principal"] == "owner"
+    assert payload["org_id"] == str(tenant.id)
+    minted.assert_awaited_once()
+    kwargs = minted.await_args.kwargs
+    assert kwargs["product_slug"] == "tawala"
+    assert kwargs["audience"] == "tawala-api"
+    assert kwargs["sub"] == str(user.id)
+    assert kwargs["org_id"] == tenant.id
+    assert kwargs["principal"] == "owner"
+    assert kwargs["email"] == user.email
+
+
+@pytest.mark.asyncio
+async def test_exchange_rejects_client_principal_elevation_before_database_access(
+    client: AsyncClient, make_kc_token, patch_kc_decode, monkeypatch
+):
+    from app.api.v1.routes import auth
+
+    monkeypatch.setattr(auth, "exchange_enabled", lambda: True)
+    monkeypatch.setattr(
+        auth,
+        "ensure_tawala_product",
+        AsyncMock(side_effect=AssertionError("should reject before product lookup")),
+    )
+    token = make_kc_token(email="non-owner@example.test", roles=["user"])
+    response = await client.post(
+        "/api/v1/auth/exchange",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"product": "tawala", "principal": "owner"},
+    )
+    assert response.status_code == 403
+    assert response.json()["detail"] == "principal is derived by NetHubKe and cannot be overridden"
