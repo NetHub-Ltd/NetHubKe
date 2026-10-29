@@ -61,22 +61,25 @@ async def lifespan(app: FastAPI):
         raise RuntimeError("Redis unavailable or not ready. Aborting startup.") from e
 
     # --------------------------------------------------------------
-    # 3. Signing keys: bootstrap if empty (backend-generated RSA)
+    # 3. Signing keys: bootstrap only when token exchange is enabled
     # --------------------------------------------------------------
-    try:
-        from app.services.tawala_token import ensure_signing_keys_ready
+    from app.services.tawala_token import ensure_signing_keys_ready, exchange_enabled
 
-        async with AsyncSessionLocal() as session:
-            key_row = await ensure_signing_keys_ready(session)
-            # Copy scalars while session is open — avoid expired-instance IO after commit
-            kid = str(getattr(key_row, "kid", "") or "")
-            key_status = str(getattr(key_row, "status", "") or "")
-        logger.info(f"Signing keys ready kid={kid} status={key_status}")
-    except Exception as e:
-        logger.critical(f"Signing key bootstrap failed: {e}")
-        raise RuntimeError(
-            "Could not bootstrap signing keys. Aborting startup."
-        ) from e
+    if exchange_enabled():
+        try:
+            async with AsyncSessionLocal() as session:
+                key_row = await ensure_signing_keys_ready(session)
+                # Copy scalars while session is open — avoid expired-instance IO after commit
+                kid = str(getattr(key_row, "kid", "") or "")
+                key_status = str(getattr(key_row, "status", "") or "")
+            logger.info(f"Signing keys ready kid={kid} status={key_status}")
+        except Exception as e:
+            logger.critical(f"Signing key bootstrap failed: {e}")
+            raise RuntimeError(
+                "Could not bootstrap signing keys. Aborting startup."
+            ) from e
+    else:
+        logger.info("Token exchange disabled; skipping signing-key bootstrap.")
 
     yield
 

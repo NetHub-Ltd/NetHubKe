@@ -16,9 +16,11 @@ from typing import Any, Optional, Tuple
 from uuid import UUID
 
 import jwt
+from cryptography.fernet import Fernet, InvalidToken
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from fastapi import HTTPException, status
+from sqlalchemy import text
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -36,6 +38,68 @@ from app.utils.logging import logger
 
 def exchange_enabled() -> bool:
     return bool(getattr(settings, "tawala_exchange_enabled", False))
+
+
+_ENCRYPTED_PEM_PREFIX = "enc:v1:"
+
+
+def _require_signing_key_encryption() -> str | None:
+    """Validate the optional Fernet key; production refuses unencrypted key custody."""
+    configured = getattr(settings, "signing_key_encryption_key", "") or ""
+    environment = getattr(settings, "environment", "development")
+    environment = getattr(environment, "value", environment)
+    if environment == "production" and not configured:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Signing-key encryption is required in production",
+        )
+    if configured:
+        try:
+            Fernet(configured.encode("ascii"))
+        except (ValueError, UnicodeEncodeError) as exc:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Signing-key encryption configuration is invalid",
+            ) from exc
+    return configured or None
+
+
+def _protect_private_pem(private_pem: str) -> str:
+    if private_pem.startswith(_ENCRYPTED_PEM_PREFIX):
+        return private_pem
+    key = _require_signing_key_encryption()
+    if key is None:
+        return private_pem
+    token = Fernet(key.encode("ascii")).encrypt(private_pem.encode("utf-8")).decode("ascii")
+    return _ENCRYPTED_PEM_PREFIX + token
+
+
+def _unprotect_private_pem(stored_value: str) -> str:
+    key = _require_signing_key_encryption()
+    if stored_value.startswith(_ENCRYPTED_PEM_PREFIX):
+        if key is None:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Signing-key encryption key is required to use stored signing keys",
+            )
+        try:
+            return Fernet(key.encode("ascii")).decrypt(
+                stored_value[len(_ENCRYPTED_PEM_PREFIX):].encode("ascii")
+            ).decode("utf-8")
+        except (InvalidToken, ValueError, UnicodeEncodeError) as exc:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Stored signing key could not be decrypted",
+            ) from exc
+
+    environment = getattr(settings, "environment", "development")
+    environment = getattr(environment, "value", environment)
+    if environment == "production":
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Legacy plaintext signing key must be migrated before production use",
+        )
+    return stored_value
 
 
 def _b64url_uint(val: int) -> str:
@@ -133,7 +197,7 @@ async def rotate_signing_key(
         kid=kid,
         status="active",
         algorithm="RS256",
-        private_pem=pem,
+        private_pem=_protect_private_pem(pem),
         public_jwk=jwk,
     )
     db.add(new_row)
@@ -223,22 +287,54 @@ async def ensure_signing_keys_ready(db: AsyncSession) -> SigningKey:
     Not gated on exchange flag — JWKS must publish keys so product apps can
     configure trust before the first exchange. Generates RSA in Postgres if empty.
     """
+    if not exchange_enabled():
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Token exchange is not enabled",
+        )
     await ensure_fresh_signing_key(db)
     row = (
         await db.exec(
             select(SigningKey).where(
                 SigningKey.status == "active",
                 SigningKey.deleted_at.is_(None),
-            )
+            ).order_by(SigningKey.created_at, SigningKey.kid)
         )
     ).first()
     if row is not None:
+        # Fail closed on malformed or unreadable stored private material.
+        try:
+            serialization.load_pem_private_key(
+                _unprotect_private_pem(row.private_pem).encode("utf-8"), password=None
+            )
+        except HTTPException:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            logger.error("Stored signing key is invalid; refusing to use it")
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Stored signing key is invalid",
+            ) from exc
         return row
     return await bootstrap_signing_key(db)
 
 
 async def bootstrap_signing_key(db: AsyncSession) -> SigningKey:
-    """Create first active key if none exist. Prefer env PEM material if set."""
+    """Create the first active key under a PostgreSQL transaction advisory lock."""
+    # All bootstrap callers serialize on the same transaction lock, then recheck
+    # the durable source of truth to avoid duplicate active rows under concurrency.
+    await db.exec(text("SELECT pg_advisory_xact_lock(732104219)"))
+    existing = (
+        await db.exec(
+            select(SigningKey).where(
+                SigningKey.status == "active",
+                SigningKey.deleted_at.is_(None),
+            ).order_by(SigningKey.created_at, SigningKey.kid)
+        )
+    ).first()
+    if existing is not None:
+        return existing
+
     env_key = _load_env_private_key()
     if env_key is not None:
         kid = "nethub-env-bootstrap"
@@ -251,7 +347,7 @@ async def bootstrap_signing_key(db: AsyncSession) -> SigningKey:
         kid=kid,
         status="active",
         algorithm="RS256",
-        private_pem=pem,
+        private_pem=_protect_private_pem(pem),
         public_jwk=jwk,
     )
     db.add(row)
@@ -271,14 +367,23 @@ async def get_active_signing_key(db: AsyncSession) -> Tuple[Any, str]:
     stmt = select(SigningKey).where(
         SigningKey.status == "active",
         SigningKey.deleted_at.is_(None),
-    )
+    ).order_by(SigningKey.created_at, SigningKey.kid)
     row = (await db.exec(stmt)).first()
     if row is None:
         row = await ensure_signing_keys_ready(db)
 
-    private_key = serialization.load_pem_private_key(
-        row.private_pem.encode("utf-8"), password=None
-    )
+    try:
+        private_key = serialization.load_pem_private_key(
+            _unprotect_private_pem(row.private_pem).encode("utf-8"), password=None
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        logger.error("Stored signing key is invalid; refusing to sign")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Stored signing key is invalid",
+        ) from exc
     await redis_set(ACTIVE_KID_CACHE_KEY, row.kid, int(getattr(settings, "jwks_redis_ttl_sec", 120)))
     return private_key, row.kid
 
@@ -306,7 +411,8 @@ def _sanitize_public_jwks(raw_keys: list[Any]) -> list[dict[str, Any]]:
 
 async def build_jwks_document(db: AsyncSession) -> dict[str, Any]:
     """JWKS for active + retiring keys (not retired). Auto-rotates by max age."""
-    await ensure_fresh_signing_key(db)
+    if exchange_enabled():
+        await ensure_fresh_signing_key(db)
     cached = await redis_get(JWKS_CACHE_KEY)
     if cached:
         try:
@@ -332,17 +438,22 @@ async def build_jwks_document(db: AsyncSession) -> dict[str, Any]:
     keys = []
     now = datetime.now(timezone.utc)
     for row in rows:
+        if row.status not in ("active", "retiring"):
+            continue
         if row.status == "retiring" and row.retire_after is not None and row.retire_after <= now:
             continue  # treat as retired for JWKS until prune job runs
         jwk = _sanitize_public_jwks([row.public_jwk or {}])
         if jwk:
             keys.extend(jwk)
 
-    # Backend bootstrap: never leave JWKS empty if we can generate a key
-    if not keys:
+    # Do not create durable signing state from a public JWKS read. Bootstrap is
+    # exchange-driven and remains impossible while the feature flag is disabled.
+    if not keys and exchange_enabled():
         await ensure_signing_keys_ready(db)
         rows = list(await db.exec(stmt))
         for row in rows:
+            if row.status not in ("active", "retiring"):
+                continue
             if row.status == "retiring" and row.retire_after is not None and row.retire_after <= now:
                 continue
             jwk = _sanitize_public_jwks([row.public_jwk or {}])

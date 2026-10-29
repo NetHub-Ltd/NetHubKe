@@ -37,10 +37,11 @@ async def test_ensure_signing_keys_ready_bootstraps_when_empty():
     fake = MagicMock()
     fake.kid = "new-kid"
     fake.status = "active"
-    with patch.object(tt, "ensure_fresh_signing_key", new_callable=AsyncMock):
-        with patch.object(
-            tt, "bootstrap_signing_key", new_callable=AsyncMock, return_value=fake
-        ) as boot:
-            row = await tt.ensure_signing_keys_ready(db)
+    with patch.object(tt, "exchange_enabled", return_value=True):
+        with patch.object(tt, "ensure_fresh_signing_key", new_callable=AsyncMock):
+            with patch.object(
+                tt, "bootstrap_signing_key", new_callable=AsyncMock, return_value=fake
+            ) as boot:
+                row = await tt.ensure_signing_keys_ready(db)
     assert row.kid == "new-kid"
     boot.assert_awaited()

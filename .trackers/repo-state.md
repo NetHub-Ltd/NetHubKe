@@ -1,11 +1,17 @@
 # Repository State
 - Repository: NetHub-Ltd/NetHubKe
-- Baseline: dev at ba31e338e91f7b1f62f754264efc9972a6544bf6 (inspected 2026-10-29)
-- Current branch: test/n1-exchange-regression-coverage
-- Implementation issue: #144; milestone N1
-- Planning issue/PR: #142 / #143 (PR #143 remains separate and unmerged)
-- PR target: dev
-- Scope: backend auth/exchange behavior and tests, AUTH_MATRIX, trackers; no schema or migration changes.
-- Changes: require exp/iat/sub on validated IdP JWTs; disallow client principal hints that differ from role-derived principal; add exchange regression and signed product-token tests.
-- Tests have not been executed locally in this session. Use GitHub Actions PR checks as execution evidence.
-- N1 remains not accepted until CI and acceptance checklist are verified. N2–N8 also need evidence review; N9/N10 remain open.
+- Baseline branch: `dev` (inspected 2026-10-29; GitHub connector did not expose a reliable current branch-head SHA).
+- Current branch: `feat/n2-managed-signing-keys`.
+- Implementation issue: #146; milestone N2.
+- N0 PR #143 and N1 PR #145: user confirmed both merged to `dev`.
+- PR: #147 (https://github.com/NetHub-Ltd/NetHubKe/pull/147), open and ready for review; target `dev`. No merge without explicit user approval.
+- N2 changes so far:
+  - Added tests-first regression suite `apps/backend/tests/unit/test_n2_signing_key_acceptance.py`.
+  - Added exchange-gated bootstrap, PostgreSQL advisory-lock serialization, encrypted private PEM helpers, production fail-closed behavior and safer private-key loading in `app/services/tawala_token.py`.
+  - Added `SIGNING_KEY_ENCRYPTION_KEY` setting.
+  - Added `scripts/encrypt_signing_keys.py` and `docs/SIGNING_KEY_CUSTODY.md`.
+  - Updated `apps/backend/docs/AUTH_MATRIX.md`.
+- Key format: legacy plaintext remains readable in non-production for migration; encrypted rows use `enc:v1:`. Production refuses to sign with legacy plaintext or without valid encryption configuration.
+- No schema migration, deployment or feature-flag change.
+- Validation status: initial CI failures were fixed. Backend CI run #71 and readiness run #32 both completed successfully on the current PR head. Local tests remain unrun. CI must verify tests, migration compatibility and Postgres/Redis behavior before review.
+- Remaining: obtain authoritative backend CI/test results, resolve failures, and review PR #147. Do not merge without explicit user approval.

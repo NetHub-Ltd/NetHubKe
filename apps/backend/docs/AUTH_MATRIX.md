@@ -68,3 +68,13 @@ Evaluate separately: service exists/enabled and public availability; whether aut
 - Signing key table and JWKS route exist in the repository.
 - Redis is cache/coordination; PostgreSQL is durable source of truth.
 - Do not treat issue closure alone as proof of key custody, rotation, invalidation or recovery acceptance.
+
+
+## N2 managed signing-key acceptance (implementation branch)
+
+- Signing-key bootstrap is exchange-flag gated; a disabled exchange request cannot create key rows. An empty JWKS response remains possible when no key exists and exchange is disabled.
+- PostgreSQL is the durable source of key state. Bootstrap uses a transaction advisory lock and rechecks for an active row before creating a key.
+- JWKS sanitization permits only public RSA RS256 fields, deduplicates `kid`, and excludes retiring keys whose `retire_after` has elapsed.
+- Private PEM values can be stored as `enc:v1:` Fernet ciphertext with `SIGNING_KEY_ENCRYPTION_KEY`. Production fails closed when the key is absent/invalid or a legacy plaintext row is used for signing.
+- Existing plaintext rows require the documented, backed-up rollout in [SIGNING_KEY_CUSTODY.md](SIGNING_KEY_CUSTODY.md) using `scripts/encrypt_signing_keys.py`. No deployment or exchange flag change is authorized by this PR.
+- CI evidence is pending. This does not establish live Zitadel staging readiness, N5 emergency rotation acceptance, or the five-minute revocation bound.
