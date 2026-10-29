@@ -18,3 +18,12 @@
 - Claim profiles: `standard` excludes Tawala-only organization/principal claims; unsupported profile fails closed.
 - Entitlement cache: exchange decisions no longer trust Redis cached decisions; PostgreSQL is read as source of truth.
 - Pending acceptance: grant precedence/admin override model; audited explicit linking for existing accounts; comprehensive emergency revocation + JWKS/Redis outage tests; five-minute freshness measured end-to-end. Keep exchange default-off.
+
+
+## CI repair checkpoint — 2026-10-29 23:08 UTC
+- Active branch is `fix/n3-n5-acceptance-gaps`, PR #153 targeting `dev`; head `efab03f2af994931aa04ae6e2d15f8d51b9f8d51f6`.
+- Exchange fixtures now create matching issuer+subject `UserIdentity` mappings for the four DB-backed exchange outcomes.
+- CRUD tests now assert stable identity idempotency and reject email collision with a different subject (409).
+- Entitlement test now asserts PostgreSQL recomputation wins over stale Redis negative cache.
+- Backend CI run #86 and Docker/Postgres/Redis readiness run #47 were in progress at last check. Earlier backend CI #83 had 7 failures / 164 passes, 72.93% coverage; readiness #44 passed.
+- Keep PR draft/unmerged and exchange default-off. Remaining N3–N5 policy/linking/emergency-response acceptance gaps remain open.
