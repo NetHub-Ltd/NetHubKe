@@ -8,3 +8,7 @@
 - Signing-key emergency response must preserve the key custody secret independently of the database; never log or expose private material. Keep the documented N2 backup/encryption process intact.
 - If rollout behavior is uncertain, leave exchange disabled and revert the application change; do not claim five-minute revocation or staging readiness without evidence.
 - No merge without explicit user approval.
+
+## Consolidated PR 1 additions
+- Migration `j3d4e5f6a7b8_add_security_audit_events.py` adds durable audit events; verify upgrade/downgrade on PostgreSQL before merge. If migration or audit writes fail, leave exchange disabled and revert the PR as a unit.
+- Emergency revocation creates a replacement key when the targeted key is active, retires the compromised key immediately, commits a durable audit event and invalidates JWKS/active-kid caches. Validate these effects in CI before use.
