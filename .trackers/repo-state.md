@@ -13,5 +13,5 @@
   - Updated `apps/backend/docs/AUTH_MATRIX.md`.
 - Key format: legacy plaintext remains readable in non-production for migration; encrypted rows use `enc:v1:`. Production refuses to sign with legacy plaintext or without valid encryption configuration.
 - No schema migration, deployment or feature-flag change.
-- Validation status: tests have not been run locally; CI must verify tests, migration compatibility and Postgres/Redis behavior before review.
+- Validation status: initial CI run #68 reported 160 passed / 2 failed (old startup bootstrap expectation and JWKS test's implicit exchange-flag mock); readiness run #29 failed because lifespan unconditionally bootstrapped keys while exchange was disabled. Follow-up fixes committed; rerun CI not yet visible. Local tests remain unrun. CI must verify tests, migration compatibility and Postgres/Redis behavior before review.
 - Remaining: obtain authoritative backend CI/test results, resolve failures, and review PR #147. Do not merge without explicit user approval.
