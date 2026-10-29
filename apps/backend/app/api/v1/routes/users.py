@@ -46,6 +46,8 @@ async def sync_user(
         user = result.first() or user
         logger.debug(f"Sync Success: {user.id} | Time: {utc_now()}")
         return _to_user_read(user)
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Sync Failure | email: {token_data.email} | Error: {e}")
         raise HTTPException(status_code=500, detail="Sync failed")
