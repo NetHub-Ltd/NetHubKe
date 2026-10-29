@@ -214,6 +214,20 @@ class Membership(BaseMixin, table=True):
 
 
 
+class UserIdentity(BaseMixin, table=True):
+    """Stable upstream identity mapping; never keyed by mutable email."""
+
+    __tablename__ = "user_identities"
+    __table_args__ = (
+        sa.UniqueConstraint("issuer", "subject", name="uq_user_identities_issuer_subject"),
+        sa.UniqueConstraint("user_id", "issuer", name="uq_user_identities_user_issuer"),
+    )
+
+    issuer: str = Field(max_length=512, index=True)
+    subject: str = Field(max_length=512, index=True)
+    user_id: uuid.UUID = Field(foreign_key="users.id", index=True, nullable=False)
+
+
 class SecurityAuditEvent(BaseMixin, table=True):
     """Durable audit trail for sensitive identity and signing-key operations."""
 
