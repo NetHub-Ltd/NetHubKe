@@ -3,11 +3,12 @@ from uuid import UUID
 
 from pydantic import EmailStr
 from sqlalchemy.exc import IntegrityError
+from fastapi import HTTPException, status
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.crud.base import BaseCRUD
-from app.db.models.models import User, Tenant
+from app.db.models.models import User, Tenant, UserIdentity
 from app.db.schemas.schemas import UserCreate, UserUpdate, UserCreateBase, TokenData
 from app.utils.logging import logger
 
@@ -24,6 +25,23 @@ class UserCRUD(BaseCRUD[User, UserCreate, UserUpdate]):
         stmt = select(self.model).where(self.model.email == _norm_email(email))
         result = await db.exec(stmt)
         return result.first()
+
+    async def get_by_upstream_identity(
+        self, db: AsyncSession, *, issuer: str, subject: str
+    ) -> Optional[User]:
+        issuer_n = (issuer or "").strip().rstrip("/")
+        subject_n = (subject or "").strip()
+        if not issuer_n or not subject_n:
+            return None
+        result = await db.exec(
+            select(UserIdentity).where(
+                UserIdentity.issuer == issuer_n,
+                UserIdentity.subject == subject_n,
+                UserIdentity.deleted_at.is_(None),
+            )
+        )
+        identity = result.first()
+        return await self.get_by_id(db, identity.user_id) if identity else None
 
     async def get_by_id(self, db: AsyncSession, user_id: UUID) -> Optional[User]:
         stmt = select(self.model).where(self.model.id == user_id)
@@ -46,8 +64,36 @@ class UserCRUD(BaseCRUD[User, UserCreate, UserUpdate]):
         return tenant
 
     async def get_or_create(self, db: AsyncSession, obj_in: TokenData) -> User:
-        """Legacy email-based JIT sync; never reactivate a disabled local identity implicitly."""
+        """Sync only a verified issuer+subject identity; never auto-link by email."""
         email = _norm_email(str(obj_in.email))
+        issuer = (obj_in.issuer or "").strip().rstrip("/")
+        subject = (obj_in.sub or "").strip()
+        if not issuer or not subject:
+            raise HTTPException(status_code=401, detail="Validated issuer and subject are required")
+
+        mapped = await self.get_by_upstream_identity(db, issuer=issuer, subject=subject)
+        if mapped:
+            if not mapped.is_active:
+                return mapped
+            dirty = False
+            if obj_in.full_name and not (mapped.full_name or "").strip():
+                mapped.full_name = obj_in.full_name
+                dirty = True
+            if obj_in.username and not (mapped.username or "").strip():
+                mapped.username = obj_in.username
+                dirty = True
+            if dirty:
+                db.add(mapped)
+                await db.commit()
+                await db.refresh(mapped)
+            return mapped
+
+        existing_email_user = await self.get_by_email(db, email) if email else None
+        if existing_email_user:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="This email already belongs to a local account. Explicitly link the verified identity before sync.",
+            )
         if not email:
             raise ValueError("email is required to sync a user")
 
@@ -82,7 +128,9 @@ class UserCRUD(BaseCRUD[User, UserCreate, UserUpdate]):
             db_obj = await self.create(db, obj_in=new_user_data)
             await db.commit()
             await db.refresh(db_obj)
-            logger.info(f"created user: {db_obj.id} email={db_obj.email}")
+            db.add(UserIdentity(issuer=issuer, subject=subject, user_id=db_obj.id))
+            await db.commit()
+            logger.info(f"created user: {db_obj.id} issuer={issuer} subject_mapping_created=true")
             return db_obj
         except IntegrityError:
             await db.rollback()
