@@ -1,4 +1,11 @@
 # Repository State
-- Branch: feat/n8-billing-read
-- Milestone: N8 (#54)
+- Repository: NetHub-Ltd/NetHubKe
+- Baseline: dev at ba31e338e91f7b1f62f754264efc9972a6544bf6 (inspected 2026-10-29)
+- Current branch: test/n1-exchange-regression-coverage
+- Implementation issue: #144; milestone N1
+- Planning issue/PR: #142 / #143 (PR #143 remains separate and unmerged)
 - PR target: dev
+- Scope: backend auth/exchange behavior and tests, AUTH_MATRIX, trackers; no schema or migration changes.
+- Changes: require exp/iat/sub on validated IdP JWTs; disallow client principal hints that differ from role-derived principal; add exchange regression and signed product-token tests.
+- Tests have not been executed locally in this session. Use GitHub Actions PR checks as execution evidence.
+- N1 remains not accepted until CI and acceptance checklist are verified. N2–N8 also need evidence review; N9/N10 remain open.

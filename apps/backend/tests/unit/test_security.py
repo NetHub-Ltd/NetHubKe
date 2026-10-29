@@ -133,3 +133,41 @@ def test_decode_zitadel_roles(rsa_key):
         data = security_mod._decode_token(token)
     assert "admin" in data.roles
     assert "user" in data.roles
+
+
+@pytest.mark.parametrize("missing_claim", ["exp", "iat", "sub"])
+def test_decode_rejects_missing_required_claim(rsa_key, missing_claim):
+    pub = rsa_key.public_key()
+    payload = {
+        "sub": str(uuid.uuid4()),
+        "email": "user@example.com",
+        "preferred_username": "a",
+        "name": "A",
+        "email_verified": True,
+        "scope": "openid user:read",
+        "realm_access": {"roles": ["user"]},
+        "iss": settings.idp_issuer,
+        "aud": settings.audience,
+        "iat": int(time.time()),
+        "exp": int(time.time()) + 3600,
+    }
+    payload.pop(missing_claim)
+    token = jwt.encode(payload, rsa_key, algorithm="RS256", headers={"kid": "t"})
+    with _patch_jwks(pub):
+        with pytest.raises(HTTPException) as error:
+            security_mod._decode_token(token)
+    assert error.value.status_code == 401
+
+
+def test_decode_rejects_wrong_signature_algorithm(rsa_key):
+    token = jwt.encode(
+        {"sub": "subject", "iss": settings.idp_issuer, "aud": settings.audience,
+         "iat": int(time.time()), "exp": int(time.time()) + 60},
+        "attacker-controlled-secret",
+        algorithm="HS256",
+        headers={"kid": "t"},
+    )
+    with _patch_jwks(rsa_key.public_key()):
+        with pytest.raises(HTTPException) as error:
+            security_mod._decode_token(token)
+    assert error.value.status_code == 401

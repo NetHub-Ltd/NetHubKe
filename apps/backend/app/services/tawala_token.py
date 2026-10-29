@@ -283,14 +283,45 @@ async def get_active_signing_key(db: AsyncSession) -> Tuple[Any, str]:
     return private_key, row.kid
 
 
+def _sanitize_public_jwks(raw_keys: list[Any]) -> list[dict[str, Any]]:
+    """Keep only valid public RS256 RSA JWK fields and deduplicate by kid."""
+    public_keys: dict[str, dict[str, Any]] = {}
+    allowed_fields = {"kty", "use", "alg", "kid", "n", "e"}
+    for raw in raw_keys:
+        if not isinstance(raw, dict):
+            continue
+        if raw.get("kty") != "RSA" or raw.get("alg") != "RS256":
+            continue
+        if raw.get("use") not in (None, "sig"):
+            continue
+        kid, modulus, exponent = raw.get("kid"), raw.get("n"), raw.get("e")
+        if not all(isinstance(value, str) and value.strip() for value in (kid, modulus, exponent)):
+            continue
+        if kid in public_keys:
+            continue
+        public_keys[kid] = {key: value for key, value in raw.items() if key in allowed_fields}
+        public_keys[kid].setdefault("use", "sig")
+    return list(public_keys.values())
+
+
 async def build_jwks_document(db: AsyncSession) -> dict[str, Any]:
     """JWKS for active + retiring keys (not retired). Auto-rotates by max age."""
     await ensure_fresh_signing_key(db)
     cached = await redis_get(JWKS_CACHE_KEY)
     if cached:
         try:
-            return json.loads(cached)
-        except json.JSONDecodeError:
+            cached_document = json.loads(cached)
+            if isinstance(cached_document, dict) and isinstance(cached_document.get("keys"), list):
+                safe_document = {"keys": _sanitize_public_jwks(cached_document["keys"])}
+                if safe_document["keys"]:
+                    if safe_document != cached_document:
+                        await redis_set(
+                            JWKS_CACHE_KEY,
+                            json.dumps(safe_document),
+                            int(getattr(settings, "jwks_redis_ttl_sec", 120)),
+                        )
+                    return safe_document
+        except (json.JSONDecodeError, TypeError):
             pass
 
     stmt = select(SigningKey).where(
@@ -303,9 +334,9 @@ async def build_jwks_document(db: AsyncSession) -> dict[str, Any]:
     for row in rows:
         if row.status == "retiring" and row.retire_after is not None and row.retire_after <= now:
             continue  # treat as retired for JWKS until prune job runs
-        jwk = row.public_jwk or {}
+        jwk = _sanitize_public_jwks([row.public_jwk or {}])
         if jwk:
-            keys.append(jwk)
+            keys.extend(jwk)
 
     # Backend bootstrap: never leave JWKS empty if we can generate a key
     if not keys:
@@ -314,9 +345,9 @@ async def build_jwks_document(db: AsyncSession) -> dict[str, Any]:
         for row in rows:
             if row.status == "retiring" and row.retire_after is not None and row.retire_after <= now:
                 continue
-            jwk = row.public_jwk or {}
+            jwk = _sanitize_public_jwks([row.public_jwk or {}])
             if jwk:
-                keys.append(jwk)
+                keys.extend(jwk)
 
     # Opt-in env PEM only (TAWALA_JWT_ALLOW_ENV_PEM=true)
     if not keys:
@@ -324,7 +355,7 @@ async def build_jwks_document(db: AsyncSession) -> dict[str, Any]:
         if env_key is not None:
             keys.append(public_jwk_from_private(env_key, "nethub-env-bootstrap"))
 
-    doc = {"keys": keys}
+    doc = {"keys": _sanitize_public_jwks(keys)}
     ttl = int(getattr(settings, "jwks_redis_ttl_sec", 120))
     await redis_set(JWKS_CACHE_KEY, json.dumps(doc), ttl)
     return doc
