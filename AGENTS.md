@@ -20,9 +20,11 @@ This is **not optional**. It applies to every agent, every session, regardless o
 
 ### 2.1 Program identity
 
+**Architecture contract:** docs/SSO_ARCHITECTURE_CONTRACT.md (approved 2026-10-29; implementation remains separately gated). Product APIs validate NetHubKe-issued tokens locally via JWKS. Zitadel tokens terminate at NetHubKe except for any separately approved, time-bounded compatibility exception. The five-minute stale-access bound is end-to-end, not additive per cache layer.
+
 | Item | Value |
 |------|--------|
-| **Goal** | Keycloak = IdP; NetHubKe = multi-product token AS + central console (services, billing, SSO launch hop); product apps (Tawala, …) trust NetHubKe JWKS |
+| **Goal** | Zitadel = IdP; NetHubKe = IdP-agnostic product token issuer + central console (services, billing, SSO launch hop); product APIs trust NetHubKe JWKS |
 | **Project board** | https://github.com/orgs/NetHub-Ltd/projects/4 |
 | **Umbrella issue** | https://github.com/NetHub-Ltd/NetHubKe/issues/57 |
 | **Milestones** | **N0 → N10** (GitHub milestones on this repo) |
@@ -49,7 +51,7 @@ SSO program: N2 in progress — #44 open, #45 open. Exchange flag still off. Nex
 4. **Refuse to skip milestones.** Work proceeds **N0 → N1 → … → N10** unless the user explicitly reprioritizes **within** the approved program (e.g. docs in parallel). Agents must **not**:
    - Jump to Billing UI (N8) or Launch hop (N7) before managed keys (N2) and generic exchange (N3) exist
    - Put product private keys or long-lived product secrets in the frontend
-   - Introduce a second IdP login UI that bypasses Keycloak
+   - Introduce a second IdP login UI that bypasses Zitadel
    - Use SQLite or non-Postgres primary stores
    - Add per-request introspection hops from product apps into NetHub on hot paths (products verify JWTs locally via JWKS)
    - Create cashier/staff rows for Tawala (or other product floor users) in the NetHub database
@@ -58,7 +60,7 @@ SSO program: N2 in progress — #44 open, #45 open. Exchange flag still off. Nex
 
 ### 2.3 Non-blocking / flags rule
 
-New AS and console paths ship **behind flags default off** (or docs-only) until the matching milestone’s acceptance criteria are met on staging. Existing Keycloak login + `/users/sync` + Profile must keep working unless a milestone explicitly replaces them.
+New AS and console paths ship **behind flags default off** (or docs-only) until the matching milestone’s acceptance criteria are met on staging. Existing Zitadel OIDC login + `/users/sync` + Profile must keep working unless a milestone explicitly replaces them.
 
 ### 2.4 Every push / PR rule
 
@@ -103,6 +105,6 @@ After that, this section may be reduced in a dedicated docs PR. **Until then, ag
 
 ---
 
-**Last updated:** 2026-09-16  
+**Last updated:** 2026-10-29  
 **Program board:** https://github.com/orgs/NetHub-Ltd/projects/4  
 **Umbrella:** #57
