@@ -1,9 +1,11 @@
 # Repository State
 - Repository: NetHub-Ltd/NetHubKe
 - Baseline: dev at ba31e338e91f7b1f62f754264efc9972a6544bf6 (inspected 2026-10-29)
-- Current planning branch: docs/n0-sso-contract-reconciliation
-- Planning issue: #142; umbrella #57; conflicting Path A issue #135
+- Current branch: test/n1-exchange-regression-coverage
+- Implementation issue: #144; milestone N1
+- Planning issue/PR: #142 / #143 (PR #143 remains separate and unmerged)
 - PR target: dev
-- Scope: architecture docs, issue reconciliation, trackers only; no application implementation or runtime changes.
-- Milestone assessment: N0 governance artifacts exist; N1–N8 issues are closed but their acceptance checklists remain unchecked in GitHub, so closure is not sufficient evidence of acceptance. N9 (#55) and N10 (#56) are open. Earliest milestone not demonstrably accepted is N1 (#42/#43), pending verification against code, CI, and staging.
-- Milestone mapping follows the observed sequence N0=1, N2=3, N3=4, …, N10=11. #42/#43 were corrected from milestone 11 to milestone 2 to match their N1 bodies.
+- Scope: backend auth/exchange behavior and tests, AUTH_MATRIX, trackers; no schema or migration changes.
+- Changes: require exp/iat/sub on validated IdP JWTs; disallow client principal hints that differ from role-derived principal; add exchange regression and signed product-token tests.
+- Tests have not been executed locally in this session. Use GitHub Actions PR checks as execution evidence.
+- N1 remains not accepted until CI and acceptance checklist are verified. N2–N8 also need evidence review; N9/N10 remain open.
