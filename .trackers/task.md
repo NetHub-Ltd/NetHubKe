@@ -21,3 +21,13 @@
 - Backend CI run #75 passed: https://github.com/NetHub-Ltd/NetHubKe/actions/runs/40957949078
 - Docker/Postgres/Redis readiness run #36 passed: https://github.com/NetHub-Ltd/NetHubKe/actions/runs/40957949058
 - Vercel check passed for the current draft head. These results validate current tested paths only; N3–N5 remains incomplete until canonical identity mapping, explicit grant precedence, generic claim-profile behavior, and comprehensive freshness/emergency tests are resolved.
+
+
+## Follow-up to merged PR #151 — issue #152
+- User confirmed PR #151 merged to `dev`; acceptance gaps were not closed by merge. Work continues on `fix/n3-n5-acceptance-gaps` before N6–N7 (#149) starts.
+- Added `UserIdentity` with unique issuer+subject mapping and a PostgreSQL migration; validated token claims now carry issuer; sync creates identity mapping for new users and refuses email-only linking to an existing local account (409 requiring explicit linking); exchange looks up the canonical identity mapping.
+- Added `standard` product claim profile support that omits Tawala-only `org_id` and `principal`, and fails closed on unsupported profiles. Tawala retains its compatibility profile.
+- Removed trust in cached positive/negative entitlement decisions; PostgreSQL remains authoritative for each exchange decision, Redis writes are advisory only.
+- Added regression tests for identity constraints, issuer+subject lookup, refusing email-only account linking, standard JWT claims, and unknown claim profiles.
+- Important gaps still open: implement and test explicit organization/individual grant precedence and narrowly authorized admin override; provide a safe audited admin linking workflow for existing accounts; comprehensive emergency revocation/JWKS-cache behavior tests and measured end-to-end freshness bound. Do not start N6–N7 until those are closed and verified.
+- CI not yet checked for this branch; local tests not run.
