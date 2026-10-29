@@ -6,4 +6,4 @@
 - PR target: dev
 - Scope: architecture docs, issue reconciliation, trackers only; no application implementation or runtime changes.
 - Milestone assessment: N0 governance artifacts exist; N1–N8 issues are closed but their acceptance checklists remain unchecked in GitHub, so closure is not sufficient evidence of acceptance. N9 (#55) and N10 (#56) are open. Earliest milestone not demonstrably accepted is N1 (#42/#43), pending verification against code, CI, and staging.
-- Milestone IDs are inconsistent: #42/#43 say N1 but point at GitHub milestone 11; #55 says N9/milestone 10; #56 says N10/milestone 11. Do not change milestone assignments until actual GitHub milestone names/IDs are verified.
+- Milestone mapping follows the observed sequence N0=1, N2=3, N3=4, …, N10=11. #42/#43 were corrected from milestone 11 to milestone 2 to match their N1 bodies.

@@ -20,8 +20,8 @@
 | N10 | #56 | Open | Flag matrix, staging soak, end-to-end success criteria and close umbrella only when evidenced. |
 
 ## Data-quality findings
-- #42/#43 body says N1 but their GitHub milestone assignment is 11; do not guess the intended milestone ID.
-- #55 body says N9 and is assigned milestone 10; #56 body says N10 and is assigned milestone 11. These may be correct or incorrect; verify actual GitHub milestone names/IDs before changing.
+- #42/#43 body says N1; their incorrect GitHub milestone assignment (11) was corrected to milestone 2, matching the N0=1, N2=3 sequence.
+- #55 (N9) is assigned milestone 10 and #56 (N10) milestone 11, consistent with the observed sequential mapping N0=1 through N10=11.
 - .trackers/repo-state.md previously pointed at feat/n8-billing-read while task tracker pointed at feat/idp-agnostic-oidc; both were stale relative to inspected dev baseline.
 - Issue #135's Path A direct-IdP-token mechanism conflicts with the approved token issuer model. Preserve generic membership/external-user-link concepts and issue history; explicitly revise/split before implementing the endpoint as an ecosystem contract.
 

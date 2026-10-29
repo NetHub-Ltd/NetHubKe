@@ -78,7 +78,7 @@ The programme remains N0 → N10; do not jump ahead based only on issue closure:
 - N9: settings (#55).
 - N10: operational runbook, staging soak and end-to-end success criteria (#56).
 
-Issues #42–#54 are marked closed but retain unchecked acceptance boxes. They are **closed in GitHub, acceptance evidence unverified** until code, CI and staging evidence is recorded. #55 and #56 are open. The earliest not-demonstrably-accepted milestone is N1, pending verification. GitHub milestone assignments appear inconsistent with issue-body milestone labels; verify milestone names/IDs before correcting assignments. The project board remains the programme status source.
+Issues #42–#54 are marked closed but retain unchecked acceptance boxes. They are **closed in GitHub, acceptance evidence unverified** until code, CI and staging evidence is recorded. #55 and #56 are open. The earliest not-demonstrably-accepted milestone is N1, pending verification. The #42/#43 milestone assignment was corrected from 11 to 2 based on the observed N0=1, N2=3, …, N10=11 sequence; #55/#56 align with that mapping. The project board remains the programme status source.
 
 ## 9. Non-goals and rollout constraints
 
