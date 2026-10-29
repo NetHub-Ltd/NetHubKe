@@ -1,17 +1,11 @@
 # Repository State
 - Repository: NetHub-Ltd/NetHubKe
-- Baseline branch: `dev` (inspected 2026-10-29; GitHub connector did not expose a reliable current branch-head SHA).
-- Current branch: `feat/n2-managed-signing-keys`.
-- Implementation issue: #146; milestone N2.
-- N0 PR #143 and N1 PR #145: user confirmed both merged to `dev`.
-- PR: #147 (https://github.com/NetHub-Ltd/NetHubKe/pull/147), open and ready for review; target `dev`. No merge without explicit user approval.
-- N2 changes so far:
-  - Added tests-first regression suite `apps/backend/tests/unit/test_n2_signing_key_acceptance.py`.
-  - Added exchange-gated bootstrap, PostgreSQL advisory-lock serialization, encrypted private PEM helpers, production fail-closed behavior and safer private-key loading in `app/services/tawala_token.py`.
-  - Added `SIGNING_KEY_ENCRYPTION_KEY` setting.
-  - Added `scripts/encrypt_signing_keys.py` and `docs/SIGNING_KEY_CUSTODY.md`.
-  - Updated `apps/backend/docs/AUTH_MATRIX.md`.
-- Key format: legacy plaintext remains readable in non-production for migration; encrypted rows use `enc:v1:`. Production refuses to sign with legacy plaintext or without valid encryption configuration.
-- No schema migration, deployment or feature-flag change.
-- Validation status: initial CI failures were fixed. Backend CI run #71 and readiness run #32 both completed successfully on the current PR head. Local tests remain unrun. CI must verify tests, migration compatibility and Postgres/Redis behavior before review.
-- Remaining: obtain authoritative backend CI/test results, resolve failures, and review PR #147. Do not merge without explicit user approval.
+- Baseline: `dev`; N2 PR #147 merged to `dev` at `31f61ded9a124009db8bdecf2c251d2628ade756` (2026-10-29).
+- Current branch: `feat/n3-n5-token-policy-rotation`, created from `dev`.
+- Current implementation issue: #148 (N3–N5 consolidated first PR); future consolidated issues #149 (N6–N7), #150 (N8–N10).
+- Existing milestone issues #46–#50 remain the source history for N3–N5; link acceptance evidence rather than replacing/closing them without proof.
+- Relevant current code observed: `app/api/v1/routes/auth.py` already contains generic exchange + Tawala alias; `Product`, `ProductLink`, `Membership`, `SigningKey` models exist; `services/entitlements.py` and key rotation helpers need a full audit before changing behavior.
+- Current risks to investigate: canonical identity still uses email lookup (explicitly marked compatibility behavior); audience/profile handling may be product-specific; org resolution fallback and entitlement precedence need verification; key rotation helpers exist but need operator authorization, cache-failure and emergency-response tests.
+- Exchange feature flag remains default-off. Do not claim live Zitadel staging or the end-to-end five-minute stale-access bound without evidence.
+- Validation status: no tests run yet on this branch. Establish baseline CI/local test evidence before and after edits.
+- Operating constraints: PR target `dev`; no merge without explicit user approval; no history rewriting.
