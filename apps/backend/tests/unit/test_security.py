@@ -163,8 +163,9 @@ def test_decode_rejects_wrong_signature_algorithm(rsa_key):
     token = jwt.encode(
         {"sub": "subject", "iss": settings.idp_issuer, "aud": settings.audience,
          "iat": int(time.time()), "exp": int(time.time()) + 60},
-        rsa_key,
-        algorithm="RS256",
+        "attacker-controlled-secret",
+        algorithm="HS256",
+        headers={"kid": "t"},
     )
     with _patch_jwks(rsa_key.public_key()):
         with pytest.raises(HTTPException) as error:
