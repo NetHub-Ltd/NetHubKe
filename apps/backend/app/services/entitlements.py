@@ -59,10 +59,9 @@ async def check_entitled(
     ):
         return False
 
-    cached = await redis_get(key)
-    if cached is not None:
-        return cached == "1"
-
+    # Authorization decisions must use the durable source of truth. Redis remains
+    # useful for observability/future optimization, but a positive cache hit must
+    # never outlive a grant revocation or account/service state change.
     entitled = await _compute_entitled(db, tenant_id=tenant_id, product_slug=product_slug)
     await redis_set(key, "1" if entitled else "0", ENTITLE_TTL_SEC)
     return entitled
