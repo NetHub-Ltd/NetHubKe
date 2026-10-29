@@ -197,13 +197,13 @@ async def test_exchange_success_uses_server_resolved_identity_and_product_audien
     from app.api.v1.routes import auth
     from app.db.models.models import Product, Tenant, User
 
-    tenant = Tenant(name="Exchange Test Tenant", email=f"tenant-{uuid.uuid4()}@example.test")
+    tenant = Tenant(name="Exchange Test Tenant", email=f"tenant-{uuid.uuid4()}@example.com")
     db_session.add(tenant)
     await db_session.flush()
 
     user = User(
         username=f"exchange-{uuid.uuid4().hex[:8]}",
-        email=f"exchange-{uuid.uuid4().hex[:8]}@example.test",
+        email=f"exchange-{uuid.uuid4().hex[:8]}@example.com",
         full_name="Exchange Test User",
         is_active=True,
         tenant_id=tenant.id,
@@ -263,7 +263,7 @@ async def test_exchange_rejects_client_principal_elevation_before_database_acces
         "ensure_tawala_product",
         AsyncMock(side_effect=AssertionError("should reject before product lookup")),
     )
-    token = make_kc_token(email="non-owner@example.test", roles=["user"])
+    token = make_kc_token(email="non-owner@example.com", roles=["user"])
     response = await client.post(
         "/api/v1/auth/exchange",
         headers={"Authorization": f"Bearer {token}"},
