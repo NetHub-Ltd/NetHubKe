@@ -14,10 +14,10 @@ from app.db.schemas.enums import ServicePricing, ServiceFAQ, ServiceIcon
 class TokenData(BaseModel):
     """
     Claims extracted from a verified IdP access token.
-    Identity in NetHub is email + local UUID — not IdP subject format.
-    `sub` is opaque (string) and never stored as a foreign key.
+    The stable upstream identity is the exact validated (issuer, sub) pair; email is mutable profile data.
     """
     sub: str = Field(default="", validation_alias=AliasChoices("sub"))
+    issuer: str = Field(default="", validation_alias=AliasChoices("iss", "issuer"))
     email: EmailStr
     username: str = Field(default="", validation_alias=AliasChoices("preferred_username", "username"))
     full_name: str = Field(default="", validation_alias=AliasChoices("name"))
