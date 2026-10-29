@@ -97,6 +97,7 @@ def _decode_token(token: str) -> TokenData:
             algorithms=settings.algorithms,
             audience=settings.audience,
             issuer=issuer,
+            options={"require": ["exp", "iat", "sub"]},
             leeway=10,
         )
 
