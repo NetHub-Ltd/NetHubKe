@@ -37,7 +37,7 @@ class ExchangeRequest(BaseModel):
     )
     principal: Optional[str] = Field(
         default=None,
-        description="Force principal owner|terminal; default inferred from roles.",
+        description="Legacy hint; must match the principal derived by NetHubKe.",
     )
 
 
@@ -46,7 +46,7 @@ class TawalaExchangeRequest(BaseModel):
 
     principal: Optional[str] = Field(
         default=None,
-        description="Force principal owner|terminal; default inferred from roles/tenant.",
+        description="Legacy hint; must match the principal derived by NetHubKe.",
     )
 
 
@@ -60,24 +60,40 @@ class ExchangeResponse(BaseModel):
     product: str
 
 
-# Backward-compatible alias name
 TawalaExchangeResponse = ExchangeResponse
 
 
-def _infer_principal(token_data: TokenData, user: User) -> str:
-    roles = {str(r).lower() for r in (token_data.roles or [])}
+def _infer_principal(token_data: TokenData) -> str:
+    """Derive the product principal from verified IdP claims, never client input."""
+    roles = {str(role).lower() for role in (token_data.roles or [])}
     if roles & {"owner", "org_owner", "tenant_owner", "admin", "super_admin"}:
         return "owner"
     return "terminal"
 
 
+def _validate_principal_hint(token_data: TokenData, hint: Optional[str]) -> str:
+    """Keep legacy request compatibility without allowing client privilege elevation."""
+    inferred = _infer_principal(token_data)
+    if hint is None:
+        return inferred
+
+    requested = hint.strip().lower()
+    if requested not in {"owner", "terminal"}:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="principal must be owner or terminal",
+        )
+    if requested != inferred:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="principal is derived by NetHubKe and cannot be overridden",
+        )
+    return inferred
+
+
 @router.get("/jwks.json")
 async def product_jwks(db: SessionDep):
-    """
-    Public JWKS for product resource servers (AUTH_HARD_JWKS_URL).
-
-    Serves active + retiring keys from signing_keys (Redis-cached).
-    """
+    """Public JWKS for product resource servers; contains public signing keys only."""
     return await build_jwks_document(db)
 
 
@@ -88,20 +104,25 @@ async def _run_exchange(
     product_slug: str,
     principal_override: Optional[str],
 ) -> ExchangeResponse:
+    # Fail closed before any database lookup, key access, or side effect.
     if not exchange_enabled():
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Token exchange is not enabled",
         )
 
+    principal = _validate_principal_hint(token_data, principal_override)
+
     from app.crud.user import user_crud
 
-    # Ensure default tawala row exists in fresh DBs (migration seeds; this is belt-and-suspenders)
+    # Ensure default Tawala row exists in fresh DBs (migration seeds; belt-and-suspenders).
     if product_slug.strip().lower() == "tawala":
         await ensure_tawala_product(db)
 
     product = await get_product_by_slug(db, product_slug)
 
+    # NOTE: email lookup is the current compatibility behavior. The approved target
+    # is stable (issuer, subject) identity mapping; that needs its own migration/issue.
     user = await user_crud.get_by_email(db, str(token_data.email))
     if not user:
         raise HTTPException(
@@ -146,16 +167,7 @@ async def _run_exchange(
         tenant_id_fallback=tenant.id,
     )
 
-    principal = principal_override or _infer_principal(token_data, user)
-    principal = str(principal).strip().lower()
-    if principal not in ("owner", "terminal"):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="principal must be owner or terminal",
-        )
-
     nethub_sub = str(user.id)
-    # Prefer settings audience for tawala so env overrides seed row
     audience = product.audience
     if product.slug == "tawala":
         audience = getattr(settings, "tawala_jwt_audience", None) or product.audience
@@ -188,11 +200,7 @@ async def exchange_product_token(
     body: ExchangeRequest,
     token_data: TokenData = Depends(get_token_data),
 ):
-    """
-    Exchange a valid Keycloak access token for a product access JWT (N3).
-
-    Body: ``{"product": "tawala", "principal": "owner"|"terminal"|null}``
-    """
+    """Exchange a valid upstream IdP access token for a product access JWT."""
     return await _run_exchange(
         db,
         token_data,
@@ -207,9 +215,7 @@ async def exchange_tawala_token(
     token_data: TokenData = Depends(get_token_data),
     body: Optional[TawalaExchangeRequest] = None,
 ):
-    """
-    Alias for ``POST /exchange`` with product=tawala (kept for existing clients).
-    """
+    """Backward-compatible alias for POST /exchange with product=tawala."""
     return await _run_exchange(
         db,
         token_data,

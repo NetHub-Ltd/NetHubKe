@@ -217,3 +217,69 @@ async def test_mint_product_success(rsa_pem):
                 )
     assert isinstance(token, str) and len(token) > 20
     assert exp > int(time.time())
+
+
+
+@pytest.mark.asyncio
+async def test_mint_product_success_token_claims_and_signature(rsa_pem):
+    """Minted product JWT is RS256-signed, audience-bound and exposes no private key material."""
+    _, key = rsa_pem
+    db = AsyncMock()
+    org_id = uuid.uuid4()
+    now = int(time.time())
+    with patch.object(tt, "exchange_enabled", return_value=True):
+        with patch.object(
+            tt, "get_active_signing_key", new_callable=AsyncMock, return_value=(key, "kid-verified")
+        ):
+            with patch.object(
+                tt,
+                "settings",
+                MagicMock(tawala_jwt_issuer="https://api.example.test", tawala_jwt_ttl_sec=60),
+            ):
+                token, exp = await tt.mint_product_access_token(
+                    db,
+                    product_slug="netpay",
+                    audience="netpay-api",
+                    sub="canonical-user-123",
+                    org_id=org_id,
+                    principal="terminal",
+                    email="user@example.com",
+                )
+
+    header = jwt.get_unverified_header(token)
+    assert header["alg"] == "RS256"
+    assert header["kid"] == "kid-verified"
+    claims = jwt.decode(
+        token,
+        key.public_key(),
+        algorithms=["RS256"],
+        audience="netpay-api",
+        issuer="https://api.example.test",
+    )
+    assert claims["sub"] == "canonical-user-123"
+    assert claims["org_id"] == str(org_id)
+    assert claims["principal"] == "terminal"
+    assert claims["product"] == "netpay"
+    assert claims["iat"] >= now
+    assert claims["exp"] == exp
+    assert 0 < claims["exp"] - claims["iat"] <= 60
+    assert claims["email"] == "user@example.com"
+    assert not ({"password", "private_pem", "private_key", "roles", "tenant_id"} & claims.keys())
+
+
+@pytest.mark.asyncio
+async def test_mint_rejects_unknown_principal_without_loading_key():
+    db = AsyncMock()
+    with patch.object(tt, "exchange_enabled", return_value=True):
+        with patch.object(tt, "get_active_signing_key", new_callable=AsyncMock) as get_key:
+            with pytest.raises(HTTPException) as error:
+                await tt.mint_product_access_token(
+                    db,
+                    product_slug="tawala",
+                    audience="tawala-api",
+                    sub="sub-1",
+                    org_id=uuid.uuid4(),
+                    principal="admin",
+                )
+    assert error.value.status_code == 400
+    get_key.assert_not_awaited()
