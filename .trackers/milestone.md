@@ -7,7 +7,7 @@
 ## Delivery plan — three PRs
 | PR group | Milestones | Tracking issue | Existing milestone issues | State |
 |---|---|---|---|---|
-| PR 1 | N3–N5 | #148 | #46–#50 | In progress on `feat/n3-n5-token-policy-rotation` |
+| PR 1 | N3–N5 | #148 + gap follow-up #152 | #46–#50 | #151 merged; acceptance-gap follow-up underway before N6–N7 |
 | PR 2 | N6–N7 | #149 | #51–#53 | Planned; depends on PR 1 acceptance |
 | PR 3 | N8–N10 | #150 | #54–#56 | Planned; depends on PRs 1 and 2 acceptance |
 
@@ -17,9 +17,9 @@
 | N0 | #40, #41; reconciliation #142 / PR #143 | User reports PR #143 merged to dev | Architecture baseline established; staging evidence remains distinct. |
 | N1 | #42, #43; implementation #144 / PR #145 | User reports PR #145 merged to dev | Prior PR reports 152 tests passed, 75.22% coverage and readiness success; verify end-to-end compatibility as later changes land. |
 | N2 | #44, #45; implementation #146 / PR #147 | PR #147 merged to dev at `31f61ded9a124009db8bdecf2c251d2628ade756` | Managed keys/JWKS baseline merged. Encryption rollout/staging and five-minute freshness are not proven by merge alone. |
-| N3 | #46, #47 | In progress under #148 | Generic exchange route exists; JWT now adds jti and docs correct canonical subject claims. Stable upstream (issuer, sub) mapping remains unresolved; feature remains default-off. |
-| N4 | #48, #49 | In progress under #148 | Inactive service denies and external org resolution fails closed without explicit link/approved Tawala mapping. Full grant-precedence model remains to audit/implement. |
-| N5 | #50 | In progress under #148 | Rotation serialized; durable audit model + emergency key revocation implemented; CI/migration/test verification pending. |
+| N3 | #46, #47 | #151 merged; #152 follow-up | Generic exchange now resolves by issuer+subject mapping; standard profile omits Tawala-only claims. Need explicit legacy account linking and CI verification; feature remains default-off. |
+| N4 | #48, #49 | #152 follow-up | PostgreSQL is authoritative for each entitlement check; inactive services/missing required services fail closed. Explicit org/individual grant precedence and authorized admin override remain open. |
+| N5 | #50 | #151 merged; #152 follow-up | Rotation/audit/emergency endpoint merged; comprehensive cache/JWKS emergency tests and measured end-to-end freshness remain open. |
 | N6 | #51, #52 | Planned under #149 | Service catalogue and connected/trial/not-connected status. |
 | N7 | #53 | Planned under #149 | Secure feature-flagged launch hop; redirect/token-leakage controls. |
 | N8 | #54 | Planned under #150 | Read-only billing API/UI; NetHub remains source of truth. |
@@ -44,3 +44,8 @@
 - A PostgreSQL migration adds durable `security_audit_events` (down revision `i2c3d4e5f6a7`); verify this is the active migration head in CI before merge.
 - Key remaining gaps to resolve before acceptance: canonical upstream identity mapping by (issuer, immutable sub); explicit org/individual grant precedence and a complete policy decision model; claim-profile behavior for non-Tawala products; comprehensive Redis failure, migration and end-to-end freshness tests.
 - Backend CI #75, Docker/Postgres/Redis readiness #36, and Vercel check passed on draft PR #151. These checks do not close the remaining acceptance gaps. No flag enablement or merge is authorized.
+
+## PR #151 post-merge gap follow-up
+- Issue #152 / branch `fix/n3-n5-acceptance-gaps` addresses gaps explicitly acknowledged in PR #151.
+- Identity mapping and standard claim profile work is implemented but not CI-verified yet.
+- Do not start #149/N6–N7 until explicit grant precedence, safe existing-account linking, emergency-response tests and end-to-end freshness evidence are complete.
