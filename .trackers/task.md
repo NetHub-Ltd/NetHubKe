@@ -1,11 +1,10 @@
-# Task: N2 managed signing keys and JWKS reliability
-- Issue: #146 — implementation contract approved by user on 2026-10-29.
-- Programme: #57; approved architecture: `docs/SSO_ARCHITECTURE_CONTRACT.md`.
-- Branch: `feat/n2-managed-signing-keys` → PR to `dev`.
-- Baseline: `dev` as inspected 2026-10-29; N0 planning PR #143 and N1 implementation PR #145 reported merged by user. N1 PR reports 152 passed, 75.22% coverage and readiness CI passed.
-- Scope: key persistence/bootstrap correctness, public JWKS filtering/cache behavior, encryption-at-rest rollout, regression tests, AUTH_MATRIX and trackers.
-- Decisions: PostgreSQL remains durable source of truth; Redis is disposable cache; disabled exchange must not bootstrap; production signing requires `SIGNING_KEY_ENCRYPTION_KEY` and encrypted key rows.
-- Rollout guide: `apps/backend/docs/SIGNING_KEY_CUSTODY.md`; helper: `apps/backend/scripts/encrypt_signing_keys.py`.
-- Exchange remains default-off. No deployment, staging-readiness or production-flag claims.
-- Tests-first: N2 regression test file was committed before implementation changes. Initial CI exposed two compatibility failures plus readiness startup still bootstrapping keys while exchange was disabled. Follow-up fixes now skip startup bootstrap when exchange is off and make legacy tests state their flag assumptions explicitly; backend CI and readiness are green on runs #71 and #32; PR remains open for review and explicit merge approval.
-- No merge without explicit user approval. Do not rebase, squash, reset, force-push or rewrite history.
+# Task: Consolidated N3–N5 implementation (generic exchange, entitlements, key operations)
+- Implementation issue: #148 — contract created 2026-10-29; maps to existing milestone issues #46–#50 without replacing their history.
+- Programme umbrella: #57; approved architecture contract: `docs/SSO_ARCHITECTURE_CONTRACT.md`.
+- Delivery plan: three PRs total — PR 1 N3–N5 (#148), PR 2 N6–N7 (#149), PR 3 N8–N10 (#150).
+- Branch: `feat/n3-n5-token-policy-rotation` → PR target `dev`.
+- N2 predecessor: issue #146 / PR #147 merged to `dev` at merge commit `31f61ded9a124009db8bdecf2c251d2628ade756` (2026-10-29). Exchange remains default-off; no live staging readiness is implied.
+- Scope: audit and harden generic product exchange/claim profiles, product/org links and explicit entitlement precedence, signing-key rotation and emergency response. PostgreSQL is durable source of truth; Redis is disposable cache.
+- Contract boundaries: no N6/N7 catalogue/launch work and no N8–N10 billing/settings work in this PR. Do not enable flags or change deployment.
+- Tests-first; inspect current implementation and tests before edits. Do not infer acceptance from closed legacy issues.
+- Workflow: topic branch; PR targets `dev`; update all four trackers at meaningful transitions; no merge without explicit user approval. Do not rebase, squash, reset, force-push, or rewrite history.
