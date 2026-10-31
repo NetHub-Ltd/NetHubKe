@@ -79,3 +79,12 @@ On application start the lifespan **hard-stops** unless:
 JWKS reads do not create signing state while exchange is disabled; an empty `{"keys":[]}` response is valid when no key exists and exchange is off.
 
 k3s: use `/ready` for readinessProbe and `/health` for livenessProbe.
+
+
+## Five-minute stale-access budget
+
+Product access tokens are hard-capped in issuer code at **240 seconds**, even if a deployment supplies the legacy eight-hour setting. Resource servers must use no more than **60 seconds** of JWT clock leeway and must not accept a token after `exp + 60s`.
+
+Resource servers must refresh JWKS at least every 60 seconds and refresh immediately when a token presents an unknown `kid`. They must not extend a cached key beyond that refresh bound, and must validate exact issuer/audience and RS256.
+
+This creates a 300-second maximum token-age budget for tokens issued before revocation, assuming the verifier honors the 60-second clock-leeway ceiling. It does not prove deployed verifier behavior. End-to-end acceptance still requires measuring the actual resource server's JWKS cache, refresh behavior and clock skew. No live verifier measurement or production rollout is asserted.

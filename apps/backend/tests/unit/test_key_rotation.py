@@ -79,3 +79,25 @@ async def test_emergency_revoke_active_key_replaces_and_audits():
     assert any(isinstance(call.args[0], SecurityAuditEvent) for call in db.add.call_args_list)
     db.commit.assert_awaited_once()
     invalidate.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_auto_rotation_rechecks_fresh_key_after_lock():
+    """A competing worker's completed rotation makes this worker a no-op."""
+    fresh = MagicMock(kid="fresh-key", status="active", deleted_at=None, created_at=datetime.now(timezone.utc))
+    stale = MagicMock(kid="old-key", status="active", deleted_at=None, created_at=datetime.now(timezone.utc) - timedelta(days=10))
+    empty = MagicMock()
+    empty.__iter__ = lambda self: iter([])
+    initial = MagicMock()
+    initial.first.return_value = stale
+    locked = MagicMock()
+    locked.__iter__ = lambda self: iter([fresh])
+    db = AsyncMock()
+    db.exec = AsyncMock(side_effect=[empty, initial, MagicMock(), locked])
+    with patch.object(tt, "settings", MagicMock(
+        signing_key_max_age_hours=168, signing_key_retire_overlap_hours=24,
+        signing_key_encryption_key="", environment="development",
+    )):
+        await tt.ensure_fresh_signing_key(db)
+    assert not any(isinstance(call.args[0], SecurityAuditEvent) for call in db.add.call_args_list)
+    db.commit.assert_not_awaited()
