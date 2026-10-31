@@ -1,11 +1,17 @@
 """Ops endpoints for signing-key rotation (N5)."""
 from __future__ import annotations
 
+from hashlib import sha256
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlmodel import select
+from starlette.concurrency import run_in_threadpool
+from sqlalchemy.exc import IntegrityError
 
 from app.api.deps import SessionDep, require_scopes
+from app.core.config import settings
+from app.core.security import _decode_token
 from app.db.schemas.schemas import TokenData
 from app.db.models.models import User, UserIdentity, SecurityAuditEvent
 from app.services.tawala_token import (
@@ -39,7 +45,7 @@ def _require_admin(token: TokenData) -> None:
     if not (roles & {"admin", "super_admin", "ops"}):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin or ops role required for key rotation",
+            detail="Admin or ops role required.",
         )
 
 
@@ -94,8 +100,7 @@ async def ops_emergency_revoke_signing_key(
 
 
 class LinkIdentityBody(BaseModel):
-    issuer: str = Field(min_length=1, max_length=512)
-    subject: str = Field(min_length=1, max_length=512)
+    proof_token: str = Field(min_length=1, max_length=16384)
     user_id: str = Field(min_length=1, max_length=36)
 
 
@@ -103,20 +108,27 @@ class LinkIdentityBody(BaseModel):
 async def ops_link_upstream_identity(
     body: LinkIdentityBody,
     db: SessionDep,
-    token_data: TokenData = Depends(require_scopes(["user:write"])),
+    token_data: TokenData = Depends(require_scopes(["identity:link"])),
 ):
-    """Explicitly link a validated upstream issuer+subject to a local account."""
+    """Link a local account only with a separately verified IdP identity proof."""
     _require_admin(token_data)
     from uuid import UUID
 
-    issuer = body.issuer.strip().rstrip("/")
-    subject = body.subject.strip()
     try:
         user_id = UUID(body.user_id)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail="user_id must be a UUID") from exc
-    if not issuer or not subject:
-        raise HTTPException(status_code=422, detail="issuer and subject must not be blank")
+
+    # The supplied proof is independently signature/issuer/audience/expiry checked
+    # against the configured IdP. Never accept a caller-typed issuer or subject.
+    proof = await run_in_threadpool(_decode_token, body.proof_token)
+    issuer = (proof.issuer or "").strip().rstrip("/")
+    # The upstream subject is opaque; preserve the exact validated claim.
+    subject = proof.sub or ""
+    if issuer != (settings.idp_issuer or "").strip().rstrip("/"):
+        raise HTTPException(status_code=401, detail="Identity proof issuer is not trusted")
+    if not subject or not proof.email or not proof.email_verified:
+        raise HTTPException(status_code=403, detail="Verified upstream email is required for account linking")
 
     user = (
         await db.exec(
@@ -125,6 +137,8 @@ async def ops_link_upstream_identity(
     ).first()
     if user is None:
         raise HTTPException(status_code=404, detail="Local user not found")
+    if (user.email or "").strip().lower() != str(proof.email).strip().lower():
+        raise HTTPException(status_code=409, detail="Verified upstream email does not match the local account")
 
     existing = (
         await db.exec(
@@ -159,7 +173,15 @@ async def ops_link_upstream_identity(
         target_type="user",
         target_id=str(user_id),
         outcome="success",
-        details={"issuer": issuer, "subject": subject},
+        details={
+            "issuer": issuer,
+            "subject_sha256": sha256(subject.encode("utf-8")).hexdigest(),
+            "proof_email_verified": True,
+        },
     ))
-    await db.commit()
+    try:
+        await db.commit()
+    except IntegrityError as exc:
+        await db.rollback()
+        raise HTTPException(status_code=409, detail="Identity link conflicts with an existing mapping") from exc
     return {"linked": True, "user_id": str(user_id), "already_linked": False}

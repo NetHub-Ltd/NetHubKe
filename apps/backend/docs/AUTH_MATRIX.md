@@ -22,6 +22,7 @@ Resource server validation is configured by issuer/audience and JWKS; compatibil
 |---|---|
 | user:read | Read own profile (GET /users/me) |
 | user:write | Update own profile (PATCH /users/me) |
+| identity:link | Explicitly link a verified upstream identity to a local account; requires an admin/ops role |
 | services:admin | Mutate services catalogue (seed / create) |
 
 OIDC noise scopes (openid, profile, email, …) are not authorization grants.
@@ -88,3 +89,18 @@ Evaluate separately: service exists/enabled and public availability; whether aut
 - Standard claim profile omits Tawala-only `org_id` and `principal`; Tawala retains its compatibility profile. Unsupported profiles fail closed.
 - Redis helpers degrade to cache misses/no-op writes. Entitlement decisions now read PostgreSQL rather than trusting cached positive/negative decisions; Redis writes are advisory only. This avoids stale positive grants at the cost of a database query per exchange.
 - The five-minute stale-access bound and live Zitadel staging readiness remain unproven until measured end-to-end evidence is recorded.
+
+
+## Canonical identity lifecycle (N3)
+
+- Authenticated API requests resolve the local account only by the exact validated (issuer, sub) mapping. Email is mutable profile/contact data and must never be used to authenticate or locate an account.
+- POST /api/v1/users/sync creates a mapping for a new identity but never silently links an existing email-owned account. A verified upstream email change may update the mapped user's email only if no other live local account owns it; an unverified email change is ignored.
+- Soft-deleted users are excluded from email lookup, identity lookup, sync, and authenticated profile access. Disabled users remain denied and are never reactivated by sync.
+- POST /api/v1/ops/identities/link requires both the identity:link scope and an admin/ops role, plus a separately validated proof token with a verified email matching the target local account. The subject is hashed in the durable audit event.
+
+
+### N3 transaction and race-safety follow-up
+
+- First-login provisioning creates the personal tenant, local user, and (issuer, subject) mapping in one PostgreSQL transaction. Tenant helpers may flush to obtain generated IDs but must not commit independently.
+- Concurrent first-login attempts are resolved by database uniqueness constraints. A losing transaction rolls back and re-reads the winning identity mapping; it must not leave duplicate or orphan tenant/user rows.
+- The HTTP sync contract explicitly rejects email-only linking for an existing local account and must leave its user, tenant, and identity state unchanged.
