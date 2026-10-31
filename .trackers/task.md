@@ -102,3 +102,13 @@
 - Temporary product/tenant or product/user overrides require entitlements:override plus admin/super_admin/ops role, reason, expiry within 90 days, and durable create/revoke audit events. Overrides satisfy only their matching policy dimension and cannot bypass inactive users/products/services.
 - PostgreSQL is authoritative; entitlement decisions do not read Redis. Added policy matrix, product/period isolation, inactive service, override expiry/revocation, HTTP authorization/audit, exchange wiring and Alembic upgrade/downgrade/re-upgrade CI coverage.
 - Validation pending CI. Exchange remains default-off; no deployment or production flag changes. PR remains unmerged pending review.
+
+
+## N4 validation completed — 2026-10-31
+- Final implementation commit: 030a6b50502105e5b6d0653d2f6a9ce305ccd5c7 on PR #156.
+- Backend CI run 41211623055 passed: 205 tests, 73.85% coverage, required threshold and per-file coverage checks passed.
+- Alembic upgrade to head, downgrade one revision, and upgrade to head passed on a separate PostgreSQL database.
+- Docker/PostgreSQL/Redis readiness run 41211623011 passed. Vercel check passed.
+- Subscription period columns were migrated to timezone-aware timestamps, interpreting existing values as UTC; downgrade converts them back using UTC.
+- Codecov reports Repository not found during upload; this is non-blocking and the coverage artifact was generated.
+- PR #156 remains open against dev and unmerged. Exchange remains default-off. Subsequent tracker-only commit does not change app/test code.

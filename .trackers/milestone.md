@@ -109,3 +109,10 @@
 - Organization grants are product-scoped active-period Subscriptions; individual grants reuse Membership. Legacy product_id-null subscriptions are preserved and do not grant access. ProductLink is mapping only.
 - Time-bound overrides require entitlements:override and admin/super_admin/ops, reason, max 90-day expiry, and durable create/revoke audit. Overrides only satisfy their corresponding policy dimension.
 - PostgreSQL is authoritative and Redis is not consulted for entitlement decisions. Migration, policy matrix, authorization, audit, and exchange tests are included. CI validation pending; exchange stays default-off and no deployment changes are included.
+
+
+## N4 acceptance validation — 2026-10-31
+- PR #156 implementation commit 030a6b50502105e5b6d0653d2f6a9ce305ccd5c7 validated: 205 tests passed, 73.85% coverage, per-file coverage passed (Backend CI 41211623055).
+- PostgreSQL migration upgrade/downgrade/re-upgrade passed. Docker/PostgreSQL/Redis readiness 41211623011 and Vercel passed.
+- Subscription period timestamp conversion to timezone-aware UTC is covered by the migration workflow. Codecov Repository not found is non-blocking; artifact upload succeeded.
+- PR #156 remains open, unmerged; N4 implementation and validation are complete pending user review. N5 remains separate.
