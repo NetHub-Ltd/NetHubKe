@@ -72,3 +72,11 @@
 - Docker/Postgres/Redis readiness run #62 passed. https://github.com/NetHub-Ltd/NetHubKe/actions/runs/41207472249
 - Vercel check passed. Coverage XML was generated; the non-blocking Codecov upload returned `Repository not found`, while the GitHub Actions workflow completed successfully.
 - No application runtime behavior, CI workflow configuration, deployment, feature flag, or merge state was changed by this repair. PR #154 remains open against `dev` for review; no merge is authorized.
+
+
+## N4 final implementation PR
+- Branch feat/n4-product-entitlement-policy targets dev from 858cf32e2e53649e3a78a9d632638ae269d54c47.
+- Explicit Product policy modes: organization_only, individual_only, organization_or_individual (default), organization_and_individual.
+- Organization grants are product-scoped active-period Subscriptions; individual grants reuse Membership. Legacy product_id-null subscriptions are preserved and do not grant access. ProductLink is mapping only.
+- Time-bound overrides require entitlements:override and admin/super_admin/ops, reason, max 90-day expiry, and durable create/revoke audit. Overrides only satisfy their corresponding policy dimension.
+- PostgreSQL is authoritative and Redis is not consulted for entitlement decisions. Migration, policy matrix, authorization, audit, and exchange tests are included. CI validation pending; exchange stays default-off and no deployment changes are included.
