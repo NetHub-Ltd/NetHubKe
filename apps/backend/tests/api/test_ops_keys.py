@@ -265,3 +265,56 @@ async def test_identity_link_succeeds_over_http_with_scope_role_and_verified_pro
     assert audit is not None
     assert audit.details["subject_sha256"]
     assert "subject" not in audit.details
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("method", "path"),
+    [
+        ("POST", "/api/v1/ops/signing-keys/rotate"),
+        ("POST", "/api/v1/ops/signing-keys/prune"),
+        ("POST", "/api/v1/ops/signing-keys/compromised-kid/emergency-revoke"),
+        ("GET", "/api/v1/ops/signing-keys/jwks-preview"),
+    ],
+)
+async def test_signing_key_operations_require_admin_or_ops_role(
+    client: AsyncClient, make_kc_token, patch_kc_decode, method: str, path: str
+):
+    token = make_kc_token(
+        sub="ordinary-operator",
+        scopes="openid profile email user:read user:write",
+        roles=["user"],
+    )
+    response = await client.request(
+        method,
+        path,
+        json={"retire_after_hours": 24} if method == "POST" and path.endswith("/rotate") else None,
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("method", "path"),
+    [
+        ("POST", "/api/v1/ops/signing-keys/rotate"),
+        ("POST", "/api/v1/ops/signing-keys/prune"),
+        ("POST", "/api/v1/ops/signing-keys/compromised-kid/emergency-revoke"),
+    ],
+)
+async def test_signing_key_mutations_require_write_scope(
+    client: AsyncClient, make_kc_token, patch_kc_decode, method: str, path: str
+):
+    token = make_kc_token(
+        sub="ops-without-write-scope",
+        scopes="openid profile email user:read",
+        roles=["ops"],
+    )
+    response = await client.request(
+        method,
+        path,
+        json={"retire_after_hours": 24} if path.endswith("/rotate") else None,
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 403
