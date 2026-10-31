@@ -250,9 +250,6 @@ class SecurityAuditEvent(BaseMixin, table=True):
 class EntitlementOverride(BaseMixin, table=True):
     """Time-bound product-specific exception for one tenant or tenant user."""
     __tablename__ = "entitlement_overrides"
-    __table_args__ = (sa.CheckConstraint(
-        "expires_at > created_at", name="ck_entitlement_overrides_expiry_after_creation"
-    ),)
     product_id: uuid.UUID = Field(foreign_key="products.id", index=True)
     tenant_id: uuid.UUID = Field(foreign_key="tenants.id", index=True)
     # Null means organization grant; a value means individual grant.

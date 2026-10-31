@@ -40,7 +40,6 @@ def upgrade() -> None:
         sa.Column("granted_by_sub", sa.String(255), nullable=False),
         sa.Column("revoked_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("revoked_by_sub", sa.String(255), nullable=True),
-        sa.CheckConstraint("expires_at > created_at", name="ck_entitlement_overrides_expiry_after_creation"),
     )
     for column in ("product_id", "tenant_id", "user_id", "granted_by_sub"):
         op.create_index(f"ix_entitlement_overrides_{column}", "entitlement_overrides", [column])
