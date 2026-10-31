@@ -1,7 +1,7 @@
 """HTTP acceptance tests for authorized and audited entitlement overrides."""
 from __future__ import annotations
 from datetime import datetime,timedelta,timezone
-from uuid import uuid4
+from uuid import UUID, uuid4
 import pytest
 from httpx import AsyncClient
 from sqlmodel import select
@@ -47,7 +47,7 @@ async def test_create_and_revoke_override_is_audited(client:AsyncClient,db_sessi
     assert created.status_code==201,created.text
     override_id=created.json()["id"]
     override=(await db_session.exec(select(EntitlementOverride).where(
-        EntitlementOverride.id==override_id))).first()
+        EntitlementOverride.id==UUID(override_id)))).first()
     assert override is not None and override.user_id is None
     created_audit=(await db_session.exec(select(SecurityAuditEvent).where(
         SecurityAuditEvent.action=="entitlement.override.created"))).first()
