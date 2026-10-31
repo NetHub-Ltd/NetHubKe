@@ -123,3 +123,53 @@ async def test_individual_override_is_individual_grant(db_session):
         reason="Temporary individual access",granted_by_sub="ops"))
     await db_session.commit()
     assert await check_entitled(db_session,tenant_id=tenant.id,user_id=user.id,product=product)
+
+
+from unittest.mock import AsyncMock, MagicMock
+from fastapi import HTTPException
+from app.db.models.models import ProductLink
+from app.services.entitlements import resolve_org_id
+
+
+def test_product_link_table_is_preserved():
+    assert ProductLink.__tablename__ == "product_links"
+
+
+@pytest.mark.asyncio
+async def test_resolve_org_id_prefers_active_product_link():
+    db = AsyncMock()
+    tenant_id = uuid4()
+    external_org_id = uuid4()
+    product = MagicMock(id=uuid4(), slug="generic-product")
+    result = MagicMock()
+    result.first.return_value = MagicMock(external_org_id=external_org_id)
+    db.exec = AsyncMock(return_value=result)
+
+    resolved = await resolve_org_id(
+        db,
+        tenant_id=tenant_id,
+        product=product,
+        tenant_tawala_org_id=None,
+        tenant_id_fallback=tenant_id,
+    )
+    assert resolved == external_org_id
+
+
+@pytest.mark.asyncio
+async def test_resolve_org_id_fails_closed_without_explicit_mapping():
+    db = AsyncMock()
+    tenant_id = uuid4()
+    product = MagicMock(id=uuid4(), slug="generic-product")
+    result = MagicMock()
+    result.first.return_value = None
+    db.exec = AsyncMock(return_value=result)
+
+    with pytest.raises(HTTPException) as error:
+        await resolve_org_id(
+            db,
+            tenant_id=tenant_id,
+            product=product,
+            tenant_tawala_org_id=None,
+            tenant_id_fallback=tenant_id,
+        )
+    assert error.value.status_code == 403
