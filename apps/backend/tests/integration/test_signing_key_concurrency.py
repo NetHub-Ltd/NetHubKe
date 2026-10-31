@@ -54,7 +54,7 @@ async def test_concurrent_auto_rotation_only_replaces_stale_key_once(test_engine
     db_session.add(stale)
     await db_session.commit()
 
-    sessions = async_sessionmaker(test_engine, expire_on_commit=False, autoflush=False)
+    sessions = async_sessionmaker(test_engine, class_=AsyncSession, expire_on_commit=False, autoflush=False)
     start = asyncio.Event()
 
     async def rotate_if_needed():

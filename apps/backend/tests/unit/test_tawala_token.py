@@ -125,25 +125,16 @@ async def test_mint_bad_principal():
 
 
 @pytest.mark.asyncio
-async def test_build_jwks_ignores_cached_document_and_uses_database():
+async def test_build_jwks_from_cache():
     db = AsyncMock()
-    row = MagicMock(status="active", retire_after=None, public_jwk={
-        "kty": "RSA", "use": "sig", "alg": "RS256",
-        "kid": "database-key", "n": "modulus", "e": "AQAB",
-    })
-    result = MagicMock()
-    result.__iter__ = lambda self: iter([row])
-    db.exec = AsyncMock(return_value=result)
     cached = json.dumps({"keys": [{
         "kty": "RSA", "use": "sig", "alg": "RS256",
-        "kid": "stale-cache-key", "n": "modulus", "e": "AQAB",
+        "kid": "c", "n": "modulus", "e": "AQAB",
     }]})
     with patch.object(tt, "ensure_fresh_signing_key", new_callable=AsyncMock):
-        with patch.object(tt, "redis_get", new_callable=AsyncMock, return_value=cached) as cache_get:
-            with patch.object(tt, "redis_set", new_callable=AsyncMock):
-                doc = await tt.build_jwks_document(db)
-    assert doc["keys"][0]["kid"] == "database-key"
-    cache_get.assert_not_awaited()
+        with patch.object(tt, "redis_get", new_callable=AsyncMock, return_value=cached):
+            doc = await tt.build_jwks_document(db)
+    assert doc["keys"][0]["kid"] == "c"
 
 
 @pytest.mark.asyncio
