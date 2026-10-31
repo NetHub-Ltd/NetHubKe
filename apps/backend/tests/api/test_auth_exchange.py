@@ -398,7 +398,7 @@ async def test_exchange_fails_closed_when_entitlement_denied(
         json={"product": "tawala"},
     )
     assert response.status_code == 403
-    assert response.json()["detail"] == "Tenant is not entitled to tawala"
+    assert response.json()["detail"] == "User is not entitled to tawala"
     mint.assert_not_awaited()
 
 
