@@ -5,6 +5,7 @@ import asyncio
 from datetime import datetime, timedelta, timezone
 
 import pytest
+from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlmodel import select
 
@@ -22,7 +23,7 @@ async def test_concurrent_manual_rotations_leave_exactly_one_active_key(test_eng
     db_session.add(SigningKey(kid=kid, status="active", algorithm="RS256", private_pem=pem, public_jwk=jwk))
     await db_session.commit()
 
-    sessions = async_sessionmaker(test_engine, expire_on_commit=False, autoflush=False)
+    sessions = async_sessionmaker(test_engine, class_=AsyncSession, expire_on_commit=False, autoflush=False)
     start = asyncio.Event()
 
     async def rotate():
