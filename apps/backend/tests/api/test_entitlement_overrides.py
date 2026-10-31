@@ -7,6 +7,7 @@ from httpx import AsyncClient
 from sqlmodel import select
 from app.core.config import settings
 from app.db.models.models import EntitlementOverride,Product,SecurityAuditEvent,Tenant,User,UserIdentity
+from app.services.entitlements import check_entitled
 
 async def _admin(db_session):
     user=User(username="override-admin",email=f"{uuid4()}@example.com",
@@ -33,9 +34,11 @@ async def test_override_requires_dedicated_scope(client:AsyncClient,db_session,m
 async def test_create_and_revoke_override_is_audited(client:AsyncClient,db_session,make_kc_token,patch_kc_decode):
     actor=await _admin(db_session)
     tenant=Tenant(name="Override API Tenant",email=f"{uuid4()}@example.com")
+    target=User(username="override-target",email=f"{uuid4()}@example.com",
+                full_name="Override Target",is_active=True,tenant_id=tenant.id)
     product=Product(slug="override-api-product",name="Override API Product",
                     audience="override-api",entitlement_policy="organization_only")
-    db_session.add_all([tenant,product]); await db_session.commit()
+    db_session.add_all([tenant,target,product]); await db_session.commit()
     token=make_kc_token(sub="override-operator",email=actor.email,
                         scopes="openid profile email entitlements:override",roles=["ops"])
     headers={"Authorization":f"Bearer {token}"}
@@ -52,6 +55,7 @@ async def test_create_and_revoke_override_is_audited(client:AsyncClient,db_sessi
     created_audit=(await db_session.exec(select(SecurityAuditEvent).where(
         SecurityAuditEvent.action=="entitlement.override.created"))).first()
     assert created_audit is not None and created_audit.target_id==override_id
+    assert await check_entitled(db_session,tenant_id=tenant.id,user_id=target.id,product=product)
     revoked=await client.post(f"/api/v1/ops/entitlements/overrides/{override_id}/revoke",
                               headers=headers)
     assert revoked.status_code==200,revoked.text
@@ -60,3 +64,4 @@ async def test_create_and_revoke_override_is_audited(client:AsyncClient,db_sessi
     revoked_audit=(await db_session.exec(select(SecurityAuditEvent).where(
         SecurityAuditEvent.action=="entitlement.override.revoked"))).first()
     assert revoked_audit is not None
+    assert not await check_entitled(db_session,tenant_id=tenant.id,user_id=target.id,product=product)
