@@ -105,7 +105,7 @@ async def resolve_product_access(
             detail="No active membership for this product",
         )
 
-    entitled = await check_entitled(db, tenant_id=user.tenant_id, product_slug=slug)
+    entitled = await check_entitled(db, tenant_id=user.tenant_id, user_id=user.id, product=product)
     if not entitled:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

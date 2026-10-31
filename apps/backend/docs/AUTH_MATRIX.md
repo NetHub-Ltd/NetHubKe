@@ -104,3 +104,28 @@ Evaluate separately: service exists/enabled and public availability; whether aut
 - First-login provisioning creates the personal tenant, local user, and (issuer, subject) mapping in one PostgreSQL transaction. Tenant helpers may flush to obtain generated IDs but must not commit independently.
 - Concurrent first-login attempts are resolved by database uniqueness constraints. A losing transaction rolls back and re-reads the winning identity mapping; it must not leave duplicate or orphan tenant/user rows.
 - The HTTP sync contract explicitly rejects email-only linking for an existing local account and must leave its user, tenant, and identity state unchanged.
+
+## Product entitlement policy (N4)
+
+Exchange evaluates Product.entitlement_policy against PostgreSQL grants:
+- organization_only: current subscription for this product and tenant.
+- individual_only: active membership for this product and user.
+- organization_or_individual: either grant (default).
+- organization_and_individual: both grants.
+
+Subscriptions are scoped by subscriptions.product_id and must be active or
+trialing within their current period. Legacy rows with a null product_id are
+preserved but cannot authorize a product. ProductLink maps an external
+organization ID; it is not an entitlement.
+
+A matching inactive Service row is a hard deny. Inactive/deleted users and
+products are denied before entitlement evaluation. Unknown policies fail closed.
+
+Administrative override endpoints under /api/v1/ops/entitlements/overrides
+require both the entitlements:override scope and an admin, super_admin, or ops
+role. Overrides target one product and one tenant or tenant-linked user,
+require a reason, expire within 90 days, and are durably audited. They satisfy
+only their corresponding grant dimension and never bypass disabled accounts,
+products, or services.
+
+PostgreSQL is authoritative. Redis is not consulted to authorize token exchange.

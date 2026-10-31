@@ -56,3 +56,12 @@ Tokens for one product must not be accepted by another product. Audience, issuer
 - A verified email change may update the local profile email after checking for collisions with other live accounts. Unverified email changes do not overwrite the stored profile email.
 - Existing local accounts are never automatically linked by matching email. Account linking requires a separate verified IdP proof and the dedicated identity:link scope plus an admin/ops role.
 - Soft-deleted accounts cannot be resolved by identity or email and cannot authenticate or exchange product tokens.
+
+## Entitlement policy
+
+Claim profiles and entitlement policies are independent. Each Product row
+owns one of four policies: organization_only, individual_only,
+organization_or_individual (default), or organization_and_individual.
+The claim profile controls token shape; entitlement policy controls whether
+a local user may receive that token. A product link is only an external
+organization mapping and never grants access.
