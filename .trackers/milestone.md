@@ -125,3 +125,14 @@
 - Implementing: automatic-rotation age recheck under the PostgreSQL advisory lock; PostgreSQL-authoritative JWKS responses; four-minute product-token lifetime hard cap; resource-server refresh and clock-skew requirements.
 - Local test execution is unavailable because this runtime cannot resolve github.com. GitHub Actions validation is pending.
 - Five-minute acceptance remains conditional on end-to-end tests against actual product resource-server verifiers; NetHubKe-side changes alone cannot prove their cache and clock behavior.
+
+
+## N5 validation checkpoint — 2026-10-31
+
+- Latest validated head: `82745f4ec772f08f4735741d5ac5e624a0fc0c35` on `fix/n5-signing-key-freshness` / PR #157.
+- Backend CI run #121 passed: **218 tests passed**, **74.99% coverage**, per-file coverage validation passed, and Alembic upgrade → downgrade → upgrade passed. Run: https://github.com/NetHub-Ltd/NetHubKe/actions/runs/41221031075.
+- Docker/PostgreSQL/Redis readiness run #82 passed. Run: https://github.com/NetHub-Ltd/NetHubKe/actions/runs/41221031072.
+- PostgreSQL tests exercise independent-session concurrent manual rotation, concurrent automatic rotation, and emergency revocation while Redis invalidation is unavailable. HTTP tests verify operator-role and mutation-scope denials.
+- No schema migration was needed for N5. No deployment or production feature-flag changes were made; exchange remains default-off.
+- **N5 end-to-end freshness acceptance remains open:** the actual product resource-server verifiers are not in this repository, so their cached-JWKS refresh and clock-skew behavior have not been measured. The 240-second issuer cap and documented 60-second verifier limits are implementation controls, not proof of deployed verifier compliance.
+- PR #157 remains open and unmerged pending user review. Do not close issue #152 or claim N5 fully accepted until the end-to-end verifier evidence is supplied.
