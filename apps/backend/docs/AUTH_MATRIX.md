@@ -22,6 +22,7 @@ Resource server validation is configured by issuer/audience and JWKS; compatibil
 |---|---|
 | user:read | Read own profile (GET /users/me) |
 | user:write | Update own profile (PATCH /users/me) |
+| identity:link | Explicitly link a verified upstream identity to a local account; requires an admin/ops role |
 | services:admin | Mutate services catalogue (seed / create) |
 
 OIDC noise scopes (openid, profile, email, …) are not authorization grants.

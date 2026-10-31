@@ -45,7 +45,7 @@ def _require_admin(token: TokenData) -> None:
     if not (roles & {"admin", "super_admin", "ops"}):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin or ops role required for key rotation",
+            detail="Admin or ops role required.",
         )
 
 
