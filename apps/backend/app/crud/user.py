@@ -65,8 +65,9 @@ class UserCRUD(BaseCRUD[User, UserCreate, UserUpdate]):
         if not tenant:
             tenant = Tenant(name=f"{email_n}-personal", email=email_n)
             db.add(tenant)
-            await db.commit()
-            await db.refresh(tenant)
+            # Keep tenant creation in the caller's transaction. User and
+            # UserIdentity must commit or roll back with this tenant together.
+            await db.flush()
             return tenant
         return tenant
 
