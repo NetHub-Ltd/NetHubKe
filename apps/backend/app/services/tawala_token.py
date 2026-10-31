@@ -29,6 +29,7 @@ from app.core.redis_client import (
     ACTIVE_KID_CACHE_KEY,
     JWKS_CACHE_KEY,
     redis_delete,
+    redis_get,  # retained for compatibility with existing cache-failure test seams
     redis_set,
 )
 from app.db.models.models import SecurityAuditEvent, SigningKey

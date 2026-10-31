@@ -47,7 +47,6 @@ async def test_concurrent_manual_rotations_leave_exactly_one_active_key(test_eng
 async def test_concurrent_auto_rotation_only_replaces_stale_key_once(test_engine, db_session):
     """Workers that observed the same stale key re-check freshness under lock."""
     from app.services.tawala_token import _generate_rsa_keypair
-    from app.core.config import settings
 
     kid, pem, jwk, _ = _generate_rsa_keypair()
     stale = SigningKey(kid=kid, status="active", algorithm="RS256", private_pem=pem, public_jwk=jwk)
