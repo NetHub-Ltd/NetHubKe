@@ -97,3 +97,10 @@ Evaluate separately: service exists/enabled and public availability; whether aut
 - POST /api/v1/users/sync creates a mapping for a new identity but never silently links an existing email-owned account. A verified upstream email change may update the mapped user's email only if no other live local account owns it; an unverified email change is ignored.
 - Soft-deleted users are excluded from email lookup, identity lookup, sync, and authenticated profile access. Disabled users remain denied and are never reactivated by sync.
 - POST /api/v1/ops/identities/link requires both the identity:link scope and an admin/ops role, plus a separately validated proof token with a verified email matching the target local account. The subject is hashed in the durable audit event.
+
+
+### N3 transaction and race-safety follow-up
+
+- First-login provisioning creates the personal tenant, local user, and (issuer, subject) mapping in one PostgreSQL transaction. Tenant helpers may flush to obtain generated IDs but must not commit independently.
+- Concurrent first-login attempts are resolved by database uniqueness constraints. A losing transaction rolls back and re-reads the winning identity mapping; it must not leave duplicate or orphan tenant/user rows.
+- The HTTP sync contract explicitly rejects email-only linking for an existing local account and must leave its user, tenant, and identity state unchanged.
