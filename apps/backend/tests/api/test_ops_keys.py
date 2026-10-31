@@ -278,8 +278,9 @@ async def test_identity_link_succeeds_over_http_with_scope_role_and_verified_pro
     ],
 )
 async def test_signing_key_operations_require_admin_or_ops_role(
-    client: AsyncClient, make_kc_token, patch_kc_decode, method: str, path: str
+    client: AsyncClient, db_session, make_kc_token, patch_kc_decode, method: str, path: str
 ):
+    await _persist_signing_key_test_identity(db_session, "ordinary-operator")
     token = make_kc_token(
         sub="ordinary-operator",
         scopes="openid profile email user:read user:write",
@@ -304,8 +305,9 @@ async def test_signing_key_operations_require_admin_or_ops_role(
     ],
 )
 async def test_signing_key_mutations_require_write_scope(
-    client: AsyncClient, make_kc_token, patch_kc_decode, method: str, path: str
+    client: AsyncClient, db_session, make_kc_token, patch_kc_decode, method: str, path: str
 ):
+    await _persist_signing_key_test_identity(db_session, "ops-without-write-scope")
     token = make_kc_token(
         sub="ops-without-write-scope",
         scopes="openid profile email user:read",
@@ -318,3 +320,24 @@ async def test_signing_key_mutations_require_write_scope(
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == 403
+
+
+async def _persist_signing_key_test_identity(db_session, subject: str) -> None:
+    """Create the canonical local identity required by authenticated ops routes."""
+    from app.core.config import settings
+    from app.db.models.models import User, UserIdentity
+
+    user = User(
+        username=subject,
+        email=f"{subject}@example.test",
+        full_name="Signing Key Operator",
+        is_active=True,
+    )
+    db_session.add(user)
+    await db_session.flush()
+    db_session.add(UserIdentity(
+        issuer=settings.idp_issuer.rstrip("/"),
+        subject=subject,
+        user_id=user.id,
+    ))
+    await db_session.commit()
