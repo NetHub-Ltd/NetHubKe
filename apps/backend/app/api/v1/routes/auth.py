@@ -154,10 +154,10 @@ async def _run_exchange(
             detail="Tenant not found for user",
         )
 
-    if not await check_entitled(db, tenant_id=tenant.id, product_slug=product.slug):
+    if not await check_entitled(db, tenant_id=tenant.id, user_id=user.id, product=product):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Tenant is not entitled to {product.slug}",
+            detail=f"User is not entitled to {product.slug}",
         )
 
     org_id = None

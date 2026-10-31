@@ -110,3 +110,13 @@ jobs:
           name: backend
           fail_ci_if_error: false
           verbose: true
+
+      - name: Verify Alembic migration upgrade and downgrade
+        run: |
+          set -euo pipefail
+          createdb -h localhost -U nethub_ci nethub_migration_ci
+          export FASTAPI_DB_NAME=nethub_migration_ci
+          alembic upgrade head
+          alembic downgrade -1
+          alembic upgrade head
+          dropdb -h localhost -U nethub_ci nethub_migration_ci

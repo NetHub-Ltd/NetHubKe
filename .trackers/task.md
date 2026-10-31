@@ -93,3 +93,22 @@
 - Docker/Postgres/Redis readiness run #62 passed. https://github.com/NetHub-Ltd/NetHubKe/actions/runs/41207472249
 - Vercel check passed. Coverage XML was generated; the non-blocking Codecov upload returned `Repository not found`, while the GitHub Actions workflow completed successfully.
 - No application runtime behavior, CI workflow configuration, deployment, feature flag, or merge state was changed by this repair. PR #154 remains open against `dev` for review; no merge is authorized.
+
+
+## N4 implementation — final product entitlement policy PR
+- Approved one final N4 PR on 2026-10-31; branch feat/n4-product-entitlement-policy, target dev, base 858cf32e2e53649e3a78a9d632638ae269d54c47.
+- Product policy is explicit: organization_only, individual_only, organization_or_individual (default), organization_and_individual.
+- Organization grants reuse Subscription with a product_id and active period; legacy null-product subscriptions remain non-authoritative. Individual grants reuse active Membership. ProductLink remains an external organization mapping, never an entitlement.
+- Temporary product/tenant or product/user overrides require entitlements:override plus admin/super_admin/ops role, reason, expiry within 90 days, and durable create/revoke audit events. Overrides satisfy only their matching policy dimension and cannot bypass inactive users/products/services.
+- PostgreSQL is authoritative; entitlement decisions do not read Redis. Added policy matrix, product/period isolation, inactive service, override expiry/revocation, HTTP authorization/audit, exchange wiring and Alembic upgrade/downgrade/re-upgrade CI coverage.
+- Validation pending CI. Exchange remains default-off; no deployment or production flag changes. PR remains unmerged pending review.
+
+
+## N4 validation completed — 2026-10-31
+- Final implementation commit: 030a6b50502105e5b6d0653d2f6a9ce305ccd5c7 on PR #156.
+- Backend CI run 41211623055 passed: 205 tests, 73.85% coverage, required threshold and per-file coverage checks passed.
+- Alembic upgrade to head, downgrade one revision, and upgrade to head passed on a separate PostgreSQL database.
+- Docker/PostgreSQL/Redis readiness run 41211623011 passed. Vercel check passed.
+- Subscription period columns were migrated to timezone-aware timestamps, interpreting existing values as UTC; downgrade converts them back using UTC.
+- Codecov reports Repository not found during upload; this is non-blocking and the coverage artifact was generated.
+- PR #156 remains open against dev and unmerged. Exchange remains default-off. Subsequent tracker-only commit does not change app/test code.

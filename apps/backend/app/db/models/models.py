@@ -86,11 +86,13 @@ class Service(BaseMixin, table=True):
 class Subscription(BaseMixin, table=True):
     __tablename__ = "subscriptions"
     tenant_id: uuid.UUID = Field(foreign_key="tenants.id", index=True)
+    # Legacy null values are deliberately non-authoritative for product access.
+    product_id: Optional[uuid.UUID] = Field(default=None, foreign_key="products.id", index=True)
     plan_id: uuid.UUID = Field(foreign_key="plans.id")
 
     status: str = Field(default="active")  # active, trialing, past_due, canceled
-    current_period_start: datetime
-    current_period_end: datetime
+    current_period_start: datetime = Field(sa_type=SADateTime(timezone=True))
+    current_period_end: datetime = Field(sa_type=SADateTime(timezone=True))
 
     # External ID for M-Pesa or Stripe integration
     external_subscription_id: Optional[str] = Field(default=None)
@@ -161,12 +163,17 @@ class Product(BaseMixin, table=True):
     claim_profile: named profile documented in docs/PRODUCT_CLAIM_PROFILES.md
     """
     __tablename__ = "products"
+    __table_args__ = (sa.CheckConstraint(
+        "entitlement_policy IN ('organization_only', 'individual_only', 'organization_or_individual', 'organization_and_individual')",
+        name="ck_products_entitlement_policy",
+    ),)
 
     slug: str = Field(max_length=64, unique=True, index=True)
     name: str = Field(max_length=128)
     audience: str = Field(max_length=256)
     is_active: bool = Field(default=True, index=True)
     claim_profile: str = Field(max_length=64, default="tawala")
+    entitlement_policy: str = Field(max_length=40, default="organization_or_individual", index=True)
     # Optional external org claim field name guidance (docs); not enforced in N3
     notes: Optional[str] = Field(default=None, sa_column=Column(sa.Text, nullable=True))
 
@@ -239,3 +246,16 @@ class SecurityAuditEvent(BaseMixin, table=True):
     target_id: str = Field(max_length=255, index=True)
     outcome: str = Field(max_length=32, default="success", index=True)
     details: dict = Field(default_factory=dict, sa_column=Column(JSONB, nullable=False))
+
+class EntitlementOverride(BaseMixin, table=True):
+    """Time-bound product-specific exception for one tenant or tenant user."""
+    __tablename__ = "entitlement_overrides"
+    product_id: uuid.UUID = Field(foreign_key="products.id", index=True)
+    tenant_id: uuid.UUID = Field(foreign_key="tenants.id", index=True)
+    # Null means organization grant; a value means individual grant.
+    user_id: Optional[uuid.UUID] = Field(default=None, foreign_key="users.id", index=True)
+    expires_at: datetime = Field(sa_type=SADateTime(timezone=True), sa_column_kwargs={"nullable": False})
+    reason: str = Field(sa_column=Column(sa.Text, nullable=False))
+    granted_by_sub: str = Field(max_length=255, index=True)
+    revoked_at: Optional[datetime] = Field(default=None, sa_type=SADateTime(timezone=True), sa_column_kwargs={"nullable": True})
+    revoked_by_sub: Optional[str] = Field(default=None, max_length=255)

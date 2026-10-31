@@ -245,6 +245,11 @@ async def test_exchange_success_uses_server_resolved_identity_and_product_audien
     assert payload["principal"] == "owner"
     assert payload["org_id"] == str(tenant.id)
     minted.assert_awaited_once()
+    entitlement = auth.check_entitled
+    entitlement.assert_awaited_once()
+    assert entitlement.await_args.kwargs["tenant_id"] == tenant.id
+    assert entitlement.await_args.kwargs["user_id"] == user.id
+    assert entitlement.await_args.kwargs["product"].id == product.id
     kwargs = minted.await_args.kwargs
     assert kwargs["product_slug"] == "tawala"
     assert kwargs["audience"] == "tawala-api"
@@ -393,7 +398,7 @@ async def test_exchange_fails_closed_when_entitlement_denied(
         json={"product": "tawala"},
     )
     assert response.status_code == 403
-    assert response.json()["detail"] == "Tenant is not entitled to tawala"
+    assert response.json()["detail"] == "User is not entitled to tawala"
     mint.assert_not_awaited()
 
 

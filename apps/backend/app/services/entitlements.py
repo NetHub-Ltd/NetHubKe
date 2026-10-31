@@ -1,183 +1,97 @@
-"""Tenant ↔ product entitlement checks with Redis cache (N4)."""
+"""Product-scoped entitlement policy evaluation (N4). PostgreSQL is authoritative."""
 from __future__ import annotations
-
+from datetime import datetime, timezone
 from typing import Optional
 from uuid import UUID
-
 from fastapi import HTTPException, status
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
-
-from app.core.config import settings
-from app.core.redis_client import redis_get, redis_set, redis_delete
-from app.db.models.models import Product, ProductLink, Service, Subscription
+from app.db.models.models import EntitlementOverride, Membership, Product, ProductLink, Service, Subscription
 from app.utils.logging import logger
 
-ENTITLE_TTL_SEC = 120
+ENTITLEMENT_POLICIES = {"organization_only", "individual_only", "organization_or_individual", "organization_and_individual"}
 
-
-def _entitle_cache_key(tenant_id: UUID, product_slug: str) -> str:
-    return f"nethub:as:entitle:{tenant_id}:{product_slug}"
-
-
-async def invalidate_entitlement_cache(tenant_id: UUID, product_slug: str) -> None:
-    await redis_delete(_entitle_cache_key(tenant_id, product_slug))
-
-
-async def check_entitled(
-    db: AsyncSession,
-    *,
-    tenant_id: UUID,
-    product_slug: str,
-) -> bool:
-    """
-    Return whether tenant may exchange tokens for product.
-
-    - Cached in Redis as nethub:as:entitle:{tenant}:{product} ("1" / "0")
-    - An explicitly inactive service is always denied.
-    - When subscription enforcement is enabled, missing/inactive service or active subscription denies.
-    """
-    # Global service disable is a hard denial, independent of subscription policy.
-    service = (
-        await db.exec(
-            select(Service).where(
-                Service.slug == product_slug,
-                Service.deleted_at.is_(None),  # type: ignore[union-attr]
-            )
-        )
-    ).first()
-    if service is not None and not service.is_active:
-        await redis_set(_entitle_cache_key(tenant_id, product_slug), "0", ENTITLE_TTL_SEC)
+async def check_entitled(db: AsyncSession, *, tenant_id: UUID, user_id: UUID, product: Product) -> bool:
+    """Evaluate one user's grants for one product from durable PostgreSQL state."""
+    if not product.is_active or product.deleted_at is not None:
         return False
-
-    key = _entitle_cache_key(tenant_id, product_slug)
-    # A missing service catalogue entry is not an authorization grant. Tawala's
-    # explicit legacy compatibility mode is the only exception.
-    if service is None and not (
-        product_slug == "tawala"
-        and not bool(getattr(settings, "tawala_exchange_require_subscription", False))
-    ):
+    service = (await db.exec(select(Service).where(Service.slug == product.slug))).first()
+    if service is not None and (not service.is_active or service.deleted_at is not None):
+        logger.warning(f"entitlement denied: inactive service product={product.slug}")
         return False
-
-    # Authorization decisions must use the durable source of truth. Redis remains
-    # useful for observability/future optimization, but a positive cache hit must
-    # never outlive a grant revocation or account/service state change.
-    entitled = await _compute_entitled(db, tenant_id=tenant_id, product_slug=product_slug)
-    await redis_set(key, "1" if entitled else "0", ENTITLE_TTL_SEC)
-    return entitled
-
-
-async def _compute_entitled(
-    db: AsyncSession,
-    *,
-    tenant_id: UUID,
-    product_slug: str,
-) -> bool:
-    # Master exchange flag handled by caller; this is product entitlement only
-    require = bool(getattr(settings, "tawala_exchange_require_subscription", False))
-    if product_slug == "tawala" and not require:
-        return True
-    if not require:
-        return True
-
-    # Subscription-enforced products require an active service catalogue entry.
-    svc = (
-        await db.exec(
-            select(Service).where(
-                Service.slug == product_slug,
-                Service.is_active == True,  # noqa: E712
-            )
-        )
-    ).first()
-    if not svc:
-        logger.warning(
-            f"entitlement fail-closed: no active service slug={product_slug} tenant={tenant_id}"
-        )
+    policy = (product.entitlement_policy or "").strip().lower()
+    if policy not in ENTITLEMENT_POLICIES:
+        logger.error(f"entitlement denied: invalid policy product={product.slug} policy={policy}")
         return False
+    now = datetime.now(timezone.utc)
+    subscription = (await db.exec(select(Subscription).where(
+        Subscription.tenant_id == tenant_id, Subscription.product_id == product.id,
+        Subscription.status.in_(("active", "trialing")),
+        Subscription.current_period_start <= now, Subscription.current_period_end > now,
+        Subscription.deleted_at.is_(None),
+    ))).first()
+    membership = (await db.exec(select(Membership).where(
+        Membership.user_id == user_id, Membership.tenant_id == tenant_id,
+        Membership.product_id == product.id, Membership.is_active == True,  # noqa: E712
+        Membership.deleted_at.is_(None),
+    ))).first()
+    overrides = list(await db.exec(select(EntitlementOverride).where(
+        EntitlementOverride.product_id == product.id, EntitlementOverride.tenant_id == tenant_id,
+        EntitlementOverride.expires_at > now, EntitlementOverride.revoked_at.is_(None),
+        EntitlementOverride.deleted_at.is_(None),
+    )))
+    org_grant = subscription is not None or any(row.user_id is None for row in overrides)
+    individual_grant = membership is not None or any(row.user_id == user_id for row in overrides)
+    allowed = {
+        "organization_only": org_grant,
+        "individual_only": individual_grant,
+        "organization_or_individual": org_grant or individual_grant,
+        "organization_and_individual": org_grant and individual_grant,
+    }[policy]
+    if not allowed:
+        logger.info(f"entitlement denied tenant={tenant_id} user={user_id} product={product.slug} policy={policy}")
+    return allowed
 
-    # If any active subscription exists for tenant, treat as entitled (plans link later)
-    subs = (
-        await db.exec(
-            select(Subscription).where(Subscription.tenant_id == tenant_id)
-        )
-    ).all()
-    sub = next((s for s in subs if s.status in ("active", "trialing")), None)
-    if sub:
-        return True
-
-    logger.info(f"entitlement denied tenant={tenant_id} product={product_slug}")
-    return False
-
-
-async def resolve_org_id(
-    db: AsyncSession,
-    *,
-    tenant_id: UUID,
-    product: Product,
-    tenant_tawala_org_id: Optional[UUID],
-    tenant_id_fallback: UUID,
-) -> UUID:
-    """Resolve a product org only from an active explicit link or approved Tawala legacy mapping."""
-    link = (
-        await db.exec(
-            select(ProductLink).where(
-                ProductLink.tenant_id == tenant_id,
-                ProductLink.product_id == product.id,
-                ProductLink.is_active == True,  # noqa: E712
-                ProductLink.deleted_at.is_(None),  # type: ignore[union-attr]
-            )
-        )
-    ).first()
+async def resolve_org_id(db: AsyncSession, *, tenant_id: UUID, product: Product,
+                         tenant_tawala_org_id: Optional[UUID], tenant_id_fallback: UUID) -> UUID:
+    """Resolve external product org only from an active explicit link or Tawala mapping."""
+    link = (await db.exec(select(ProductLink).where(
+        ProductLink.tenant_id == tenant_id, ProductLink.product_id == product.id,
+        ProductLink.is_active == True,  # noqa: E712
+        ProductLink.deleted_at.is_(None),
+    ))).first()
     if link and link.external_org_id:
         return link.external_org_id
     if product.slug == "tawala" and tenant_tawala_org_id:
         return tenant_tawala_org_id
-    # Never silently treat a NetHub tenant UUID as an external product organization ID.
-    raise HTTPException(
-        status_code=status.HTTP_403_FORBIDDEN,
-        detail=f"No active organization link is configured for product {product.slug}",
-    )
+    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"No active organization link is configured for product {product.slug}")
 
-
-async def upsert_product_link(
-    db: AsyncSession,
-    *,
-    tenant_id: UUID,
-    product_slug: str,
-    external_org_id: UUID,
-) -> ProductLink:
-    product = (
-        await db.exec(select(Product).where(Product.slug == product_slug.strip().lower()))
-    ).first()
+async def upsert_product_link(db: AsyncSession, *, tenant_id: UUID, product_slug: str,
+                              external_org_id: UUID, actor_sub: str) -> ProductLink:
+    """Upsert external org link and audit event atomically."""
+    product = (await db.exec(select(Product).where(
+        Product.slug == product_slug.strip().lower(), Product.deleted_at.is_(None)
+    ))).first()
     if not product:
         raise HTTPException(status_code=404, detail=f"Unknown product: {product_slug}")
-
-    existing = (
-        await db.exec(
-            select(ProductLink).where(
-                ProductLink.tenant_id == tenant_id,
-                ProductLink.product_id == product.id,
-            )
-        )
-    ).first()
+    if not product.is_active:
+        raise HTTPException(status_code=403, detail=f"Product is not active: {product.slug}")
+    existing = (await db.exec(select(ProductLink).where(
+        ProductLink.tenant_id == tenant_id, ProductLink.product_id == product.id
+    ))).first()
     if existing:
-        existing.external_org_id = external_org_id
-        existing.is_active = True
-        existing.deleted_at = None
+        existing.external_org_id, existing.is_active, existing.deleted_at = external_org_id, True, None
         db.add(existing)
-        await db.commit()
-        await db.refresh(existing)
-        await invalidate_entitlement_cache(tenant_id, product.slug)
-        return existing
-
-    row = ProductLink(
-        tenant_id=tenant_id,
-        product_id=product.id,
-        external_org_id=external_org_id,
-        is_active=True,
-    )
-    db.add(row)
+        row, action = existing, "product_link.updated"
+    else:
+        row = ProductLink(tenant_id=tenant_id, product_id=product.id, external_org_id=external_org_id, is_active=True)
+        db.add(row)
+        action = "product_link.created"
+    await db.flush()
+    from app.db.models.models import SecurityAuditEvent
+    db.add(SecurityAuditEvent(actor_sub=actor_sub, action=action, target_type="product_link",
+        target_id=str(row.id), outcome="success",
+        details={"tenant_id": str(tenant_id), "product": product.slug, "external_org_id": str(external_org_id)}))
     await db.commit()
     await db.refresh(row)
-    await invalidate_entitlement_cache(tenant_id, product.slug)
     return row

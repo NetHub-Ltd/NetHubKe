@@ -60,6 +60,7 @@ async def set_my_product_link(
         tenant_id=user.tenant_id,
         product_slug=body.product,
         external_org_id=body.external_org_id,
+        actor_sub=token_data.sub,
     )
     product = (await db.exec(select(Product).where(Product.id == link.product_id))).first()
     logger.info(

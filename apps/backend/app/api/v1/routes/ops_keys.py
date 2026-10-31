@@ -1,7 +1,9 @@
 """Ops endpoints for signing-key rotation (N5)."""
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
 from hashlib import sha256
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
@@ -13,7 +15,7 @@ from app.api.deps import SessionDep, require_scopes
 from app.core.config import settings
 from app.core.security import _decode_token
 from app.db.schemas.schemas import TokenData
-from app.db.models.models import User, UserIdentity, SecurityAuditEvent
+from app.db.models.models import EntitlementOverride, Product, Tenant, User, UserIdentity, SecurityAuditEvent
 from app.services.tawala_token import (
     rotate_signing_key,
     emergency_revoke_signing_key,
@@ -185,3 +187,109 @@ async def ops_link_upstream_identity(
         await db.rollback()
         raise HTTPException(status_code=409, detail="Identity link conflicts with an existing mapping") from exc
     return {"linked": True, "user_id": str(user_id), "already_linked": False}
+
+class EntitlementOverrideCreate(BaseModel):
+    product: str = Field(min_length=1, max_length=64)
+    tenant_id: UUID | None = None
+    user_id: UUID | None = None
+    expires_at: datetime
+    reason: str = Field(min_length=10, max_length=1000)
+
+class EntitlementOverrideRead(BaseModel):
+    id: UUID
+    product: str
+    tenant_id: UUID
+    user_id: UUID | None
+    expires_at: datetime
+    reason: str
+
+def _require_entitlement_admin(token: TokenData) -> None:
+    roles = {str(role).lower() for role in (token.roles or [])}
+    if not (roles & {"admin", "super_admin", "ops"}):
+        raise HTTPException(status_code=403, detail="Admin or ops role required")
+
+@router.post("/entitlements/overrides", response_model=EntitlementOverrideRead, status_code=201)
+async def create_entitlement_override(
+    body: EntitlementOverrideCreate,
+    db: SessionDep,
+    token_data: TokenData = Depends(require_scopes(["entitlements:override"])),
+):
+    """Create a narrow, expiring and audited entitlement grant."""
+    _require_entitlement_admin(token_data)
+    if (body.tenant_id is None) == (body.user_id is None):
+        raise HTTPException(status_code=422, detail="Provide exactly one of tenant_id or user_id")
+    now = datetime.now(timezone.utc)
+    expires_at = body.expires_at
+    if expires_at.tzinfo is None or expires_at.utcoffset() is None:
+        raise HTTPException(status_code=422, detail="expires_at must include a timezone")
+    if expires_at <= now or expires_at > now + timedelta(days=90):
+        raise HTTPException(status_code=422, detail="expires_at must be in the next 90 days")
+    product = (await db.exec(select(Product).where(
+        Product.slug == body.product.strip().lower(), Product.deleted_at.is_(None)
+    ))).first()
+    if product is None:
+        raise HTTPException(status_code=404, detail="Product not found")
+    if not product.is_active:
+        raise HTTPException(status_code=409, detail="Cannot override an inactive product")
+    target_user = None
+    tenant_id = body.tenant_id
+    if body.user_id is not None:
+        target_user = (await db.exec(select(User).where(
+            User.id == body.user_id, User.deleted_at.is_(None)
+        ))).first()
+        if target_user is None or not target_user.is_active or target_user.tenant_id is None:
+            raise HTTPException(status_code=404, detail="Active tenant-linked user not found")
+        tenant_id = target_user.tenant_id
+    else:
+        tenant = (await db.exec(select(Tenant).where(
+            Tenant.id == tenant_id, Tenant.deleted_at.is_(None)
+        ))).first()
+        if tenant is None:
+            raise HTTPException(status_code=404, detail="Tenant not found")
+    override = EntitlementOverride(
+        product_id=product.id, tenant_id=tenant_id,
+        user_id=target_user.id if target_user else None,
+        expires_at=expires_at, reason=body.reason.strip(), granted_by_sub=token_data.sub,
+    )
+    db.add(override)
+    await db.flush()
+    db.add(SecurityAuditEvent(
+        actor_sub=token_data.sub, action="entitlement.override.created",
+        target_type="entitlement_override", target_id=str(override.id), outcome="success",
+        details={"product": product.slug, "tenant_id": str(tenant_id),
+                 "user_id": str(target_user.id) if target_user else None,
+                 "expires_at": expires_at.isoformat(), "reason": body.reason.strip()},
+    ))
+    await db.commit()
+    await db.refresh(override)
+    return EntitlementOverrideRead(
+        id=override.id, product=product.slug, tenant_id=override.tenant_id,
+        user_id=override.user_id, expires_at=override.expires_at, reason=override.reason,
+    )
+
+@router.post("/entitlements/overrides/{override_id}/revoke")
+async def revoke_entitlement_override(
+    override_id: UUID,
+    db: SessionDep,
+    token_data: TokenData = Depends(require_scopes(["entitlements:override"])),
+):
+    """Immediately revoke an override and durably audit the operator action."""
+    _require_entitlement_admin(token_data)
+    override = (await db.exec(select(EntitlementOverride).where(
+        EntitlementOverride.id == override_id, EntitlementOverride.deleted_at.is_(None)
+    ))).first()
+    if override is None:
+        raise HTTPException(status_code=404, detail="Entitlement override not found")
+    if override.revoked_at is not None:
+        return {"revoked": True, "already_revoked": True}
+    override.revoked_at = datetime.now(timezone.utc)
+    override.revoked_by_sub = token_data.sub
+    db.add(override)
+    db.add(SecurityAuditEvent(
+        actor_sub=token_data.sub, action="entitlement.override.revoked",
+        target_type="entitlement_override", target_id=str(override.id), outcome="success",
+        details={"product_id": str(override.product_id), "tenant_id": str(override.tenant_id),
+                 "user_id": str(override.user_id) if override.user_id else None},
+    ))
+    await db.commit()
+    return {"revoked": True, "already_revoked": False}
