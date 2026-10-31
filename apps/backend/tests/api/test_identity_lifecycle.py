@@ -169,7 +169,9 @@ async def test_sync_refuses_email_only_linking_over_http(
 
 @pytest.mark.asyncio
 @pytest.mark.integration
-async def test_concurrent_first_sync_commits_one_tenant_user_and_identity(test_engine):
+async def test_concurrent_first_sync_commits_one_tenant_user_and_identity(
+    test_engine, db_session
+):
     # Exercise PostgreSQL uniqueness races with independent transactions/sessions.
     from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -185,8 +187,18 @@ async def test_concurrent_first_sync_commits_one_tenant_user_and_identity(test_e
         email_verified=True,
     )
 
+    # The db_session fixture initializes an isolated schema for this test.
+    # Start both independent sessions together so their first-login reads overlap.
+    ready = 0
+    start = asyncio.Event()
+
     async def provision():
+        nonlocal ready
         async with session_factory() as session:
+            ready += 1
+            if ready == 2:
+                start.set()
+            await start.wait()
             return await user_crud.get_or_create(session, claims)
 
     first, second = await asyncio.gather(provision(), provision())
