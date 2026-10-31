@@ -107,7 +107,7 @@ class LinkIdentityBody(BaseModel):
 async def ops_link_upstream_identity(
     body: LinkIdentityBody,
     db: SessionDep,
-    token_data: TokenData = Depends(require_scopes(["user:write"])),
+    token_data: TokenData = Depends(require_scopes(["identity:link"])),
 ):
     """Link a local account only with a separately verified IdP identity proof."""
     _require_admin(token_data)

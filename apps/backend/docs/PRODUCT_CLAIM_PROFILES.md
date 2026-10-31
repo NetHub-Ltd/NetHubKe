@@ -7,7 +7,7 @@ NetHubKe validates the configured upstream IdP access token and issues a short-l
 | Claim/header | Required | Meaning |
 |---|---|---|
 | `iss` | yes | NetHubKe token issuer |
-| `sub` | yes | Stable NetHubKe canonical user identifier; currently the local user UUID. Upstream identity mapping by `(issuer, immutable sub)` remains a tracked gap and must not be replaced with email as a primary key. |
+| `sub` | yes | Stable NetHubKe canonical user identifier; currently the local user UUID. NetHubKe resolves the upstream principal by the exact validated `(issuer, immutable sub)` mapping; email is mutable profile data, never an identity key. |
 | `aud` | yes | Exact audience from the registered product configuration |
 | `iat`, `exp` | yes | Issue and expiry times; keep access tokens short-lived and design freshness end-to-end |
 | `jti` | yes | Unique token identifier |
@@ -48,3 +48,11 @@ Tokens for one product must not be accepted by another product. Audience, issuer
 - When subscription enforcement is required, missing service/subscription data fails closed.
 - Product/org links are authorization-sensitive; only centrally authorized owners/admins may manage them.
 - A five-minute stale-access bound is an end-to-end requirement, not a claim implied by the 120-second cache TTL.
+
+
+## Upstream identity lifecycle
+
+- NetHubKe resolves a local user by the exact validated (issuer, sub) mapping. A changed email does not change the canonical identity.
+- A verified email change may update the local profile email after checking for collisions with other live accounts. Unverified email changes do not overwrite the stored profile email.
+- Existing local accounts are never automatically linked by matching email. Account linking requires a separate verified IdP proof and the dedicated identity:link scope plus an admin/ops role.
+- Soft-deleted accounts cannot be resolved by identity or email and cannot authenticate or exchange product tokens.

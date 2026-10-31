@@ -74,18 +74,20 @@ async def get_current_user(
         )
 
     logger.info(
-        f"Auth Attempt | email: {token_data.email} | sub: {token_data.sub} | scopes: {token_data.scopes}"
+        f"Auth Attempt | issuer: {token_data.issuer} | sub: {token_data.sub} | scopes: {token_data.scopes}"
     )
 
-    # 3. Resolve local user by email (IdP-agnostic)
-    if not token_data.email:
-        raise HTTPException(status_code=401, detail="Token missing email claim")
+    # Resolve the local account only by the immutable, validated upstream identity.
+    if not token_data.issuer or not token_data.sub:
+        raise HTTPException(status_code=401, detail="Token missing canonical identity claims")
 
-    user = await user_crud.get_by_email(db, str(token_data.email))
+    user = await user_crud.get_by_upstream_identity(
+        db, issuer=token_data.issuer, subject=token_data.sub
+    )
 
     if not user:
         logger.warning(
-            f"Auth Fail | email: {token_data.email} | Reason: User not in database"
+            f"Auth Fail | issuer: {token_data.issuer} | sub: {token_data.sub} | Reason: identity not mapped"
         )
         raise HTTPException(
             status_code=404,

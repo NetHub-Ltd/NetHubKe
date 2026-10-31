@@ -60,7 +60,7 @@ async def test_identity_link_requires_verified_proof_and_audits_hashed_subject(m
         issuer=ops_keys.settings.idp_issuer,
         email="admin@example.com",
         roles=["ops"],
-        scopes=["user:write"],
+        scopes=["identity:link"],
     )
     response = await ops_keys.ops_link_upstream_identity(
         ops_keys.LinkIdentityBody(proof_token="signed-proof-token", user_id=str(user_id)),
@@ -104,7 +104,7 @@ async def test_identity_link_rejects_unverified_email(monkeypatch):
         issuer=ops_keys.settings.idp_issuer,
         email="admin@example.com",
         roles=["admin"],
-        scopes=["user:write"],
+        scopes=["identity:link"],
     )
     with pytest.raises(HTTPException) as error:
         await ops_keys.ops_link_upstream_identity(

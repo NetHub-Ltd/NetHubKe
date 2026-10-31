@@ -22,7 +22,10 @@ class UserCRUD(BaseCRUD[User, UserCreate, UserUpdate]):
         super().__init__(model)
 
     async def get_by_email(self, db: AsyncSession, email: str) -> Optional[User]:
-        stmt = select(self.model).where(self.model.email == _norm_email(email))
+        stmt = select(self.model).where(
+            self.model.email == _norm_email(email),
+            self.model.deleted_at.is_(None),
+        )
         result = await db.exec(stmt)
         return result.first()
 
@@ -44,7 +47,10 @@ class UserCRUD(BaseCRUD[User, UserCreate, UserUpdate]):
         return await self.get_by_id(db, identity.user_id) if identity else None
 
     async def get_by_id(self, db: AsyncSession, user_id: UUID) -> Optional[User]:
-        stmt = select(self.model).where(self.model.id == user_id)
+        stmt = select(self.model).where(
+            self.model.id == user_id,
+            self.model.deleted_at.is_(None),
+        )
         result = await db.exec(stmt)
         return result.first()
 
@@ -74,8 +80,24 @@ class UserCRUD(BaseCRUD[User, UserCreate, UserUpdate]):
         mapped = await self.get_by_upstream_identity(db, issuer=issuer, subject=subject)
         if mapped:
             if not mapped.is_active:
-                return mapped
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Account is disabled. Please contact NetHub support.",
+                )
+
             dirty = False
+            # Email is mutable profile data, never an identity lookup key. Only
+            # accept an upstream change when the IdP explicitly verifies it.
+            if obj_in.email_verified and email and email != _norm_email(mapped.email):
+                email_owner = await self.get_by_email(db, email)
+                if email_owner is not None and email_owner.id != mapped.id:
+                    raise HTTPException(
+                        status_code=status.HTTP_409_CONFLICT,
+                        detail="Verified email already belongs to another local account.",
+                    )
+                mapped.email = email
+                dirty = True
+
             if obj_in.full_name and not (mapped.full_name or "").strip():
                 mapped.full_name = obj_in.full_name
                 dirty = True
@@ -84,8 +106,15 @@ class UserCRUD(BaseCRUD[User, UserCreate, UserUpdate]):
                 dirty = True
             if dirty:
                 db.add(mapped)
-                await db.commit()
-                await db.refresh(mapped)
+                try:
+                    await db.commit()
+                    await db.refresh(mapped)
+                except IntegrityError as exc:
+                    await db.rollback()
+                    raise HTTPException(
+                        status_code=status.HTTP_409_CONFLICT,
+                        detail="Profile update conflicts with an existing account.",
+                    ) from exc
             return mapped
 
         existing_email_user = await self.get_by_email(db, email) if email else None

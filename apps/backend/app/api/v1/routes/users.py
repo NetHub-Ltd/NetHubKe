@@ -56,7 +56,9 @@ async def sync_user(
 @router.get("/me", response_model=UserRead)
 async def read_current_user(db: SessionDep, current_user: TokenData = Depends(require_scopes(["user:read"]))):
     try:
-        user = await user_crud.get_by_email(db, str(current_user.email))
+        user = await user_crud.get_by_upstream_identity(
+            db, issuer=current_user.issuer, subject=current_user.sub
+        )
         if user:
             stmt = (
                 select(User)
@@ -81,7 +83,9 @@ async def read_current_user(db: SessionDep, current_user: TokenData = Depends(re
 @router.patch("/me", status_code=200, response_model=UserRead)
 async def update_current_user(db: SessionDep, user_data: UserUpdate, current_user: TokenData = Depends(require_scopes(['user:write']))):
     try:
-        db_obj = await user_crud.get_by_email(db, str(current_user.email))
+        db_obj = await user_crud.get_by_upstream_identity(
+            db, issuer=current_user.issuer, subject=current_user.sub
+        )
         if not db_obj:
             raise HTTPException(status_code=404, detail="User Not Found.")
         user = await user_crud.update(db, db_obj=db_obj, obj_in=user_data)
