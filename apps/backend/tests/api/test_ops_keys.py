@@ -113,7 +113,7 @@ async def test_identity_link_rejects_unverified_email(monkeypatch):
             actor,
         )
     assert error.value.status_code == 403
-    db.exec.assert_not_awaited()
+    db.exec.assert_not_called()
 
 
 @pytest.mark.asyncio
