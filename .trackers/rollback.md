@@ -1,5 +1,5 @@
 # Rollback: consolidated N3–N5 implementation
-- Branch/issue: `feat/n3-n5-token-policy-rotation` / #148; PR target `dev`.
+- Historical branch/issue: `feat/n3-n5-token-policy-rotation` / #148 (PR #151 merged). Current follow-up: `fix/n3-n5-acceptance-completion` / #152; PR target `dev`.
 - Predecessor N2 PR #147 is merged. This branch must remain separate and reviewable.
 - Keep all token exchange/issuer flags default-off; no deployment or runtime flag changes are authorized.
 - If tests or review fail, revert this PR as one unit. Do not reset, rebase, squash, force-push, or rewrite history.
@@ -30,3 +30,13 @@
 - If these tests expose a real application defect, fix the underlying behavior without weakening issuer+subject identity or database-authoritative entitlement checks.
 - Backend CI #86 and readiness #47 were in progress; do not claim success until confirmed. PR remains draft/unmerged; exchange remains default-off.
 - Existing rollback policy unchanged: no history rewrite, no deployment/flag changes, and no merge without explicit user approval.
+
+
+## Authoritative checkpoint — 2026-10-31 10:54 UTC
+- PR #153 was merged into dev before this follow-up; the current base is dev at 7feb7c5cb483fa29d25a9bbd39e11c7883bb14c7. Any earlier statements in this tracker saying PR #153 is draft/unmerged or that fix/n3-n5-acceptance-gaps is the active branch are historical and superseded.
+- Approved delivery structure for issue #152: three coherent PRs, all targeting dev — PR 1 N3 canonical identity lifecycle; PR 2 N4 product access and entitlement policy; PR 3 N5 signing-key security and acceptance. No per-gap PRs. N4 policy approved: organization_only, individual_only, organization_or_individual, organization_and_individual; default organization_or_individual when both grant types are supported.
+- Active branch: fix/n3-n5-acceptance-completion. It is 5 commits ahead of dev and 0 behind. Existing three identity-link commits are preserved; no history rewrite or force-push.
+- PR 1: draft PR #154 https://github.com/NetHub-Ltd/NetHubKe/pull/154, targeting dev. Current head e47404f067a0e01c6330824460c7de0eccd0c1f1. It implements canonical issuer+subject lookup for authentication/profile routes, soft-delete filtering, verified email synchronization with collision checks, atomic new-user/identity persistence, disabled-user denial, dedicated identity:link scope plus admin/ops role, and async-safe proof-token validation. HTTP lifecycle and scope tests have been added.
+- CI is running on PR #154 head: Backend CI run #41194563402 and Docker/Postgres/Redis readiness run #41194563444. Do not claim green until both finish and results are inspected. Local tests were not run because this runtime cannot resolve github.com; the available local archive is not the active branch.
+- Existing migration k4e5f6a7b8c9_add_user_identities.py already creates the canonical mapping table; N3 has not introduced a duplicate table or email-based backfill. No new N3 migration is currently required.
+- Issue #152 remains open. N3 acceptance is pending CI and review. N4 and N5 implementation have not started. Exchange remains default-off. No deployment changes and no merge without explicit user approval.

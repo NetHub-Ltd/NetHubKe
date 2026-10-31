@@ -1,15 +1,15 @@
 # SSO Programme Milestone Tracker
 **Umbrella:** #57  
 **Architecture contract:** `docs/SSO_ARCHITECTURE_CONTRACT.md`  
-**Last inspected:** 2026-10-29  
+**Last inspected:** 2026-10-31  
 **Rule:** issue closure is not acceptance evidence; record CI/staging evidence separately.
 
 ## Delivery plan — three PRs
 | PR group | Milestones | Tracking issue | Existing milestone issues | State |
 |---|---|---|---|---|
-| PR 1 | N3–N5 | #148 + gap follow-up #152 | #46–#50 | #151 merged; acceptance-gap follow-up underway before N6–N7 |
-| PR 2 | N6–N7 | #149 | #51–#53 | Planned; depends on PR 1 acceptance |
-| PR 3 | N8–N10 | #150 | #54–#56 | Planned; depends on PRs 1 and 2 acceptance |
+| PR 1 | N3 canonical identity lifecycle | #152 | #46–#47 | Draft PR #154; CI running |
+| PR 2 | N4 product access and entitlement policy | #152 | #48–#49 | Approved policy; implementation not started |
+| PR 3 | N5 signing-key security and acceptance | #152 | #50 | Planned after PR 2 |
 
 ## Milestone status
 | Milestone | Issues | Current state | Acceptance / next action |
@@ -56,3 +56,13 @@
 - New head `efab03f2af994931aa04ae6e2d15f8d51b9f8d51f6`; backend CI #86 and readiness #47 were in progress when recorded.
 - Previous backend CI #83: 7 failed, 164 passed, 72.93% coverage. Previous readiness #44 passed. Await current run outcomes before assessing.
 - N3–N5 remains incomplete: explicit grant precedence/admin override, safe audited account linking, comprehensive emergency revocation/JWKS-cache tests, and measured freshness evidence remain outstanding. Do not begin N6–N7.
+
+
+## Authoritative checkpoint — 2026-10-31 10:54 UTC
+- PR #153 was merged into dev before this follow-up; the current base is dev at 7feb7c5cb483fa29d25a9bbd39e11c7883bb14c7. Any earlier statements in this tracker saying PR #153 is draft/unmerged or that fix/n3-n5-acceptance-gaps is the active branch are historical and superseded.
+- Approved delivery structure for issue #152: three coherent PRs, all targeting dev — PR 1 N3 canonical identity lifecycle; PR 2 N4 product access and entitlement policy; PR 3 N5 signing-key security and acceptance. No per-gap PRs. N4 policy approved: organization_only, individual_only, organization_or_individual, organization_and_individual; default organization_or_individual when both grant types are supported.
+- Active branch: fix/n3-n5-acceptance-completion. It is 5 commits ahead of dev and 0 behind. Existing three identity-link commits are preserved; no history rewrite or force-push.
+- PR 1: draft PR #154 https://github.com/NetHub-Ltd/NetHubKe/pull/154, targeting dev. Current head e47404f067a0e01c6330824460c7de0eccd0c1f1. It implements canonical issuer+subject lookup for authentication/profile routes, soft-delete filtering, verified email synchronization with collision checks, atomic new-user/identity persistence, disabled-user denial, dedicated identity:link scope plus admin/ops role, and async-safe proof-token validation. HTTP lifecycle and scope tests have been added.
+- CI is running on PR #154 head: Backend CI run #41194563402 and Docker/Postgres/Redis readiness run #41194563444. Do not claim green until both finish and results are inspected. Local tests were not run because this runtime cannot resolve github.com; the available local archive is not the active branch.
+- Existing migration k4e5f6a7b8c9_add_user_identities.py already creates the canonical mapping table; N3 has not introduced a duplicate table or email-based backfill. No new N3 migration is currently required.
+- Issue #152 remains open. N3 acceptance is pending CI and review. N4 and N5 implementation have not started. Exchange remains default-off. No deployment changes and no merge without explicit user approval.

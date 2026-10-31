@@ -1,8 +1,8 @@
 # Task: Consolidated N3–N5 implementation (generic exchange, entitlements, key operations)
 - Implementation issue: #148 — contract created 2026-10-29; maps to existing milestone issues #46–#50 without replacing their history.
 - Programme umbrella: #57; approved architecture contract: `docs/SSO_ARCHITECTURE_CONTRACT.md`.
-- Delivery plan: three PRs total — PR 1 N3–N5 (#148), PR 2 N6–N7 (#149), PR 3 N8–N10 (#150).
-- Branch: `feat/n3-n5-token-policy-rotation` → PR target `dev`.
+- Delivery plan for #152: three PRs total — PR 1 N3, PR 2 N4, PR 3 N5. N6–N7 (#149) and N8–N10 (#150) remain separate future work.
+- Active branch for #152: `fix/n3-n5-acceptance-completion` → PR target `dev`.
 - N2 predecessor: issue #146 / PR #147 merged to `dev` at merge commit `31f61ded9a124009db8bdecf2c251d2628ade756` (2026-10-29). Exchange remains default-off; no live staging readiness is implied.
 - Scope: audit and harden generic product exchange/claim profiles, product/org links and explicit entitlement precedence, signing-key rotation and emergency response. PostgreSQL is durable source of truth; Redis is disposable cache.
 - Contract boundaries: no N6/N7 catalogue/launch work and no N8–N10 billing/settings work in this PR. Do not enable flags or change deployment.
@@ -48,3 +48,13 @@
 - These runs checked code commit `efab03f2af994931aa04ae6e2d15f8d51b9f8d51f6`; later commits only append tracker documentation.
 - Codecov upload reports `Repository not found` but is configured non-blocking; workflow remains successful.
 - Green CI closes these test regressions only. Explicit grant precedence/admin override, safe audited account linking, emergency revocation/JWKS-cache tests, and measured end-to-end freshness remain open. PR #153 stays draft/unmerged; exchange remains default-off.
+
+
+## Authoritative checkpoint — 2026-10-31 10:54 UTC
+- PR #153 was merged into dev before this follow-up; the current base is dev at 7feb7c5cb483fa29d25a9bbd39e11c7883bb14c7. Any earlier statements in this tracker saying PR #153 is draft/unmerged or that fix/n3-n5-acceptance-gaps is the active branch are historical and superseded.
+- Approved delivery structure for issue #152: three coherent PRs, all targeting dev — PR 1 N3 canonical identity lifecycle; PR 2 N4 product access and entitlement policy; PR 3 N5 signing-key security and acceptance. No per-gap PRs. N4 policy approved: organization_only, individual_only, organization_or_individual, organization_and_individual; default organization_or_individual when both grant types are supported.
+- Active branch: fix/n3-n5-acceptance-completion. It is 5 commits ahead of dev and 0 behind. Existing three identity-link commits are preserved; no history rewrite or force-push.
+- PR 1: draft PR #154 https://github.com/NetHub-Ltd/NetHubKe/pull/154, targeting dev. Current head e47404f067a0e01c6330824460c7de0eccd0c1f1. It implements canonical issuer+subject lookup for authentication/profile routes, soft-delete filtering, verified email synchronization with collision checks, atomic new-user/identity persistence, disabled-user denial, dedicated identity:link scope plus admin/ops role, and async-safe proof-token validation. HTTP lifecycle and scope tests have been added.
+- CI is running on PR #154 head: Backend CI run #41194563402 and Docker/Postgres/Redis readiness run #41194563444. Do not claim green until both finish and results are inspected. Local tests were not run because this runtime cannot resolve github.com; the available local archive is not the active branch.
+- Existing migration k4e5f6a7b8c9_add_user_identities.py already creates the canonical mapping table; N3 has not introduced a duplicate table or email-based backfill. No new N3 migration is currently required.
+- Issue #152 remains open. N3 acceptance is pending CI and review. N4 and N5 implementation have not started. Exchange remains default-off. No deployment changes and no merge without explicit user approval.
