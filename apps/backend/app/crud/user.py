@@ -138,17 +138,25 @@ class UserCRUD(BaseCRUD[User, UserCreate, UserUpdate]):
                 tenant_id=personal_tenant.id if personal_tenant else None,
                 is_active=True,
             )
-            db_obj = await self.create(db, obj_in=new_user_data)
-            await db.commit()
-            await db.refresh(db_obj)
+            # Persist the local account and its canonical identity mapping in one
+            # transaction so a failed mapping insert cannot leave an orphan user.
+            db_obj = User.model_validate(new_user_data)
+            db.add(db_obj)
+            await db.flush()
             db.add(UserIdentity(issuer=issuer, subject=subject, user_id=db_obj.id))
             await db.commit()
+            await db.refresh(db_obj)
             logger.info(f"created user: {db_obj.id} issuer={issuer} subject_mapping_created=true")
             return db_obj
         except IntegrityError as exc:
             await db.rollback()
             mapped = await self.get_by_upstream_identity(db, issuer=issuer, subject=subject)
             if mapped:
+                if not mapped.is_active:
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail="Account is disabled. Please contact NetHub support.",
+                    )
                 return mapped
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,

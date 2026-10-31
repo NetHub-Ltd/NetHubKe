@@ -78,3 +78,30 @@ async def test_sync_does_not_reactivate_disabled_identity(client: AsyncClient, d
     assert response.status_code == 403
     await db_session.refresh(user)
     assert user.is_active is False
+
+
+@pytest.mark.asyncio
+async def test_sync_ignores_unverified_email_change(
+    client: AsyncClient, db_session, monkeypatch
+):
+    from app.api import deps
+    from app.db.schemas.schemas import TokenData
+
+    user = await _create_identity(
+        db_session, sub="unverified-subject", email="verified-before@example.com"
+    )
+    claims = TokenData(
+        sub="unverified-subject",
+        issuer=settings.idp_issuer,
+        email="attacker-controlled@example.com",
+        email_verified=False,
+        scopes=[],
+    )
+    monkeypatch.setattr(deps, "_decode_token", lambda _token: claims)
+    response = await client.post(
+        "/api/v1/users/sync",
+        headers={"Authorization": "Bearer test-token"},
+    )
+    assert response.status_code == 200
+    assert response.json()["id"] == str(user.id)
+    assert response.json()["email"] == "verified-before@example.com"

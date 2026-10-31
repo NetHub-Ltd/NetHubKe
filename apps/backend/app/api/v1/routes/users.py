@@ -41,7 +41,7 @@ async def sync_user(
             raise HTTPException(status_code=400, detail="Token missing email claim")
         user = await user_crud.get_or_create(db, obj_in=token_data)
         # Reload with tenant for complete profile payload
-        stmt = select(User).where(User.id == user.id).options(selectinload(User.tenant))
+        stmt = select(User).where(User.id == user.id, User.deleted_at.is_(None)).options(selectinload(User.tenant))
         result = await db.exec(stmt)
         user = result.first() or user
         logger.debug(f"Sync Success: {user.id} | Time: {utc_now()}")
@@ -62,7 +62,7 @@ async def read_current_user(db: SessionDep, current_user: TokenData = Depends(re
         if user:
             stmt = (
                 select(User)
-                .where(User.id == user.id)
+                .where(User.id == user.id, User.deleted_at.is_(None))
                 .options(selectinload(User.tenant))
             )
             result = await db.exec(stmt)
@@ -91,7 +91,7 @@ async def update_current_user(db: SessionDep, user_data: UserUpdate, current_use
         user = await user_crud.update(db, db_obj=db_obj, obj_in=user_data)
         await db.commit()
         # Reload with tenant
-        stmt = select(User).where(User.id == user.id).options(selectinload(User.tenant))
+        stmt = select(User).where(User.id == user.id, User.deleted_at.is_(None)).options(selectinload(User.tenant))
         result = await db.exec(stmt)
         user = result.first() or user
         return _to_user_read(user)

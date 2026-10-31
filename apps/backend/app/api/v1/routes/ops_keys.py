@@ -6,6 +6,7 @@ from hashlib import sha256
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlmodel import select
+from starlette.concurrency import run_in_threadpool
 from sqlalchemy.exc import IntegrityError
 
 from app.api.deps import SessionDep, require_scopes
@@ -120,7 +121,7 @@ async def ops_link_upstream_identity(
 
     # The supplied proof is independently signature/issuer/audience/expiry checked
     # against the configured IdP. Never accept a caller-typed issuer or subject.
-    proof = _decode_token(body.proof_token)
+    proof = await run_in_threadpool(_decode_token, body.proof_token)
     issuer = (proof.issuer or "").strip().rstrip("/")
     subject = (proof.sub or "").strip()
     if issuer != (settings.idp_issuer or "").strip().rstrip("/"):

@@ -114,3 +114,41 @@ async def test_identity_link_rejects_unverified_email(monkeypatch):
         )
     assert error.value.status_code == 403
     db.exec.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_identity_link_requires_dedicated_scope_at_http_boundary(
+    client: AsyncClient, db_session, make_kc_token, patch_kc_decode
+):
+    from app.core.config import settings
+    from app.db.models.models import User, UserIdentity
+
+    actor = User(
+        username="ops-admin",
+        email="ops-admin@example.com",
+        full_name="Ops Admin",
+        is_active=True,
+    )
+    db_session.add(actor)
+    await db_session.flush()
+    db_session.add(
+        UserIdentity(
+            issuer=settings.idp_issuer.rstrip("/"),
+            subject="ops-admin-subject",
+            user_id=actor.id,
+        )
+    )
+    await db_session.commit()
+
+    token = make_kc_token(
+        sub="ops-admin-subject",
+        email="ops-admin@example.com",
+        scopes="openid profile email user:write",
+        roles=["admin"],
+    )
+    response = await client.post(
+        "/api/v1/ops/identities/link",
+        json={"proof_token": "not-reached", "user_id": str(actor.id)},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 403
