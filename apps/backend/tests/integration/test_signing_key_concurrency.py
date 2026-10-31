@@ -5,12 +5,14 @@ import asyncio
 from datetime import datetime, timedelta, timezone
 
 import pytest
+from unittest.mock import AsyncMock, MagicMock
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlmodel import select
 
 from app.db.models.models import SecurityAuditEvent, SigningKey
-from app.services.tawala_token import ensure_fresh_signing_key, rotate_signing_key
+from app.services.tawala_token import (build_jwks_document, emergency_revoke_signing_key, ensure_fresh_signing_key, get_active_signing_key, rotate_signing_key)
+from app.services import tawala_token as token_service
 
 
 @pytest.mark.asyncio
@@ -70,3 +72,29 @@ async def test_concurrent_auto_rotation_only_replaces_stale_key_once(test_engine
     audits = (await db_session.exec(select(SecurityAuditEvent).where(SecurityAuditEvent.action == "signing_key.rotate"))).all()
     assert len(active) == 1
     assert len(audits) == 1
+
+
+@pytest.mark.asyncio
+@pytest.mark.integration
+async def test_emergency_revoke_with_redis_outage_removes_key_from_jwks_and_signing(test_engine, db_session, monkeypatch):
+    """PostgreSQL revocation remains effective when Redis invalidation is unavailable."""
+    from app.core import redis_client
+
+    kid, pem, jwk, _ = token_service._generate_rsa_keypair()
+    db_session.add(SigningKey(kid=kid, status="active", algorithm="RS256", private_pem=pem, public_jwk=jwk))
+    await db_session.commit()
+
+    failing_redis = MagicMock()
+    failing_redis.delete = AsyncMock(side_effect=ConnectionError("redis unavailable"))
+    monkeypatch.setattr(redis_client, "get_redis", lambda: failing_redis)
+    monkeypatch.setattr(token_service, "redis_set", AsyncMock())
+
+    result = await emergency_revoke_signing_key(db_session, kid=kid, actor_sub="incident-operator")
+    document = await build_jwks_document(db_session)
+    private_key, signing_kid = await get_active_signing_key(db_session)
+
+    assert result["kid"] == kid
+    assert result["status"] == "retired"
+    assert kid not in {item["kid"] for item in document["keys"]}
+    assert signing_kid != kid
+    assert private_key is not None
