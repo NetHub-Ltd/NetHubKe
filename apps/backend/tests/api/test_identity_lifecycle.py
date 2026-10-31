@@ -105,3 +105,26 @@ async def test_sync_ignores_unverified_email_change(
     assert response.status_code == 200
     assert response.json()["id"] == str(user.id)
     assert response.json()["email"] == "verified-before@example.com"
+
+
+@pytest.mark.asyncio
+async def test_profile_patch_resolves_by_identity_after_email_change(
+    client: AsyncClient, db_session, make_kc_token, patch_kc_decode
+):
+    user = await _create_identity(
+        db_session, sub="stable-subject-patch", email="stored@example.com"
+    )
+    token = make_kc_token(
+        sub="stable-subject-patch",
+        email="upstream-renamed@example.com",
+        scopes="openid profile email user:read user:write",
+    )
+    response = await client.patch(
+        "/api/v1/users/me",
+        json={"full_name": "Updated Through Stable Identity"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 200
+    assert response.json()["id"] == str(user.id)
+    assert response.json()["full_name"] == "Updated Through Stable Identity"
+    assert response.json()["email"] == "stored@example.com"
