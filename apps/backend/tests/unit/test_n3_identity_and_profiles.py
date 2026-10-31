@@ -111,3 +111,21 @@ async def test_unknown_claim_profile_fails_closed(monkeypatch):
             claim_profile="unknown",
         )
     assert error.value.status_code == 503
+
+
+@pytest.mark.asyncio
+async def test_upstream_subject_is_preserved_exactly():
+    db = AsyncMock()
+    identity = MagicMock(user_id=uuid4())
+    result = MagicMock()
+    result.first.return_value = identity
+    db.exec = AsyncMock(return_value=result)
+    expected = MagicMock(spec=User)
+    raw_subject = "opaque-subject-with-trailing-space "
+    with patch.object(user_crud, "get_by_id", new_callable=AsyncMock, return_value=expected):
+        resolved = await user_crud.get_by_upstream_identity(
+            db, issuer="https://idp.example/", subject=raw_subject
+        )
+    assert resolved is expected
+    query = db.exec.await_args.args[0]
+    assert raw_subject in query.compile().params.values()

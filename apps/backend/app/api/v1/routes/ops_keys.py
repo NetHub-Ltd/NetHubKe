@@ -123,7 +123,8 @@ async def ops_link_upstream_identity(
     # against the configured IdP. Never accept a caller-typed issuer or subject.
     proof = await run_in_threadpool(_decode_token, body.proof_token)
     issuer = (proof.issuer or "").strip().rstrip("/")
-    subject = (proof.sub or "").strip()
+    # The upstream subject is opaque; preserve the exact validated claim.
+    subject = proof.sub or ""
     if issuer != (settings.idp_issuer or "").strip().rstrip("/"):
         raise HTTPException(status_code=401, detail="Identity proof issuer is not trusted")
     if not subject or not proof.email or not proof.email_verified:

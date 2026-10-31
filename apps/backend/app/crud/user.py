@@ -33,7 +33,8 @@ class UserCRUD(BaseCRUD[User, UserCreate, UserUpdate]):
         self, db: AsyncSession, *, issuer: str, subject: str
     ) -> Optional[User]:
         issuer_n = (issuer or "").strip().rstrip("/")
-        subject_n = (subject or "").strip()
+        # OIDC sub is opaque and case-sensitive: preserve it byte-for-byte.
+        subject_n = subject or ""
         if not issuer_n or not subject_n:
             return None
         result = await db.exec(
@@ -73,7 +74,8 @@ class UserCRUD(BaseCRUD[User, UserCreate, UserUpdate]):
         """Sync only a verified issuer+subject identity; never auto-link by email."""
         email = _norm_email(str(obj_in.email))
         issuer = (obj_in.issuer or "").strip().rstrip("/")
-        subject = (obj_in.sub or "").strip()
+        # Do not normalize an opaque OIDC subject; only the issuer is normalized.
+        subject = obj_in.sub or ""
         if not issuer or not subject:
             raise HTTPException(status_code=401, detail="Validated issuer and subject are required")
 
