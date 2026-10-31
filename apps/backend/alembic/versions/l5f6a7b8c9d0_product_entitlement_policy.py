@@ -14,6 +14,13 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
+    # Interpret pre-existing naive subscription period values as UTC.
+    op.alter_column("subscriptions", "current_period_start",
+        existing_type=sa.DateTime(), type_=sa.DateTime(timezone=True),
+        postgresql_using="current_period_start AT TIME ZONE 'UTC'")
+    op.alter_column("subscriptions", "current_period_end",
+        existing_type=sa.DateTime(), type_=sa.DateTime(timezone=True),
+        postgresql_using="current_period_end AT TIME ZONE 'UTC'")
     op.add_column("products", sa.Column("entitlement_policy", sa.String(40),
                   nullable=False, server_default="organization_or_individual"))
     op.create_index("ix_products_entitlement_policy", "products", ["entitlement_policy"])
@@ -50,6 +57,12 @@ def downgrade() -> None:
     op.drop_table("entitlement_overrides")
     op.drop_index("ix_subscriptions_product_id", table_name="subscriptions")
     op.drop_column("subscriptions", "product_id")
+    op.alter_column("subscriptions", "current_period_end",
+        existing_type=sa.DateTime(timezone=True), type_=sa.DateTime(),
+        postgresql_using="current_period_end AT TIME ZONE 'UTC'")
+    op.alter_column("subscriptions", "current_period_start",
+        existing_type=sa.DateTime(timezone=True), type_=sa.DateTime(),
+        postgresql_using="current_period_start AT TIME ZONE 'UTC'")
     op.drop_constraint("ck_products_entitlement_policy", "products", type_="check")
     op.drop_index("ix_products_entitlement_policy", table_name="products")
     op.drop_column("products", "entitlement_policy")

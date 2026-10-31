@@ -91,8 +91,8 @@ class Subscription(BaseMixin, table=True):
     plan_id: uuid.UUID = Field(foreign_key="plans.id")
 
     status: str = Field(default="active")  # active, trialing, past_due, canceled
-    current_period_start: datetime
-    current_period_end: datetime
+    current_period_start: datetime = Field(sa_type=SADateTime(timezone=True))
+    current_period_end: datetime = Field(sa_type=SADateTime(timezone=True))
 
     # External ID for M-Pesa or Stripe integration
     external_subscription_id: Optional[str] = Field(default=None)

@@ -24,13 +24,10 @@ async def check_entitled(db: AsyncSession, *, tenant_id: UUID, user_id: UUID, pr
         logger.error(f"entitlement denied: invalid policy product={product.slug} policy={policy}")
         return False
     now = datetime.now(timezone.utc)
-    # Existing subscription period columns are timestamp-without-time-zone;
-    # their established convention is UTC-naive. New override timestamps are timestamptz.
-    subscription_now = now.replace(tzinfo=None)
     subscription = (await db.exec(select(Subscription).where(
         Subscription.tenant_id == tenant_id, Subscription.product_id == product.id,
         Subscription.status.in_(("active", "trialing")),
-        Subscription.current_period_start <= subscription_now, Subscription.current_period_end > subscription_now,
+        Subscription.current_period_start <= now, Subscription.current_period_end > now,
         Subscription.deleted_at.is_(None),
     ))).first()
     membership = (await db.exec(select(Membership).where(
