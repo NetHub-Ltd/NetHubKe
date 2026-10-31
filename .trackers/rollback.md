@@ -90,3 +90,12 @@
 - PostgreSQL Alembic upgrade → downgrade one revision → upgrade head passed. Docker/PostgreSQL/Redis readiness 41211623011 and Vercel passed.
 - N4 migration converts existing subscription period timestamps to timezone-aware UTC and reverses that conversion on downgrade. Legacy subscriptions with null product_id remain intact but non-authoritative; no data backfill was guessed.
 - Codecov's Repository not found response is non-blocking; coverage artifact is available. PR #156 remains unmerged; rollback remains revert-the-PR, no reset/rebase/force-push, and keep exchange default-off.
+
+
+## N5 implementation checkpoint — 2026-10-31
+
+- User authorized implementation, testing and validation on one coherent PR targeting `dev`; no merge or deployment changes authorized.
+- Topic branch: `fix/n5-signing-key-freshness`, created from `dev` at `6edd7844215c4703cd9d2c2d23433d63aa6e1b2b`.
+- Implementing: automatic-rotation age recheck under the PostgreSQL advisory lock; PostgreSQL-authoritative JWKS responses; four-minute product-token lifetime hard cap; resource-server refresh and clock-skew requirements.
+- Local test execution is unavailable because this runtime cannot resolve github.com. GitHub Actions validation is pending.
+- Five-minute acceptance remains conditional on end-to-end tests against actual product resource-server verifiers; NetHubKe-side changes alone cannot prove their cache and clock behavior.

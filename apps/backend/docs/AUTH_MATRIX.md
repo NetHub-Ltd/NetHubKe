@@ -129,3 +129,12 @@ only their corresponding grant dimension and never bypass disabled accounts,
 products, or services.
 
 PostgreSQL is authoritative. Redis is not consulted to authorize token exchange.
+
+
+## N5 signing-key freshness implementation (2026-10-31)
+
+- Automatic rotation re-checks active-key age after acquiring the PostgreSQL transaction advisory lock; competing workers cannot rotate a key another worker has just replaced.
+- Public JWKS responses are reconstructed from PostgreSQL. Redis is not read as a response source, preventing stale cache entries from re-publishing revoked/retired keys after invalidation failure.
+- Product access tokens are hard-capped at 240 seconds, including when a larger legacy TTL setting is configured. Resource servers must apply no more than 60 seconds of clock leeway.
+- Resource servers must refresh JWKS at least every 60 seconds and immediately on unknown `kid`.
+- The five-minute end-to-end bound remains unproven until actual product resource-server verifiers are tested with cached JWKS and measured clock behavior.

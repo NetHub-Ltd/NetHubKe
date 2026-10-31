@@ -112,3 +112,12 @@
 - Subscription period columns were migrated to timezone-aware timestamps, interpreting existing values as UTC; downgrade converts them back using UTC.
 - Codecov reports Repository not found during upload; this is non-blocking and the coverage artifact was generated.
 - PR #156 remains open against dev and unmerged. Exchange remains default-off. Subsequent tracker-only commit does not change app/test code.
+
+
+## N5 implementation checkpoint — 2026-10-31
+
+- User authorized implementation, testing and validation on one coherent PR targeting `dev`; no merge or deployment changes authorized.
+- Topic branch: `fix/n5-signing-key-freshness`, created from `dev` at `6edd7844215c4703cd9d2c2d23433d63aa6e1b2b`.
+- Implementing: automatic-rotation age recheck under the PostgreSQL advisory lock; PostgreSQL-authoritative JWKS responses; four-minute product-token lifetime hard cap; resource-server refresh and clock-skew requirements.
+- Local test execution is unavailable because this runtime cannot resolve github.com. GitHub Actions validation is pending.
+- Five-minute acceptance remains conditional on end-to-end tests against actual product resource-server verifiers; NetHubKe-side changes alone cannot prove their cache and clock behavior.

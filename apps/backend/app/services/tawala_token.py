@@ -169,6 +169,8 @@ async def rotate_signing_key(
     *,
     retire_after_hours: int = 24,
     actor_sub: str | None = None,
+    only_if_stale: bool = False,
+    max_age_hours: int | None = None,
 ) -> dict[str, Any]:
     """
     N5: Create a new active signing key; mark previous active key(s) as retiring.
@@ -190,6 +192,20 @@ async def rotate_signing_key(
             )
         )
     )
+    if only_if_stale:
+        # Re-check while holding the lock; another worker may already have rotated.
+        if not active_rows:
+            await db.rollback()
+            return {}
+        created_values = [
+            row.created_at.replace(tzinfo=timezone.utc) if row.created_at.tzinfo is None else row.created_at
+            for row in active_rows if row.created_at is not None
+        ]
+        newest_created = max(created_values, default=None)
+        if newest_created is None or datetime.now(timezone.utc) - newest_created < timedelta(hours=max_age_hours or 168):
+            await db.rollback()
+            return {}
+
     for row in active_rows:
         row.status = "retiring"
         row.retire_after = retire_at
@@ -367,7 +383,7 @@ async def ensure_fresh_signing_key(db: AsyncSession) -> None:
         logger.info(
             f"Active signing key kid={getattr(row, 'kid', '?')} age={age} >= max_age={max_age_h}h; rotating"
         )
-        await rotate_signing_key(db, retire_after_hours=overlap_h)
+        await rotate_signing_key(db, retire_after_hours=overlap_h, only_if_stale=True, max_age_hours=max_age_h)
 
 
 
@@ -499,22 +515,8 @@ async def build_jwks_document(db: AsyncSession) -> dict[str, Any]:
     """JWKS for active + retiring keys (not retired). Auto-rotates by max age."""
     if exchange_enabled():
         await ensure_fresh_signing_key(db)
-    cached = await redis_get(JWKS_CACHE_KEY)
-    if cached:
-        try:
-            cached_document = json.loads(cached)
-            if isinstance(cached_document, dict) and isinstance(cached_document.get("keys"), list):
-                safe_document = {"keys": _sanitize_public_jwks(cached_document["keys"])}
-                if safe_document["keys"]:
-                    if safe_document != cached_document:
-                        await redis_set(
-                            JWKS_CACHE_KEY,
-                            json.dumps(safe_document),
-                            int(getattr(settings, "jwks_redis_ttl_sec", 120)),
-                        )
-                    return safe_document
-        except (json.JSONDecodeError, TypeError):
-            pass
+    # PostgreSQL is authoritative. Never serve cached JWKS: a stale Redis
+    # document must not resurrect a compromised or retired public key.
 
     stmt = select(SigningKey).where(
         SigningKey.status.in_(["active", "retiring"]),
@@ -669,7 +671,7 @@ async def mint_product_access_token(
 
     private_key, kid = await get_active_signing_key(db)
     now = int(time.time())
-    ttl = int(getattr(settings, "tawala_jwt_ttl_sec", 28800))
+    ttl = min(max(1, int(getattr(settings, "tawala_jwt_ttl_sec", 240))), 240)
     exp = now + ttl
     claims: dict[str, Any] = {
         "sub": str(sub),
