@@ -162,9 +162,9 @@ async def test_sync_refuses_email_only_linking_over_http(
     identities = await db_session.exec(select(func.count()).select_from(UserIdentity))
     users = await db_session.exec(select(func.count()).select_from(User))
     tenants = await db_session.exec(select(func.count()).select_from(Tenant))
-    assert identities.one() == 0
-    assert users.one() == 1
-    assert tenants.one() == 0
+    assert identities.scalar_one() == 0
+    assert users.scalar_one() == 1
+    assert tenants.scalar_one() == 0
 
 
 @pytest.mark.asyncio
@@ -208,6 +208,6 @@ async def test_concurrent_first_sync_commits_one_tenant_user_and_identity(
         user_count = await session.exec(select(func.count()).select_from(User))
         identity_count = await session.exec(select(func.count()).select_from(UserIdentity))
         tenant_count = await session.exec(select(func.count()).select_from(Tenant))
-        assert user_count.one() == 1
-        assert identity_count.one() == 1
-        assert tenant_count.one() == 1
+        assert user_count.scalar_one() == 1
+        assert identity_count.scalar_one() == 1
+        assert tenant_count.scalar_one() == 1
