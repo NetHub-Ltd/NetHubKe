@@ -1,4 +1,4 @@
-"""Product access-token signing (NetHubKe AS) — N2 managed keys + Redis JWKS cache.
+"""Product access-token signing (NetHubKe AS) — N5 managed keys + PostgreSQL-authoritative JWKS.
 
 Priority for private key material:
 1. Active row in signing_keys (Postgres)
@@ -202,7 +202,7 @@ async def rotate_signing_key(
             for row in active_rows if row.created_at is not None
         ]
         newest_created = max(created_values, default=None)
-        if newest_created is None or datetime.now(timezone.utc) - newest_created < timedelta(hours=max_age_hours or 168):
+        if len(active_rows) == 1 and newest_created is not None and datetime.now(timezone.utc) - newest_created < timedelta(hours=max_age_hours or 168):
             await db.rollback()
             return {}
 
