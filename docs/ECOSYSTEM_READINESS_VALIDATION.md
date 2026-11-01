@@ -237,3 +237,69 @@ Findings:
 - **Legacy direct-IdP access endpoint is mounted** at `GET /api/v1/access/{product_slug}`. Its handler explicitly describes IdP bearer → principal JSON, does not mint a product JWT, and calls `resolve_product_access`, which finds the local user by email. This is inconsistent with the approved architecture contract. If retained temporarily, it needs a named consumer, explicit compatibility flag, threat boundary and removal/expiry criteria; otherwise it should be disabled/removed. This validation pass makes no implementation change.
 - Product API exchange and JWKS paths are documented, but integration contract must identify the exact issuer and audience values and token-profile requirements per registered product.
 - Redis is currently a hard startup dependency even though it is described as cache/coordination, while PostgreSQL is correctly hard-required. Determine whether Redis unavailability is intended to prevent all NetHubKe service startup or whether only cache-dependent operations should degrade. Do not change this without validating actual redis usage and operational contract.
+
+
+## Confirmed security findings from cross-route inspection — 2026-11-01
+
+### Finding F-01 — Legacy access endpoint bypasses canonical identity resolution
+**Severity:** High; blocks treating the product integration boundary as ready.
+**Affected:** #159, #163, #165.
+
+- `apps/backend/app/api/v1/api_router.py` mounts `access.router` under `/api/v1/access`.
+- `apps/backend/app/api/v1/routes/access.py::get_product_access` uses `Depends(get_token_data)`, not `get_current_user` / `require_scopes`.
+- `get_token_data` only validates the upstream JWT; it does not require a canonical `UserIdentity` mapping.
+- `apps/backend/app/services/access.py::resolve_product_access` resolves the local account with `user_crud.get_by_email(token_data.email)`, then returns its membership and external user/org mapping.
+- The route is not gated by the product exchange feature flag and explicitly implements the old IdP-bearer → principal JSON flow.
+- Unit tests exist for the service, but no route-level acceptance test was found proving that an unlinked issuer+subject with a matching email is rejected.
+
+**Impact:** This creates a second product access path that bypasses the approved canonical issuer+subject resolution and can treat email as identity. It can expose a local account's product principal to a valid but unmapped upstream identity whose email matches. It also conflicts with the approved NetHub-issued product JWT trust model.
+
+**Required disposition:** Disable/remove this path from the default product integration contract, or isolate it behind an explicitly approved, named, time-bounded compatibility flag and make it resolve canonical identity before returning anything. No change made during validation.
+
+### Finding F-02 — Protected tenant-scoped routes re-resolve users by token email
+**Severity:** High; authorization/tenant isolation risk.
+**Affected:** #159, #163, #165.
+
+- `apps/backend/app/api/deps.py::get_current_user` correctly resolves the canonical user by exact validated issuer+subject and checks the account is active.
+- After that check, several routes discard the resolved local user and look it up again by mutable `token_data.email`:
+  - `apps/backend/app/api/v1/routes/product_links.py::set_my_product_link` and `list_my_product_links`.
+  - `apps/backend/app/api/v1/routes/billing.py::_tenant_id_for_user`.
+  - `apps/backend/app/api/v1/routes/services.py::my_service_status`.
+- The local email can change after a verified IdP email update. A still-valid access token can carry the previous email; if that address is subsequently assigned to another local account, the canonical identity check authenticates user A, but the route's second email lookup can select user B and use B's tenant context.
+- In the product-link mutation route, this can direct an owner-authorized request to the wrong tenant's external organization mapping. Billing/status routes can similarly resolve the wrong tenant.
+
+**Required disposition:** Tenant-scoped handlers must use the canonical local user resolved from issuer+subject, not perform a second lookup using email. Add regression coverage for stale email claims after an identity's email has changed and the old address belongs to another account. No code change made during validation.
+
+### Finding F-03 — Product audiences are not unique
+**Severity:** High; product isolation contract gap.
+**Affected:** #160, #161, #162.
+
+- `Product.slug` is unique, but `Product.audience` is not.
+- Migration `apps/backend/alembic/versions/e8f9a0b1c2d3_add_products.py` creates a unique index only on `products.slug`; no audience uniqueness constraint/index exists.
+- Exchange signs the token with the audience stored on the selected Product row (except the server-side Tawala compatibility override).
+- `docs/PRODUCT_CLAIM_PROFILES.md` says product tokens must not be accepted by another product and that audience is the exact resource-server boundary.
+
+**Impact:** Two products can be registered with the same audience. A verifier enforcing the required issuer/audience/algorithm contract could accept a token issued for the other product if it does not additionally enforce the custom `product` claim. That makes isolation depend on every downstream verifier implementing an extra undocumented assumption.
+
+**Required disposition:** Enforce unique product audiences (including a deliberate migration/data check) or define and require a cryptographically/contractually enforced alternative per-product verifier discriminator. No migration or implementation change made during validation.
+
+### Supporting cross-route evidence
+
+- `apps/backend/app/api/v1/routes/product_links.py`: owner role and user:write scope are checked, but tenant lookup is by email after canonical auth dependency.
+- `apps/backend/app/api/v1/routes/billing.py`: tenant context is derived by email lookup after user:read scope.
+- `apps/backend/app/api/v1/routes/services.py`: product status is derived by email lookup after user:read scope.
+- `apps/backend/app/api/v1/routes/access.py` and `apps/backend/app/services/access.py`: legacy direct IdP access path uses email lookup before canonical mapping.
+- `apps/backend/app/db/models/models.py::Product` and product registry migration: slug uniqueness exists; audience uniqueness does not.
+
+## Revised preliminary status
+
+| Issue | Status | Reason |
+|---|---|---|
+| #158 | Partial | OIDC and JWT validation implementation/tests present; live Zitadel and protected-session edge cases still to verify. |
+| #159 | **Gap found** | Canonical identity core is implemented, but mounted legacy access route bypasses it; email re-lookups remain in tenant-scoped routes. |
+| #160 | **Gap found** | Product registry and active-state checks exist, but product audience is not unique. |
+| #161 | Partial | Token exchange and claim tests exist; depends on resolving audience isolation gap. |
+| #162 | Partial | JWKS issuer behavior tested; actual resource-server verifier behavior not represented in this repo. |
+| #163 | **Gap found** | Central entitlement evaluator is implemented/tested, but tenant-scoped routes have email-based re-resolution risk; legacy access path bypasses canonical identity. |
+| #164 | **Unproven** | N5 issuer CI passed; five-minute end-to-end stale-access bound has not been measured. |
+| #165 | **Gap found** | Core exchange/JWKS contract exists, but the old direct-IdP access endpoint remains mounted and conflicts with the approved product trust model. |
