@@ -114,3 +114,126 @@
 ## Final assessment
 
 Not yet complete. The known blocker is the unproven five-minute end-to-end stale-access bound. All other areas remain subject to code-level inspection; partial documentation/CI evidence must not be promoted to a pass without verifying the underlying implementation and tests.
+
+
+## Detailed implementation findings — 2026-11-01
+
+### #158 — Zitadel authentication boundary
+
+**Preliminary result: core API token validation present; full login/session boundary not yet proven.**
+
+Evidence:
+- `apps/frontend/src/auth.ts`: Auth.js is configured with an OIDC provider using the configured issuer/client. The authorization request asks for `openid profile email`. Auth.js owns the authorization-code callback; the app does not implement its own credential/password flow.
+- `apps/frontend/src/lib/server/oidcConfig.ts`: issuer/client are read from OIDC env vars (legacy Keycloak aliases retained); discovery is fetched from `{issuer}/.well-known/openid-configuration` and cached in-process for one hour.
+- `apps/backend/app/core/security.py::_decode_token`: validates JWT signature via configured JWKS, RS256/configured algorithm allowlist, issuer, audience, and required `exp`, `iat`, `sub`; 10-second leeway. If email is absent it calls the configured issuer's UserInfo endpoint.
+- `apps/backend/tests/unit/test_security.py`: tests valid, expired, wrong audience, wrong issuer, invalid signature, wrong algorithm and missing required claims.
+- `apps/backend/tests/api/test_auth_exchange.py`: exchange requires bearer; missing bearer returns 401; disabled exchange returns 503 before DB/key side effects.
+
+Open checks:
+- Verify Auth.js state/nonce/PKCE behavior from dependency/config and tests; no repository-owned callback validation code is present (expected if delegated to Auth.js).
+- Verify refresh token rotation/error behavior and that disabled/unmapped users cannot gain protected console capabilities when backend sync fails. `auth.ts` intentionally retains an IdP-only session when `/users/sync` fails; product exchange still has its own backend denial.
+- No live Zitadel staging flow evidence was inspected in this pass.
+
+### #159 — Canonical identity and lifecycle
+
+**Preliminary result: strong repository evidence; test evidence exists.**
+
+Evidence:
+- `apps/backend/app/db/models/models.py::UserIdentity`: unique constraints on `(issuer, subject)` and `(user_id, issuer)`.
+- `apps/backend/app/crud/user.py::get_by_upstream_identity`: exact issuer+subject lookup; normalizes issuer trailing slash but preserves opaque subject.
+- `UserCRUD.get_or_create`: requires issuer+subject, resolves mapped identity first, denies inactive users, updates email only when upstream marks it verified and no other live user owns it, refuses email-only linking, and creates tenant/user/identity in one transaction.
+- `apps/backend/app/api/v1/routes/ops_keys.py::ops_link_upstream_identity`: requires identity:link scope plus admin/ops role; independently validates proof token, exact trusted issuer, subject and verified email; rejects conflicting links; records durable audit with subject hash.
+- Tests in `apps/backend/tests/api/test_identity_lifecycle.py`: email change, verified-email collision, soft-deleted identity denial, disabled-user non-reactivation, unverified email change, email-only link rejection, concurrent first sync.
+- Prior N3 CI evidence in tracker: 187 tests passed, 74.19% coverage; readiness passed. This is historical CI for the N3 implementation, not a new run during this audit.
+
+Potential boundary to reconcile:
+- The mounted legacy `GET /api/v1/access/{product_slug}` path in #165 still resolves a user using `get_by_email`, not issuer+subject. It is a direct-IdP-token principal endpoint and is not gated by the exchange flag. This is inconsistent with the approved target architecture and must not be treated as the default product integration path.
+
+### #160 — Product registration and isolation
+
+**Preliminary result: registry exists and active state is checked; audience uniqueness is not enforced.**
+
+Evidence:
+- `apps/backend/app/db/models/models.py::Product`: stable unique slug, audience, active flag, claim profile and entitlement policy.
+- `apps/backend/alembic/versions/e8f9a0b1c2d3_add_products.py`: unique index on slug; no unique constraint/index on audience.
+- `apps/backend/app/services/tawala_token.py::get_product_by_slug`: rejects unknown, soft-deleted and inactive products.
+- `apps/backend/app/api/v1/routes/auth.py::_run_exchange`: product is selected server-side by registered slug; audience is loaded from the product row (Tawala has a compatibility settings override); user cannot submit audience.
+- `apps/backend/tests/api/test_auth_exchange.py`: covers active-product exchange success, unknown product, inactive user and entitlement denial.
+
+Finding:
+- **Audience is not unique across products.** The model and migration permit two active products to share the same JWT audience. Since audience is the primary resource-server isolation boundary in the approved contract, duplicate audiences can make one product's token acceptable to another verifier if that verifier validates only issuer/audience. The additional `product` claim does not repair this unless every product verifier is contractually required to check it. Treat as a real isolation gap, not a feature request.
+- No product administration/registration API is mounted; product registration currently depends on seeded/database-managed records. Determine whether that is sufficient for the initial ecosystem, rather than demanding a UI.
+
+### #161 — Product-specific token issuance
+
+**Preliminary result: issuer path is implemented; contract gaps remain under review.**
+
+Evidence:
+- `apps/backend/app/api/v1/routes/auth.py::_run_exchange`: checks feature flag first; resolves the canonical user by issuer+subject; denies missing/disabled user and missing tenant; checks product entitlement; derives audience from product record; resolves Tawala organization mapping; selects server-defined claim profile.
+- `apps/backend/app/services/tawala_token.py::mint_product_access_token`: signs RS256 JWT with managed active key and `kid`; sets `iss`, `sub`, `aud`, `iat`, `exp`, `jti`, `product`; caps lifetime at 240 seconds; Tawala profile requires server-resolved `org_id` and principal.
+- `apps/backend/tests/api/test_auth_exchange.py`: covers disabled exchange (including no DB/key side effects), missing bearer, invalid request, principal elevation, inactive user, missing tenant, denied entitlement and unknown product.
+- `apps/backend/tests/unit/test_tawala_token.py::test_mint_product_success_token_claims_and_signature`: verifies RS256 signature, kid, issuer, audience, canonical subject, product claim, iat/exp/jti and no private key/password/tenant_id leakage.
+
+Open checks:
+- Product audience uniqueness from #160 is a token-isolation dependency.
+- JWT header currently explicitly supplies `kid`; inspect actual encoded header and target token-type requirement. The approved contract requires resource servers to enforce token type, but no resource-server verifier implementation is in this repo.
+- Verify `nbf` handling requirement is correctly understood: issuer need not add it unless the contract explicitly requires it; verifiers must validate it when present.
+
+### #162 — JWKS and local verification
+
+**Preliminary result: issuer-side JWKS controls present; verifier-side acceptance not demonstrated.**
+
+Evidence:
+- `build_jwks_document` selects active/retiring non-deleted keys from PostgreSQL; expired retiring keys are omitted; sanitizer permits only RSA/RS256 public fields and unique non-empty kid; Redis is write-only best-effort cache.
+- `apps/backend/tests/api/test_auth_exchange.py::test_jwks_endpoint_returns_public_jwks_shape` checks public JWKS shape and absence of private fields.
+- `apps/backend/tests/unit/test_tawala_token.py` covers stale Redis cache bypass, database key source, public field filtering, duplicate kid removal, unsupported algorithm filtering and missing modulus.
+- `docs/SIGNING_KEY_ROTATION.md` / `AUTH_MATRIX.md` document 60-second JWKS refresh and clock-leeway limits.
+
+Open checks:
+- No product verifier source or executable verifier contract tests are present in this repository. Issuer publication tests do not prove local verifier behavior for wrong issuer/audience/alg/type, unknown kid, expired token or key retirement.
+- Confirm whether public JWKS should be empty while exchange is disabled and no key exists; this appears intentional and is not by itself a failure.
+
+### #163 — Authorization and entitlement decisions
+
+**Preliminary result: policy evaluator and decision matrix tests are present.**
+
+Evidence:
+- `apps/backend/app/services/entitlements.py::check_entitled`: checks product active/deleted, matching Service hard-disable, policy allowlist, product-scoped active subscription period, active product membership and product-scoped non-expired/non-revoked overrides; evaluates all four supported policy modes.
+- `apps/backend/app/api/v1/routes/auth.py::_run_exchange`: checks local user active before entitlement evaluation.
+- `apps/backend/app/api/v1/routes/ops_keys.py`: override create/revoke requires `entitlements:override` and admin/super_admin/ops role, one target dimension, active product/tenant-linked user, reason, <=90-day expiry and durable audit.
+- `apps/backend/tests/unit/test_entitlements.py`: all four modes, product-scoped subscription, expired subscription, inactive service hard deny, expired/revoked override and individual override.
+- `apps/backend/tests/api/test_entitlement_overrides.py`: HTTP-level authorization and audit coverage (test file exists; inspect exact cases before final pass).
+
+Open checks:
+- Direct access route uses a separate membership check and email-based lookup, and does not share the exchange flow's canonical identity contract. See #159/#165.
+- Verify all entitlement override and ProductLink operations are mounted and protected as expected; no requirement for a UI.
+
+### #164 — Revocation, signing-key rotation and freshness
+
+**Result: issuer-side N5 hardening has CI evidence; five-minute end-to-end acceptance remains UNPROVEN.**
+
+Evidence:
+- PR #157 merged at `17d38a3ca2ff1323c73577b30c591a28181bfd70`.
+- Latest reported validated implementation head `801d925fec459fe8cc2c8095c2626d1415eb1fe9`: Backend CI 218 tests, 74.93% coverage, per-file coverage passed and Alembic upgrade/downgrade/re-upgrade passed; Docker/PostgreSQL/Redis readiness passed.
+- Issuer token TTL is hard-capped at 240 seconds. N5 docs require resource server JWKS refresh <=60 seconds and clock leeway <=60 seconds.
+- Rotation uses PostgreSQL advisory transaction lock and age recheck; emergency revocation retires target key and publishes replacement if active; JWKS reads PostgreSQL rather than Redis.
+
+Acceptance gap:
+- The five-minute limit is not established by issuer CI alone. A product verifier that does not refresh JWKS within the stated bound, accepts excessive clock skew, or fails to stop accepting revoked keys could exceed it. Also, normal grant removal relies on the remaining lifetime of already issued product tokens.
+- No measured end-to-end test against a real verifier or staging consumer was found in the inspected evidence. Do not mark #164 passed.
+
+### #165 — Product integration contract and operations
+
+**Preliminary result: core endpoints exist; a conflicting legacy endpoint and dependency questions remain.**
+
+Evidence:
+- Mounted API routes in `apps/backend/app/api/v1/api_router.py`: `/users`, `/auth` (including exchange and JWKS), `/access`, `/services`, `/ops`, `/billing`.
+- Frontend BFF `apps/frontend/src/app/api/nethub/auth/exchange/route.ts` keeps backend URL and IdP access token server-side; it calls `/auth/exchange` using Auth.js session.
+- `apps/backend/app/main.py`: startup checks PostgreSQL query + signing_keys table and Redis PING; exchange-enabled startup bootstraps signing keys. `/ready` checks DB and Redis.
+- `apps/backend/app/db/session.py`: PostgreSQL async engine configured with pool_pre_ping and UTC timezone.
+- `apps/backend/docs/AUTH_MATRIX.md` and `PRODUCT_CLAIM_PROFILES.md` describe the intended token/JWKS contract.
+
+Findings:
+- **Legacy direct-IdP access endpoint is mounted** at `GET /api/v1/access/{product_slug}`. Its handler explicitly describes IdP bearer → principal JSON, does not mint a product JWT, and calls `resolve_product_access`, which finds the local user by email. This is inconsistent with the approved architecture contract. If retained temporarily, it needs a named consumer, explicit compatibility flag, threat boundary and removal/expiry criteria; otherwise it should be disabled/removed. This validation pass makes no implementation change.
+- Product API exchange and JWKS paths are documented, but integration contract must identify the exact issuer and audience values and token-profile requirements per registered product.
+- Redis is currently a hard startup dependency even though it is described as cache/coordination, while PostgreSQL is correctly hard-required. Determine whether Redis unavailability is intended to prevent all NetHubKe service startup or whether only cache-dependent operations should degrade. Do not change this without validating actual redis usage and operational contract.
