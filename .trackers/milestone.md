@@ -147,3 +147,10 @@
 - Coverage and readiness are GitHub Actions evidence; tests were not run locally in this runtime.
 - N5 repository implementation and CI validation are successful. The five-minute end-to-end stale-access bound remains **unproven** because deployed product resource-server verifier cache/clock behavior is outside this repository and has not been measured. Do not mark issue #152 fully accepted until that evidence exists.
 - Exchange remains default-off. No deployment changes, production flag changes, merge, or issue closure were performed. PR #157 remains open for user review.
+
+
+## Readiness validation checkpoint — 2026-11-01
+- The eight-item NetHubKe readiness validation is in progress on `validation/ecosystem-readiness`.
+- #158–#165 are existing open validation issues; findings are recorded in `docs/ECOSYSTEM_READINESS_VALIDATION.md`.
+- Current blockers identified: canonical identity bypass in legacy access route; mutable-email tenant re-resolution; non-unique product audiences; browser session token exposure. Five-minute end-to-end freshness remains unproven.
+- This is validation evidence only; no N6–N10 work or runtime changes are included.

@@ -143,3 +143,10 @@
 - Coverage and readiness are GitHub Actions evidence; tests were not run locally in this runtime.
 - N5 repository implementation and CI validation are successful. The five-minute end-to-end stale-access bound remains **unproven** because deployed product resource-server verifier cache/clock behavior is outside this repository and has not been measured. Do not mark issue #152 fully accepted until that evidence exists.
 - Exchange remains default-off. No deployment changes, production flag changes, merge, or issue closure were performed. PR #157 remains open for user review.
+
+
+## Ecosystem readiness validation — 2026-11-01
+- User authorized validation-only work against the eight-item readiness checklist (#158–#165); do not close issues during this pass.
+- Findings record: `docs/ECOSYSTEM_READINESS_VALIDATION.md` on `validation/ecosystem-readiness`.
+- Confirmed gaps: legacy direct-IdP `/access/{product_slug}` path bypasses canonical identity; tenant-scoped routes re-resolve users by mutable email; product audiences are not unique; upstream access/ID tokens are exposed in browser-visible Auth.js session.
+- Five-minute end-to-end stale-access bound remains unproven. No application code, migrations, runtime flags or deployment changes authorized/performed.
