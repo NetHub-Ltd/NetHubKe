@@ -30,8 +30,8 @@ def upgrade() -> None:
             "Cannot enforce unique product audiences; resolve duplicate rows "
             f"without changing deployed verifier contracts, then retry: {details}"
         )
-    op.create_index("uq_products_audience", "products", ["audience"], unique=True)
+    op.create_unique_constraint("uq_products_audience", "products", ["audience"])
 
 
 def downgrade() -> None:
-    op.drop_index("uq_products_audience", table_name="products")
+    op.drop_constraint("uq_products_audience", "products", type_="unique")

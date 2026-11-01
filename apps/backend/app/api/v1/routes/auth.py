@@ -12,7 +12,7 @@ from sqlalchemy.orm import selectinload
 from app.api.deps import SessionDep, get_token_data
 from app.core.config import settings
 from app.db.schemas.schemas import TokenData
-from app.db.models.models import User
+from app.db.models.models import Product, User
 from app.services.tawala_token import (
     exchange_enabled,
     build_jwks_document,
@@ -120,6 +120,26 @@ async def _run_exchange(
         await ensure_tawala_product(db)
 
     product = await get_product_by_slug(db, product_slug)
+    audience = product.audience
+    if product.slug == "tawala":
+        audience = getattr(settings, "tawala_jwt_audience", None) or product.audience
+
+    # A legacy Tawala audience override is part of the effective audience too.
+    # Reserve it across every registered product, including inactive products.
+    conflicting_product = (
+        await db.exec(
+            select(Product).where(
+                Product.slug != product.slug,
+                Product.audience == audience,
+                Product.deleted_at.is_(None),  # type: ignore[union-attr]
+            )
+        )
+    ).first()
+    if conflicting_product:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Configured product audience conflicts with another registered product",
+        )
 
     # Resolve only by validated immutable upstream identity. Email is not an identity key.
     user = await user_crud.get_by_upstream_identity(
@@ -171,9 +191,6 @@ async def _run_exchange(
         )
 
     nethub_sub = str(user.id)
-    audience = product.audience
-    if product.slug == "tawala":
-        audience = getattr(settings, "tawala_jwt_audience", None) or product.audience
     claim_profile = (product.claim_profile or "").strip().lower()
     if claim_profile not in {"tawala", "standard"}:
         raise HTTPException(status_code=503, detail="Unsupported product claim profile")
