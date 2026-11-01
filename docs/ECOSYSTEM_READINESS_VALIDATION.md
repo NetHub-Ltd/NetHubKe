@@ -338,3 +338,42 @@ Findings:
 | #163 | **Gap found** | Entitlement evaluator is implemented/tested, but the email-based tenant re-resolution and legacy access path undermine identity-to-tenant binding. |
 | #164 | **Unproven** | N5 issuer CI passed; five-minute end-to-end stale-access bound has not been measured. |
 | #165 | **Gap found** | Core exchange/JWKS BFF contract exists, but the legacy direct-IdP route and browser token exposure conflict with the intended trust boundary. |
+
+
+### Finding F-05 — Upstream audience configuration is inconsistent across defaults and documentation
+**Severity:** Medium; integration configuration ambiguity.
+**Affected:** #158, #165.
+
+- `apps/backend/app/core/config.py` defaults `AUDIENCE` to `nethub-api`.
+- `apps/backend/.env.example` also uses `AUDIENCE=nethub-api`.
+- `.github/workflows/backend-ci.yml` and `backend-readiness.yml` use `AUDIENCE=nethub-backend`.
+- `apps/backend/docs/AUTH_MATRIX.md` describes the default as `nethub-backend`.
+
+The runtime setting is environment-overridable, so this is not proof of a production misconfiguration. However, the default and documented contract disagree. A deployment that omits the override may reject valid Zitadel access tokens or accept a different configured audience than the integration team expects.
+
+**Required disposition:** Select one canonical default or make the deployment-required value explicit, then align config comments, examples, AUTH_MATRIX and CI. Verify actual deployed value before enabling exchange. No environment or code change made.
+
+### Validation of route-level test coverage
+
+- `apps/backend/tests/api/test_billing.py` contains only an unauthenticated-request test; it does not test tenant resolution or tenant isolation.
+- `apps/backend/tests/api/test_auth_exchange.py` checks that product-links requires authentication, but does not test product-link tenant binding or stale email claims.
+- `apps/backend/tests/unit/test_membership_access.py` tests the legacy access service's happy/negative cases but not the HTTP route's canonical identity requirement.
+- No route-level regression test was found for an unlinked subject sharing an existing account email on `/access/{product_slug}`.
+- Identity lifecycle tests verify sync and profile resolution by issuer+subject, but do not cover the downstream email re-resolution issue in billing/product-links/services.
+
+These are targeted missing tests for identified security boundaries, not a request for broad coverage expansion.
+
+### Configuration and dependency observations
+
+- Backend CI has Postgres 16 and Redis services and runs pytest with 70% overall coverage plus per-file coverage checks; Alembic upgrade → downgrade → upgrade is part of backend CI.
+- Backend readiness workflow builds and boots the API with Postgres+Redis and probes `/health` and `/ready`.
+- `apps/backend/app/main.py` hard-fails startup if Redis PING fails; `redis_get`, `redis_set` and `redis_delete` themselves catch errors and degrade to miss/no-op. Since current JWKS responses are PostgreSQL-backed and Redis is not an entitlement authority, this is an availability policy decision rather than a token-security control. It is not counted as a checklist failure without evidence that Redis is required for another critical path.
+- Product registry is controlled by PostgreSQL records/migrations; no product CRUD/admin route is mounted. The model is generic enough to represent products, and the claim-profile docs describe manual registration. A catalogue UI or public self-service registration is not required for this readiness scope.
+- ProductLink has a unique database constraint on (tenant_id, product_id), so duplicate tenant/product links are prevented at the database layer.
+
+## Validation limits
+
+- This pass inspected the `dev` source tree and repository tests/docs through GitHub. No local checkout or executable local PostgreSQL test run was available in this runtime.
+- Historical CI evidence is attributed to the exact commit/head recorded in the trackers/PR, not presented as a new run performed by this validation.
+- No live Zitadel staging login, actual deployed environment values, or real product resource-server verifier was available for measurement.
+- No code, migration, deployment, feature flag or issue state has been changed. The only repository write is this findings document on `validation/ecosystem-readiness`.
