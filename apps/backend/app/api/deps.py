@@ -124,3 +124,17 @@ def require_scopes(required_scopes: List[str], all_required: bool = True):
         return user
 
     return _verifier
+
+async def get_current_user_record(
+    db: SessionDep,
+    token_data: TokenData = Depends(get_current_user),
+) -> User:
+    """Resolve the active local account by immutable issuer + subject claims."""
+    if not token_data.issuer or not token_data.sub:
+        raise HTTPException(status_code=401, detail="Token missing canonical identity claims")
+    user = await user_crud.get_by_upstream_identity(
+        db, issuer=token_data.issuer, subject=token_data.sub
+    )
+    if not user or not user.is_active:
+        raise HTTPException(status_code=403, detail="Active canonical user required")
+    return user

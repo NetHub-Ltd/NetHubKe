@@ -22,10 +22,11 @@ declare module "next-auth" {
       tenantTier?: string | null;
       createdAt?: string | null;
     } & Omit<DefaultSession["user"], "email" | "name">;
+    /** Server-side auth() only; the public session callback never serializes this. */
     accessToken?: string;
+    /** Server-side auth() only; never copied to the public session response. */
     idToken?: string;
     error?: string;
-    idp?: IdpProfile;
     /** True when FastAPI /users/sync succeeded */
     backendSynced?: boolean;
   }

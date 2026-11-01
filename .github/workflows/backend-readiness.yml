@@ -73,7 +73,7 @@ jobs:
             -e OIDC_JWKS_URL=https://idp.test/realms/nethub/protocol/openid-connect/certs \
             -e KEYCLOAK_ISSUER_URL=https://idp.test/realms/nethub \
             -e KEYCLOAK_JWKS=https://idp.test/realms/nethub/protocol/openid-connect/certs \
-            -e AUDIENCE=nethub-backend \
+            -e AUDIENCE=nethub-api \
             -e ALLOWED_ORIGINS=http://localhost:3000 \
             -e TAWALA_EXCHANGE_ENABLED=false \
             -e TAWALA_JWT_ISSUER=http://localhost:8000 \

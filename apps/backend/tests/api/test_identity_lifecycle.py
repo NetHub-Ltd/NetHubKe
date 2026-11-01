@@ -211,3 +211,36 @@ async def test_concurrent_first_sync_commits_one_tenant_user_and_identity(
         assert user_count.scalar_one() == 1
         assert identity_count.scalar_one() == 1
         assert tenant_count.scalar_one() == 1
+
+
+@pytest.mark.asyncio
+async def test_canonical_user_resolution_ignores_reassigned_old_email(db_session):
+    """A stale token email must never select a different local tenant/user."""
+    from app.api.deps import get_current_user_record
+
+    canonical = await _create_identity(
+        db_session, sub="immutable-subject-email-reassignment", email="former@example.com"
+    )
+    canonical.email = "current@example.com"
+    await db_session.commit()
+
+    replacement = User(
+        username="replacement-account",
+        email="former@example.com",
+        full_name="Replacement Account",
+        is_active=True,
+    )
+    db_session.add(replacement)
+    await db_session.commit()
+
+    claims = TokenData(
+        issuer=settings.idp_issuer,
+        sub="immutable-subject-email-reassignment",
+        email="former@example.com",
+        scopes=["user:read"],
+    )
+    resolved = await get_current_user_record(db_session, claims)
+
+    assert resolved.id == canonical.id
+    assert resolved.id != replacement.id
+    assert resolved.email == "current@example.com"

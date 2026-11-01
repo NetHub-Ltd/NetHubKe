@@ -9,6 +9,7 @@ from fastapi import HTTPException
 
 from app.db.models.models import Membership, Product
 from app.db.schemas.schemas import TokenData
+from app.core.config import settings
 from app.services import access as access_svc
 
 
@@ -26,6 +27,7 @@ def test_product_model_still_service_agnostic():
 async def test_resolve_access_unknown_product():
     db = AsyncMock()
     token = TokenData(
+        issuer=settings.idp_issuer,
         sub="sub-1",
         email="a@example.com",
         username="a",
@@ -38,7 +40,7 @@ async def test_resolve_access_unknown_product():
 
     with patch.object(
         access_svc.user_crud,
-        "get_by_email",
+        "get_by_upstream_identity",
         new_callable=AsyncMock,
         return_value=MagicMock(
             id=uuid4(), email="a@example.com", is_active=True, tenant_id=uuid4()
@@ -58,6 +60,7 @@ async def test_resolve_access_no_membership():
     uid = uuid4()
     pid = uuid4()
     token = TokenData(
+        issuer=settings.idp_issuer,
         sub="sub-1",
         email="a@example.com",
         username="a",
@@ -83,7 +86,7 @@ async def test_resolve_access_no_membership():
     db.exec = AsyncMock(side_effect=_exec_side_effect)
 
     with patch.object(
-        access_svc.user_crud, "get_by_email", new_callable=AsyncMock, return_value=user
+        access_svc.user_crud, "get_by_upstream_identity", new_callable=AsyncMock, return_value=user
     ):
         with pytest.raises(HTTPException) as ei:
             await access_svc.resolve_product_access(
@@ -102,6 +105,7 @@ async def test_resolve_access_happy_path():
     ext_user = uuid4()
     ext_org = uuid4()
     token = TokenData(
+        issuer=settings.idp_issuer,
         sub="idp-sub",
         email="ops@example.com",
         username="ops",
@@ -136,7 +140,7 @@ async def test_resolve_access_happy_path():
     db.exec = AsyncMock(side_effect=_exec_side_effect)
 
     with patch.object(
-        access_svc.user_crud, "get_by_email", new_callable=AsyncMock, return_value=user
+        access_svc.user_crud, "get_by_upstream_identity", new_callable=AsyncMock, return_value=user
     ):
         with patch.object(
             access_svc, "check_entitled", new_callable=AsyncMock, return_value=True

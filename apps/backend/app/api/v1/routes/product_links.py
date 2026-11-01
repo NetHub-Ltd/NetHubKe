@@ -7,9 +7,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlmodel import select
 
-from app.api.deps import SessionDep, get_token_data, require_scopes
-from app.crud.user import user_crud
-from app.db.models.models import Product, ProductLink
+from app.api.deps import SessionDep, get_current_user_record, require_scopes
+from app.db.models.models import Product, ProductLink, User
 from app.db.schemas.schemas import TokenData
 from app.services.entitlements import upsert_product_link
 from app.utils.logging import logger
@@ -37,6 +36,7 @@ def _is_owner(token: TokenData) -> bool:
 async def set_my_product_link(
     body: ProductLinkBody,
     db: SessionDep,
+    user: User = Depends(get_current_user_record),
     token_data: TokenData = Depends(require_scopes(["user:write"], all_required=True)),
 ):
     """
@@ -51,8 +51,7 @@ async def set_my_product_link(
             detail="Only owner or admin roles may set product organization links",
         )
 
-    user = await user_crud.get_by_email(db, str(token_data.email))
-    if not user or not user.tenant_id:
+    if not user.tenant_id:
         raise HTTPException(status_code=404, detail="User or tenant not found")
 
     link = await upsert_product_link(
@@ -76,10 +75,10 @@ async def set_my_product_link(
 @router.get("/me/product-links", response_model=list[ProductLinkRead])
 async def list_my_product_links(
     db: SessionDep,
+    user: User = Depends(get_current_user_record),
     token_data: TokenData = Depends(require_scopes(["user:read"])),
 ):
-    user = await user_crud.get_by_email(db, str(token_data.email))
-    if not user or not user.tenant_id:
+    if not user.tenant_id:
         return []
     rows = (
         await db.exec(

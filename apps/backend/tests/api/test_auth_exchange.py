@@ -416,3 +416,60 @@ async def test_exchange_unknown_product_returns_404(
     )
     assert response.status_code == 404
     assert response.json()["detail"] == "Unknown product: unknown-product"
+
+
+@pytest.mark.asyncio
+async def test_legacy_direct_idp_access_route_is_not_mounted(
+    client: AsyncClient, make_kc_token, patch_kc_decode
+):
+    response = await client.get(
+        "/api/v1/access/tawala",
+        headers={"Authorization": f"Bearer {make_kc_token()}"},
+    )
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_tawala_audience_override_cannot_collide_with_another_product(
+    db_session, monkeypatch
+):
+    from app.api.v1.routes import auth
+    from app.core.config import settings
+    from app.db.models.models import Product
+
+    db_session.add_all([
+        Product(
+            slug="tawala",
+            name="Tawala",
+            audience="tawala-row-audience",
+            is_active=True,
+            claim_profile="tawala",
+        ),
+        Product(
+            slug="other-product",
+            name="Other Product",
+            audience=settings.tawala_jwt_audience,
+            is_active=False,
+            claim_profile="standard",
+        ),
+    ])
+    await db_session.commit()
+    monkeypatch.setattr(auth, "exchange_enabled", lambda: True)
+
+    token_data = TokenData(
+        issuer=settings.idp_issuer,
+        sub="unmapped-subject-is-not-reached",
+        email="nobody@example.com",
+        roles=["user"],
+        scopes=[],
+    )
+    with pytest.raises(HTTPException) as error:
+        await auth._run_exchange(
+            db_session,
+            token_data,
+            product_slug="tawala",
+            principal_override=None,
+        )
+
+    assert error.value.status_code == 503
+    assert "audience conflicts" in error.value.detail

@@ -161,10 +161,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           createdAt: token.user.createdAt ?? null,
         };
       }
-      session.accessToken = token.accessToken;
-      session.idToken = token.idToken;
       session.error = token.error;
-      session.idp = token.idp;
       session.backendSynced = Boolean(token.backendSynced);
       return session;
     },

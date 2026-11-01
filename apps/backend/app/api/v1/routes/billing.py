@@ -9,9 +9,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlmodel import select
 
-from app.api.deps import SessionDep, require_scopes
-from app.crud.user import user_crud
+from app.api.deps import SessionDep, get_current_user_record, require_scopes
 from app.db.models.models import Invoice, Plan, Subscription
+from app.db.models.models import User
 from app.db.schemas.schemas import TokenData
 
 router = APIRouter()
@@ -54,20 +54,16 @@ class BillingSummary(BaseModel):
     invoices: List[InvoiceRead] = Field(default_factory=list)
 
 
-async def _tenant_id_for_user(db, token: TokenData) -> UUID:
-    user = await user_crud.get_by_email(db, str(token.email))
-    if not user or not user.tenant_id:
-        raise HTTPException(status_code=404, detail="User or tenant not found")
-    return user.tenant_id
-
-
 @router.get("/summary", response_model=BillingSummary)
 async def billing_summary(
     db: SessionDep,
+    user: User = Depends(get_current_user_record),
     token_data: TokenData = Depends(require_scopes(["user:read"])),
 ) -> BillingSummary:
     """Current plan/subscription + recent invoices (read-only)."""
-    tenant_id = await _tenant_id_for_user(db, token_data)
+    if not user.tenant_id:
+        raise HTTPException(status_code=404, detail="User or tenant not found")
+    tenant_id = user.tenant_id
 
     subs = list(
         await db.exec(select(Subscription).where(Subscription.tenant_id == tenant_id))

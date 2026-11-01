@@ -12,8 +12,6 @@ import {
 type LaunchButtonProps = {
   productSlug: string;
   productName: string;
-  /** Keycloak access token from NextAuth session */
-  accessToken?: string | null;
   disabledReason?: string | null;
 };
 
@@ -23,7 +21,6 @@ type LaunchButtonProps = {
 export default function LaunchButton({
   productSlug,
   productName,
-  accessToken,
   disabledReason,
 }: LaunchButtonProps) {
   const [busy, setBusy] = useState(false);
@@ -51,10 +48,10 @@ export default function LaunchButton({
     );
   }
 
-  const blocked = Boolean(disabledReason) || !accessToken;
+  const blocked = Boolean(disabledReason);
 
   const onLaunch = async () => {
-    if (blocked || !accessToken) return;
+    if (blocked) return;
     setBusy(true);
     setError(null);
     try {

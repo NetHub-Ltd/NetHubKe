@@ -50,13 +50,15 @@ async def resolve_product_access(
     if not slug:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Unknown product")
 
-    if not token_data.email:
+    if not token_data.issuer or not token_data.sub:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token missing email claim",
+            detail="Token missing canonical identity claims",
         )
 
-    user = await user_crud.get_by_email(db, str(token_data.email))
+    user = await user_crud.get_by_upstream_identity(
+        db, issuer=token_data.issuer, subject=token_data.sub
+    )
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
