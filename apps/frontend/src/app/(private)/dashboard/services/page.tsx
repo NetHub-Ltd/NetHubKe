@@ -12,7 +12,6 @@ import {
 import { useUser } from "@/lib/hooks/useauth";
 import { federatedLogout } from "@/lib/actions/logout";
 import DashboardShell from "@/lib/components/dashboard/DashboardShell";
-import { useSession } from "next-auth/react";
 import LaunchButton from "@/lib/components/dashboard/LaunchButton";
 import ApiOfflineNotice from "@/lib/components/dashboard/ApiOfflineNotice";
 import { Button } from "@/lib/components/ui";
@@ -53,7 +52,6 @@ const STATUS_META: Record<
  */
 export default function DashboardServicesPage() {
   const { user, status: authStatus } = useUser();
-  const { data: session } = useSession();
   const [items, setItems] = useState<TenantProductStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -231,9 +229,6 @@ export default function DashboardServicesPage() {
                   <LaunchButton
                     productSlug={item.slug}
                     productName={item.name}
-                    accessToken={
-                      (session as { accessToken?: string } | null)?.accessToken
-                    }
                     disabledReason={
                       item.status === "not_connected"
                         ? "Connect this product before launching"

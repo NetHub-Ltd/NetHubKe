@@ -22,10 +22,7 @@ declare module "next-auth" {
       tenantTier?: string | null;
       createdAt?: string | null;
     } & Omit<DefaultSession["user"], "email" | "name">;
-    accessToken?: string;
-    idToken?: string;
     error?: string;
-    idp?: IdpProfile;
     /** True when FastAPI /users/sync succeeded */
     backendSynced?: boolean;
   }

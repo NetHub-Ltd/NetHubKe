@@ -9,10 +9,9 @@ from loguru import logger
 from pydantic import ValidationError
 from sqlmodel import select
 
-from app.api.deps import SessionDep, require_scopes
+from app.api.deps import SessionDep, get_current_user_record, require_scopes
 from app.crud.services import service_crud
-from app.crud.user import user_crud
-from app.db.models.models import Service, Product, ProductLink
+from app.db.models.models import Service, Product, ProductLink, User
 from app.db.schemas.schemas import ServiceCreateIn, ServiceRead, TokenData
 from app.utils.data.services_data import SERVICES_SEED_DATA
 
@@ -96,6 +95,7 @@ class TenantProductStatus(BaseModel):
 @router.get("/my-status", response_model=List[TenantProductStatus])
 async def my_service_status(
     db: SessionDep,
+    user: User = Depends(get_current_user_record),
     token_data: TokenData = Depends(require_scopes(["user:read"])),
 ) -> List[TenantProductStatus]:
     """
@@ -105,7 +105,6 @@ async def my_service_status(
     - trial: product active, no link, tenant tier suggests trial (FREE) — soft signal
     - not_connected: product active, no link
     """
-    user = await user_crud.get_by_email(db, str(token_data.email))
     if not user:
         raise HTTPException(status_code=404, detail="User profile not initialized")
 

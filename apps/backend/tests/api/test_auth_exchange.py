@@ -416,3 +416,14 @@ async def test_exchange_unknown_product_returns_404(
     )
     assert response.status_code == 404
     assert response.json()["detail"] == "Unknown product: unknown-product"
+
+
+@pytest.mark.asyncio
+async def test_legacy_direct_idp_access_route_is_not_mounted(
+    client: AsyncClient, make_kc_token, patch_kc_decode
+):
+    response = await client.get(
+        "/api/v1/access/tawala",
+        headers={"Authorization": f"Bearer {make_kc_token()}"},
+    )
+    assert response.status_code == 404

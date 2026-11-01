@@ -15,7 +15,7 @@ Resource server validation is configured by issuer/audience and JWKS; compatibil
 
 ### Audience and scopes
 
-- Config / env: AUDIENCE (default nethub-backend)
+- Config / env: AUDIENCE (default nethub-api; must match the configured Zitadel API audience)
 - Access tokens must include this value in aud (string or list)
 
 | Scope | Meaning |
@@ -160,3 +160,12 @@ PostgreSQL is authoritative. Redis is not consulted to authorize token exchange.
 - Coverage and readiness are GitHub Actions evidence; tests were not run locally in this runtime.
 - N5 repository implementation and CI validation are successful. The five-minute end-to-end stale-access bound remains **unproven** because deployed product resource-server verifier cache/clock behavior is outside this repository and has not been measured. Do not mark issue #152 fully accepted until that evidence exists.
 - Exchange remains default-off. No deployment changes, production flag changes, merge, or issue closure were performed. PR #157 remains open for user review.
+
+
+## Readiness remediation (2026-11-01)
+
+- The legacy GET /api/v1/access/{product_slug} direct-IdP-bearer route is no longer mounted. Product integrations use the NetHubKe exchange/JWKS contract.
+- Tenant-scoped product-link, billing and service-status handlers receive the canonical local user resolved by validated (issuer, sub); mutable email is not used to select tenant context.
+- Product audience values are unique at the database layer. The migration fails with a clear diagnostic if existing rows contain duplicate audiences; resolve those rows explicitly before retrying.
+- Auth.js keeps upstream access/ID/refresh tokens in its encrypted server-side JWT cookie. The public session contains no upstream bearer or ID token; the exchange BFF continues to read the server-side session.
+- nethub-api is the canonical example/CI default because it is the backend Settings default and .env.example value. Production must still be checked against the actual Zitadel API audience before rollout; no deployment secret or exchange flag is changed here.

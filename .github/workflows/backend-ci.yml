@@ -58,7 +58,7 @@ jobs:
       FASTAPI_DB_PORT: "5432"
       KEYCLOAK_ISSUER_URL: https://idp.test/realms/nethub
       KEYCLOAK_JWKS: https://idp.test/realms/nethub/protocol/openid-connect/certs
-      AUDIENCE: nethub-backend
+      AUDIENCE: nethub-api
       ALLOWED_ORIGINS: http://localhost:3000
       REDIS_URL: redis://localhost:6379/0
       TAWALA_EXCHANGE_ENABLED: "false"

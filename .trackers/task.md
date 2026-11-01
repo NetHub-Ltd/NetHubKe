@@ -143,3 +143,9 @@
 - Coverage and readiness are GitHub Actions evidence; tests were not run locally in this runtime.
 - N5 repository implementation and CI validation are successful. The five-minute end-to-end stale-access bound remains **unproven** because deployed product resource-server verifier cache/clock behavior is outside this repository and has not been measured. Do not mark issue #152 fully accepted until that evidence exists.
 - Exchange remains default-off. No deployment changes, production flag changes, merge, or issue closure were performed. PR #157 remains open for user review.
+
+
+## Ecosystem readiness remediation — 2026-11-01
+- Authorized single surgical remediation PR: fix/ecosystem-readiness-remediation → dev.
+- Scope: remove legacy direct-IdP access route; use canonical issuer+subject user records for tenant context; enforce unique product audiences; keep upstream OIDC tokens out of the browser-visible Auth.js session; align AUDIENCE CI/docs with configured code/example default (nethub-api).
+- Exchange remains default-off; no deployment secrets/flags changed. Issues #158–#165 remain open pending user review. Five-minute end-to-end verifier freshness and live Zitadel validation remain unproven.

@@ -163,10 +163,13 @@ class Product(BaseMixin, table=True):
     claim_profile: named profile documented in docs/PRODUCT_CLAIM_PROFILES.md
     """
     __tablename__ = "products"
-    __table_args__ = (sa.CheckConstraint(
-        "entitlement_policy IN ('organization_only', 'individual_only', 'organization_or_individual', 'organization_and_individual')",
-        name="ck_products_entitlement_policy",
-    ),)
+    __table_args__ = (
+        sa.CheckConstraint(
+            "entitlement_policy IN ('organization_only', 'individual_only', 'organization_or_individual', 'organization_and_individual')",
+            name="ck_products_entitlement_policy",
+        ),
+        sa.UniqueConstraint("audience", name="uq_products_audience"),
+    )
 
     slug: str = Field(max_length=64, unique=True, index=True)
     name: str = Field(max_length=128)
