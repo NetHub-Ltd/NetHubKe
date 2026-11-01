@@ -121,7 +121,8 @@
 - Exchange remains default-off. No deployment changes, production flag changes, merge, or issue closure were performed. PR #157 remains open for user review.
 
 
-## Ecosystem readiness remediation — 2026-11-01
-- Authorized single surgical remediation PR: fix/ecosystem-readiness-remediation → dev.
-- Scope: remove legacy direct-IdP access route; use canonical issuer+subject user records for tenant context; enforce unique product audiences; keep upstream OIDC tokens out of the browser-visible Auth.js session; align AUDIENCE CI/docs with configured code/example default (nethub-api).
-- Exchange remains default-off; no deployment secrets/flags changed. Issues #158–#165 remain open pending user review. Five-minute end-to-end verifier freshness and live Zitadel validation remain unproven.
+## Validation branch checkpoint — 2026-11-01
+- `dev` base at branch creation: `17d38a3ca2ff1323c73577b30c591a28181bfd70` (N5 PR #157 merged).
+- Validation-only branch: `validation/ecosystem-readiness`.
+- Findings: `docs/ECOSYSTEM_READINESS_VALIDATION.md`.
+- Eight validation issues #158–#165 are open. No issues closed; no code/schema/runtime/deployment changes.
