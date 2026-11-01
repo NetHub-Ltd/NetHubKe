@@ -119,3 +119,10 @@
 - Coverage and readiness are GitHub Actions evidence; tests were not run locally in this runtime.
 - N5 repository implementation and CI validation are successful. The five-minute end-to-end stale-access bound remains **unproven** because deployed product resource-server verifier cache/clock behavior is outside this repository and has not been measured. Do not mark issue #152 fully accepted until that evidence exists.
 - Exchange remains default-off. No deployment changes, production flag changes, merge, or issue closure were performed. PR #157 remains open for user review.
+
+
+## Validation branch checkpoint — 2026-11-01
+- `dev` base at branch creation: `17d38a3ca2ff1323c73577b30c591a28181bfd70` (N5 PR #157 merged).
+- Validation-only branch: `validation/ecosystem-readiness`.
+- Findings: `docs/ECOSYSTEM_READINESS_VALIDATION.md`.
+- Eight validation issues #158–#165 are open. No issues closed; no code/schema/runtime/deployment changes.
