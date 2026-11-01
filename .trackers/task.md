@@ -132,3 +132,14 @@
 - No schema migration was needed for N5. No deployment or production feature-flag changes were made; exchange remains default-off.
 - **N5 end-to-end freshness acceptance remains open:** the actual product resource-server verifiers are not in this repository, so their cached-JWKS refresh and clock-skew behavior have not been measured. The 240-second issuer cap and documented 60-second verifier limits are implementation controls, not proof of deployed verifier compliance.
 - PR #157 remains open and unmerged pending user review. Do not close issue #152 or claim N5 fully accepted until the end-to-end verifier evidence is supplied.
+
+
+## N5 validation refresh — 2026-11-01
+
+- PR #157 latest implementation head validated: `801d925fec459fe8cc2c8095c2626d1415eb1fe9` (branch `fix/n5-signing-key-freshness`, target `dev`).
+- Backend CI run #122 passed: **218 tests passed**, **74.93% coverage**, per-file coverage check passed, and PostgreSQL Alembic upgrade → downgrade → upgrade passed. https://github.com/NetHub-Ltd/NetHubKe/actions/runs/41221253077
+- Docker/PostgreSQL/Redis readiness run #83 passed. https://github.com/NetHub-Ltd/NetHubKe/actions/runs/41221253135
+- Vercel status check passed.
+- Coverage and readiness are GitHub Actions evidence; tests were not run locally in this runtime.
+- N5 repository implementation and CI validation are successful. The five-minute end-to-end stale-access bound remains **unproven** because deployed product resource-server verifier cache/clock behavior is outside this repository and has not been measured. Do not mark issue #152 fully accepted until that evidence exists.
+- Exchange remains default-off. No deployment changes, production flag changes, merge, or issue closure were performed. PR #157 remains open for user review.
