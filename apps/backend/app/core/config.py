@@ -52,7 +52,7 @@ class Settings(BaseSettings):
     tawala_jwt_private_key: str = ""
     tawala_jwt_issuer: str = "https://api.nethub.local"
     tawala_jwt_audience: str = "tawala-api"
-    tawala_jwt_ttl_sec: int = 28800  # 8 hours
+    tawala_jwt_ttl_sec: int = 240  # 4 minutes; reserve 60s for verifier clock skew
     # If true, tenant must have active subscription to service slug "tawala".
     tawala_exchange_require_subscription: bool = False
 

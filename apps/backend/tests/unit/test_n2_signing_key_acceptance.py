@@ -182,3 +182,42 @@ async def test_bootstrap_rechecks_active_key_after_acquiring_lock():
     assert result is existing
     db.add.assert_not_called()
     db.commit.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_jwks_ignores_stale_cached_document_after_revocation():
+    """A stale Redis value must not resurrect a key removed from PostgreSQL."""
+    db = AsyncMock()
+    current = MagicMock(status="active", retire_after=None, public_jwk={
+        "kty": "RSA", "use": "sig", "alg": "RS256", "kid": "replacement", "n": "AQ", "e": "AQAB"
+    })
+    db.exec = AsyncMock(return_value=_result([current]))
+    stale = json.dumps({"keys": [{
+        "kty": "RSA", "use": "sig", "alg": "RS256", "kid": "compromised", "n": "Ag", "e": "AQAB"
+    }]})
+    with (
+        patch.object(tt, "exchange_enabled", return_value=False),
+        patch.object(tt, "ensure_fresh_signing_key", new_callable=AsyncMock),
+        patch.object(tt, "redis_get", new_callable=AsyncMock, return_value=stale) as cache_get,
+        patch.object(tt, "redis_set", new_callable=AsyncMock),
+    ):
+        document = await tt.build_jwks_document(db)
+    assert [key["kid"] for key in document["keys"]] == ["replacement"]
+    cache_get.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_product_token_lifetime_is_hard_capped_at_four_minutes(monkeypatch):
+    """A legacy eight-hour environment value cannot violate the freshness budget."""
+    import jwt as pyjwt
+
+    _, _, _, private_key = tt._generate_rsa_keypair()
+    monkeypatch.setattr(tt, "exchange_enabled", lambda: True)
+    monkeypatch.setattr(tt, "get_active_signing_key", AsyncMock(return_value=(private_key, "test-kid")))
+    monkeypatch.setattr(tt, "settings", MagicMock(tawala_jwt_ttl_sec=28800, tawala_jwt_issuer="https://issuer.test"))
+    token, expires_at = await tt.mint_product_access_token(
+        AsyncMock(), product_slug="example", audience="example-api",
+        sub="user-1", org_id=None, principal="user", claim_profile="standard",
+    )
+    claims = pyjwt.decode(token, private_key.public_key(), algorithms=["RS256"], audience="example-api", issuer="https://issuer.test")
+    assert expires_at - claims["iat"] == 240
