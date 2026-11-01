@@ -303,3 +303,38 @@ Findings:
 | #163 | **Gap found** | Central entitlement evaluator is implemented/tested, but tenant-scoped routes have email-based re-resolution risk; legacy access path bypasses canonical identity. |
 | #164 | **Unproven** | N5 issuer CI passed; five-minute end-to-end stale-access bound has not been measured. |
 | #165 | **Gap found** | Core exchange/JWKS contract exists, but the old direct-IdP access endpoint remains mounted and conflicts with the approved product trust model. |
+
+
+### Finding F-04 — Upstream bearer tokens are exposed through the browser session
+**Severity:** Medium–High; unnecessary credential exposure.
+**Affected:** #158, #165.
+
+- `apps/frontend/src/auth.ts::callbacks.session` copies `token.accessToken` and `token.idToken` into the returned Auth.js session.
+- Auth.js exposes the session callback result through its session endpoint and `useSession()`; this makes both upstream bearer/ID tokens available to browser JavaScript.
+- `apps/frontend/src/lib/hooks/useauth.tsx` returns `session.accessToken` to client components.
+- `apps/frontend/src/app/(private)/dashboard/services/page.tsx` passes the token to `LaunchButton`; `LaunchButton` only checks whether it exists. Actual exchange is performed through the same-origin BFF, which independently reads the server-side Auth.js session.
+- `apps/frontend/src/app/api/nethub/auth/exchange/route.ts` and other BFF routes use server-side `auth()` and do not require the token to be present in the browser-visible session object.
+
+**Impact:** Access and ID tokens are unnecessarily exposed to client-side JavaScript. This increases the impact of an XSS or compromised third-party client script and is not required for the BFF exchange design.
+
+**Required disposition:** Keep access/ID/refresh tokens server-side; remove accessToken/idToken from the public session shape and client hook. Replace the LaunchButton's token-presence check with an authenticated/backend-ready boolean. Add a test asserting the public session response contains no upstream tokens while server-side BFF calls continue to work. No code change made during validation.
+
+### Additional evidence — OIDC and frontend trust boundary
+
+- `apps/frontend/src/auth.ts` configures one Auth.js OIDC provider and delegates the authorization callback to Auth.js; no local password provider is configured.
+- `apps/frontend/src/lib/server/oidcConfig.ts` obtains OIDC discovery metadata from the configured issuer and caches it in-process.
+- Auth.js session fallback when `/users/sync` fails is intentional in the current code. The profile hook then calls the backend `/users/me`; product exchange and protected backend APIs still enforce their own identity checks. This fallback is not, by itself, proof of product access.
+- The browser-visible access/ID token exposure is a separate avoidable security issue and is recorded as F-04.
+
+## Revised preliminary status (after frontend review)
+
+| Issue | Status | Reason |
+|---|---|---|
+| #158 | **Gap found** | OIDC is delegated to Auth.js and API token validation is present, but access/ID tokens are exposed in the browser-visible session. Live Zitadel verification remains outstanding. |
+| #159 | **Gap found** | Canonical identity core is implemented, but the legacy access route bypasses it and several tenant-scoped routes re-resolve by mutable email. |
+| #160 | **Gap found** | Product registry exists, but audience uniqueness is not enforced. |
+| #161 | Partial / dependent | Product-specific exchange and claim tests exist; isolation depends on fixing unique audience registration and verifier contract. |
+| #162 | Partial | JWKS issuer behavior is tested; product verifier behavior remains unproven. |
+| #163 | **Gap found** | Entitlement evaluator is implemented/tested, but the email-based tenant re-resolution and legacy access path undermine identity-to-tenant binding. |
+| #164 | **Unproven** | N5 issuer CI passed; five-minute end-to-end stale-access bound has not been measured. |
+| #165 | **Gap found** | Core exchange/JWKS BFF contract exists, but the legacy direct-IdP route and browser token exposure conflict with the intended trust boundary. |
