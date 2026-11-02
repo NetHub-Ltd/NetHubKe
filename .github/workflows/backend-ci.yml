@@ -121,5 +121,6 @@ jobs:
           alembic upgrade head
           test "$(psql -h localhost -U nethub_ci -d nethub_migration_ci -tAc "SELECT count(*) FROM products WHERE slug = 'tawala-platform' AND is_active IS TRUE")" = "0"
           alembic downgrade -1
+          test "$(psql -h localhost -U nethub_ci -d nethub_migration_ci -tAc "SELECT count(*) FROM products WHERE slug = 'tawala-platform' AND is_active IS TRUE")" = "0"
           alembic upgrade head
           dropdb -h localhost -U nethub_ci nethub_migration_ci
