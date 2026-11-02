@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from functools import lru_cache
 from typing import Any
 
 import httpx
@@ -19,6 +20,14 @@ from app.utils.logging import logger
 bearer_scheme = HTTPBearer(auto_error=False)
 
 __all__ = ["bearer_scheme", "_decode_token", "merge_scope_claims", "extract_roles"]
+
+
+@lru_cache(maxsize=4)
+def _get_jwks_client(jwks_url: str, lifespan: int) -> PyJWKClient:
+    """Reuse a bounded JWKS client; PyJWT refreshes its JWKS set after lifespan."""
+    return PyJWKClient(uri=jwks_url, cache_jwk_set=True, lifespan=lifespan,
+                       cache_keys=False, timeout=5,
+                       headers={"User-Agent": "FastAPI-Resource-Server", "Accept": "application/json"})
 
 
 def _userinfo_url(issuer: str) -> str:
@@ -78,17 +87,8 @@ def _decode_token(token: str) -> TokenData:
         issuer = settings.idp_issuer
         jwks_url = settings.idp_jwks_url
         logger.debug("OIDC Issuer | {} | JWKS | {}", issuer, jwks_url)
-        jwks_client = PyJWKClient(
-            uri=jwks_url,
-            cache_jwk_set=True,
-            lifespan=min(600, settings.jwks_cache_ttl),
-            cache_keys=True,
-            max_cached_keys=16,
-            headers={
-                "User-Agent": "FastAPI-Resource-Server",
-                "Accept": "application/json",
-            },
-        )
+        jwks_lifespan = max(1, min(300, int(settings.jwks_cache_ttl)))
+        jwks_client = _get_jwks_client(jwks_url, jwks_lifespan)
         signing_key = jwks_client.get_signing_key_from_jwt(token)
 
         payload = jwt.decode(

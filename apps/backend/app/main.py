@@ -7,7 +7,7 @@ from starlette.responses import JSONResponse
 
 from app.api.v1.api_router import router as api_router
 from app.core.config import settings
-from app.core.redis_client import ensure_redis_ready, get_redis
+from app.core.redis_client import close_redis
 from app.db.session import AsyncSessionLocal
 from app.utils.logging import logger
 
@@ -51,17 +51,10 @@ async def lifespan(app: FastAPI):
             "Database unavailable or not ready (migrations missing?). Aborting startup."
         ) from e
 
-    # --------------------------------------------------------------
-    # 2. Redis readiness (PING — connection alone is not enough)
-    # --------------------------------------------------------------
-    try:
-        await ensure_redis_ready(timeout_sec=5.0)
-    except Exception as e:
-        logger.critical(f"Redis not ready: {e}")
-        raise RuntimeError("Redis unavailable or not ready. Aborting startup.") from e
+    # Redis is an optional cache; PostgreSQL remains the durable source of truth.
 
     # --------------------------------------------------------------
-    # 3. Signing keys: bootstrap only when token exchange is enabled
+    # 2. Signing keys: bootstrap only when token exchange is enabled
     # --------------------------------------------------------------
     from app.services.tawala_token import ensure_signing_keys_ready, exchange_enabled
 
@@ -84,11 +77,7 @@ async def lifespan(app: FastAPI):
     yield
 
     logger.info(f"Shutting down {settings.app_name}")
-    try:
-        client = get_redis()
-        await client.aclose()
-    except Exception:  # noqa: BLE001
-        pass
+    await close_redis()
 
 
 def create_application() -> FastAPI:
@@ -115,22 +104,20 @@ app.include_router(api_router)
 
 @app.get("/health", response_class=JSONResponse)
 async def health_check():
-    """Liveness: process is up. Readiness of DB/Redis is enforced at startup."""
+    """Liveness: process is up; PostgreSQL readiness is checked separately."""
     return JSONResponse(content={"status": "healthy"}, status_code=200)
 
 
 @app.get("/ready", response_class=JSONResponse)
 async def readiness_check():
     """
-    Readiness: DB SELECT 1 + Redis PING must succeed.
-    Use for k3s readinessProbe so traffic only hits ready pods.
+    Readiness: PostgreSQL must answer queries and expose the required schema.
+    Redis is an optional cache and must not gate traffic.
     """
-    from app.core.redis_client import ensure_redis_ready
-
     try:
         async with AsyncSessionLocal() as session:
             await session.exec(text("SELECT 1"))
-        await ensure_redis_ready(timeout_sec=2.0)
+            await session.exec(text("SELECT 1 FROM signing_keys LIMIT 1"))
     except Exception as e:
         logger.error(f"Readiness failed: {e}")
         return JSONResponse(

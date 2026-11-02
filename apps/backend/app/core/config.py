@@ -43,7 +43,7 @@ class Settings(BaseSettings):
     # Override with env AUDIENCE. Default nethub-api for Zitadel API app.
     audience: str = "nethub-api"
     algorithms: list[str] = ["RS256"]
-    jwks_cache_ttl: int = 3600  # seconds; PyJWKClient lifespan uses its own cache
+    jwks_cache_ttl: int = 300  # seconds; hard-capped to five minutes during validation
     allowed_origins: str
 
     # Tawala hard-session exchange (ecosystem auth M2). Default OFF.

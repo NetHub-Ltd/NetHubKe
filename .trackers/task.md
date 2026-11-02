@@ -150,3 +150,28 @@
 - Findings record: `docs/ECOSYSTEM_READINESS_VALIDATION.md` on `validation/ecosystem-readiness`.
 - Confirmed gaps: legacy direct-IdP `/access/{product_slug}` path bypasses canonical identity; tenant-scoped routes re-resolve users by mutable email; product audiences are not unique; upstream access/ID tokens are exposed in browser-visible Auth.js session.
 - Five-minute end-to-end stale-access bound remains unproven. No application code, migrations, runtime flags or deployment changes authorized/performed.
+
+
+## Backend minimum hardening — approved scope
+- User-approved single backend PR: `fix/backend-minimum-hardening` targeting `dev`.
+- Scope: bounded cached OIDC JWKS client; execute synchronous JWT/JWKS/UserInfo validation in a threadpool; preserve explicit HTTP authentication errors; five-minute JWKS refresh cap; Redis optional for startup/readiness with bounded socket timeouts and safe shutdown; deactivate (do not delete) legacy `tawala-platform`; retain existing entitlement administration unchanged.
+- Explicit exclusions: frontend/Auth.js, product-role redesign, duplicate entitlement CRUD, new M2M mechanism, deployment/secret/feature-flag changes, and unrelated N3–N5 redesign.
+- ZIP snapshots are read-only context. All repository inspection and writes for this task are performed through the GitHub connector.
+- Validation must be reported from GitHub Actions; no local test execution or passing-test claim is assumed.
+
+
+## Backend minimum hardening execution — PR #168
+- PR: https://github.com/NetHub-Ltd/NetHubKe/pull/168; branch `fix/backend-minimum-hardening`; target `dev`.
+- Base: `066cf55ef38a3a6a134af58f7fc0cc9ae4d65d4d`; implementation head at this checkpoint: `9df66d52617fc4124eeee332b5e7577aefe389dc`.
+- GitHub compare confirms the topic branch is 5 commits ahead of `dev`, 0 behind; 15 files changed. No merge or deployment performed.
+- Backend CI run #141 and Docker/PostgreSQL/Redis readiness run #102 are in progress. Results are not yet known; do not mark validation complete until both finish.
+- Migration CI seeds an active legacy `tawala-platform` row at revision `m6g7h8i9j0k1`, upgrades through the deactivation migration, checks inactive state, downgrades one revision and checks the row remains inactive, then upgrades head again.
+
+
+## Backend minimum hardening — validation result
+- PR #168 remains open against `dev`; no merge or deployment has been performed.
+- Implementation/workflow validation commit: `dceb056be6cb8ed8cc3697f0020d574715b107c3` (base `066cf55ef38a3a6a134af58f7fc0cc9ae4d65d4d`). Subsequent commits, if any, are tracker-only.
+- Backend CI run #145 passed: **227 tests passed**, **76.83% total coverage**, required 70% threshold passed, and per-file coverage check passed. PostgreSQL migration validation passed: upgrade to parent revision, apply deactivation migration to the migration-seeded legacy row, verify inactive state, downgrade one revision, verify it remains inactive, and upgrade head again.
+- Docker/PostgreSQL/Redis readiness run #106 passed. Vercel status passed.
+- Codecov's upload endpoint returned `Repository not found`; the workflow is configured with `fail_ci_if_error: false`, and the GitHub Actions job passed with the coverage artifact generated.
+- Tests were run by GitHub Actions only; no local test execution is claimed.

@@ -171,3 +171,23 @@ def test_decode_rejects_wrong_signature_algorithm(rsa_key):
         with pytest.raises(HTTPException) as error:
             security_mod._decode_token(token)
     assert error.value.status_code == 401
+
+
+
+@pytest.fixture(autouse=True)
+def clear_jwks_client_cache():
+    """Prevent a cached fake JWKS client leaking between isolated unit tests."""
+    security_mod._get_jwks_client.cache_clear()
+    yield
+    security_mod._get_jwks_client.cache_clear()
+
+
+def test_jwks_client_is_reused_and_refresh_lifetime_is_bounded():
+    with patch.object(security_mod, "PyJWKClient") as constructor:
+        first = security_mod._get_jwks_client("https://issuer.example/jwks", 300)
+        second = security_mod._get_jwks_client("https://issuer.example/jwks", 300)
+    assert first is second
+    constructor.assert_called_once()
+    assert constructor.call_args.kwargs["lifespan"] == 300
+    assert constructor.call_args.kwargs["cache_keys"] is False
+    assert constructor.call_args.kwargs["timeout"] == 5
