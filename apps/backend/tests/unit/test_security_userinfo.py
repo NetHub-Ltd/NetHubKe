@@ -22,8 +22,9 @@ def test_fetch_userinfo_ok():
     mock_client.__enter__.return_value = mock_client
     mock_client.get.return_value = mock_resp
 
-    with patch("app.core.security.httpx.Client", return_value=mock_client):
+    with patch("app.core.security.httpx.Client", return_value=mock_client) as client_factory:
         data = security._fetch_userinfo("tok", "https://auth.example.com")
+    client_factory.assert_called_once_with(timeout=5.0)
     assert data["email"] == "a@example.com"
     mock_client.get.assert_called_once()
     args, kwargs = mock_client.get.call_args

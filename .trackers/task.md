@@ -150,3 +150,11 @@
 - Findings record: `docs/ECOSYSTEM_READINESS_VALIDATION.md` on `validation/ecosystem-readiness`.
 - Confirmed gaps: legacy direct-IdP `/access/{product_slug}` path bypasses canonical identity; tenant-scoped routes re-resolve users by mutable email; product audiences are not unique; upstream access/ID tokens are exposed in browser-visible Auth.js session.
 - Five-minute end-to-end stale-access bound remains unproven. No application code, migrations, runtime flags or deployment changes authorized/performed.
+
+
+## Backend minimum hardening — approved scope
+- User-approved single backend PR: `fix/backend-minimum-hardening` targeting `dev`.
+- Scope: bounded cached OIDC JWKS client; execute synchronous JWT/JWKS/UserInfo validation in a threadpool; preserve explicit HTTP authentication errors; five-minute JWKS refresh cap; Redis optional for startup/readiness with bounded socket timeouts and safe shutdown; deactivate (do not delete) legacy `tawala-platform`; retain existing entitlement administration unchanged.
+- Explicit exclusions: frontend/Auth.js, product-role redesign, duplicate entitlement CRUD, new M2M mechanism, deployment/secret/feature-flag changes, and unrelated N3–N5 redesign.
+- ZIP snapshots are read-only context. All repository inspection and writes for this task are performed through the GitHub connector.
+- Validation must be reported from GitHub Actions; no local test execution or passing-test claim is assumed.

@@ -1,7 +1,6 @@
 """Async Redis client for AS caches (JWKS, signing kid, entitlements)."""
 from __future__ import annotations
 
-from functools import lru_cache
 from typing import Optional
 
 import redis.asyncio as redis
@@ -16,7 +15,7 @@ def get_redis() -> redis.Redis:
     global _client
     if _client is None:
         url = getattr(settings, "redis_url", None) or "redis://localhost:6379/0"
-        _client = redis.from_url(url, decode_responses=True)
+        _client = redis.from_url(url, decode_responses=True, socket_connect_timeout=1.0, socket_timeout=1.0)
         logger.info("Redis client initialized")
     return _client
 
@@ -49,20 +48,28 @@ ACTIVE_KID_CACHE_KEY = "nethub:as:signing:active_kid"
 
 
 async def ensure_redis_ready(timeout_sec: float = 5.0) -> None:
-    """
-    Hard readiness check: Redis must answer PING.
-
-    Raises RuntimeError if Redis is unreachable or not ready.
-    Connection alone is not enough — we require a successful PING.
-    """
+    """Optional diagnostic check; Redis is not an application readiness dependency."""
     import asyncio
-
     client = get_redis()
     try:
         pong = await asyncio.wait_for(client.ping(), timeout=timeout_sec)
         if not pong:
             raise RuntimeError("Redis PING returned falsy")
-        logger.info("Redis readiness verified (PING ok)")
+        logger.info("Redis diagnostic check succeeded (PING ok)")
     except Exception as exc:  # noqa: BLE001
-        logger.critical(f"Redis not ready: {exc}")
-        raise RuntimeError(f"Redis unavailable or not ready: {exc}") from exc
+        logger.warning(f"Redis diagnostic check failed: {exc}")
+        raise RuntimeError(f"Redis diagnostic check failed: {exc}") from exc
+
+
+async def close_redis() -> None:
+    """Close Redis only when this process initialized a client."""
+    global _client
+    client = _client
+    if client is None:
+        return
+    try:
+        await client.aclose()
+    except Exception as exc:  # noqa: BLE001
+        logger.warning(f"Redis close failed: {exc}")
+    finally:
+        _client = None

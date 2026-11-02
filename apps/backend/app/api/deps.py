@@ -5,6 +5,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials
 from loguru import logger  # Using your preferred logger
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.concurrency import run_in_threadpool
 
 from app.core.security import bearer_scheme, _decode_token
 from app.crud.user import user_crud
@@ -32,7 +33,7 @@ async def get_token_data(
         )
 
     try:
-        token_data: TokenData = _decode_token(credentials.credentials)
+        token_data: TokenData = await run_in_threadpool(_decode_token, credentials.credentials)
     except HTTPException:
         raise
     except Exception as e:
@@ -65,7 +66,9 @@ async def get_current_user(
     # 2. Resilient Token Decoding
     # Note: _decode_token should be wrapped in a try/except inside its own definition
     try:
-        token_data: TokenData = _decode_token(credentials.credentials)
+        token_data: TokenData = await run_in_threadpool(_decode_token, credentials.credentials)
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Auth Fail | Reason: Malformed or Expired Token | Error: {str(e)}")
         raise HTTPException(

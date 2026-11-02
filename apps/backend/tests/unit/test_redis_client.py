@@ -74,3 +74,31 @@ async def test_redis_delete_empty():
 def test_cache_key_constants():
     assert "jwks" in rc.JWKS_CACHE_KEY
     assert "kid" in rc.ACTIVE_KID_CACHE_KEY
+
+
+
+def test_get_redis_uses_bounded_socket_timeouts():
+    rc._client = None
+    mock_redis = MagicMock()
+    with patch.object(rc.redis, "from_url", return_value=mock_redis) as factory:
+        assert rc.get_redis() is mock_redis
+    assert factory.call_args.kwargs["socket_connect_timeout"] == 1.0
+    assert factory.call_args.kwargs["socket_timeout"] == 1.0
+    rc._client = None
+
+
+@pytest.mark.asyncio
+async def test_close_redis_does_not_initialize_a_client():
+    rc._client = None
+    with patch.object(rc.redis, "from_url") as factory:
+        await rc.close_redis()
+    factory.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_close_redis_closes_only_initialized_client():
+    mock = AsyncMock()
+    rc._client = mock
+    await rc.close_redis()
+    mock.aclose.assert_awaited_once()
+    assert rc._client is None

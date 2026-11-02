@@ -126,3 +126,11 @@
 - Validation-only branch: `validation/ecosystem-readiness`.
 - Findings: `docs/ECOSYSTEM_READINESS_VALIDATION.md`.
 - Eight validation issues #158–#165 are open. No issues closed; no code/schema/runtime/deployment changes.
+
+
+## Backend minimum hardening — approved scope
+- User-approved single backend PR: `fix/backend-minimum-hardening` targeting `dev`.
+- Scope: bounded cached OIDC JWKS client; execute synchronous JWT/JWKS/UserInfo validation in a threadpool; preserve explicit HTTP authentication errors; five-minute JWKS refresh cap; Redis optional for startup/readiness with bounded socket timeouts and safe shutdown; deactivate (do not delete) legacy `tawala-platform`; retain existing entitlement administration unchanged.
+- Explicit exclusions: frontend/Auth.js, product-role redesign, duplicate entitlement CRUD, new M2M mechanism, deployment/secret/feature-flag changes, and unrelated N3–N5 redesign.
+- ZIP snapshots are read-only context. All repository inspection and writes for this task are performed through the GitHub connector.
+- Validation must be reported from GitHub Actions; no local test execution or passing-test claim is assumed.
