@@ -134,3 +134,11 @@
 - Explicit exclusions: frontend/Auth.js, product-role redesign, duplicate entitlement CRUD, new M2M mechanism, deployment/secret/feature-flag changes, and unrelated N3–N5 redesign.
 - ZIP snapshots are read-only context. All repository inspection and writes for this task are performed through the GitHub connector.
 - Validation must be reported from GitHub Actions; no local test execution or passing-test claim is assumed.
+
+
+## Backend minimum hardening execution — PR #168
+- PR: https://github.com/NetHub-Ltd/NetHubKe/pull/168; branch `fix/backend-minimum-hardening`; target `dev`.
+- Base: `066cf55ef38a3a6a134af58f7fc0cc9ae4d65d4d`; implementation head at this checkpoint: `9df66d52617fc4124eeee332b5e7577aefe389dc`.
+- GitHub compare confirms the topic branch is 5 commits ahead of `dev`, 0 behind; 15 files changed. No merge or deployment performed.
+- Backend CI run #141 and Docker/PostgreSQL/Redis readiness run #102 are in progress. Results are not yet known; do not mark validation complete until both finish.
+- Migration CI seeds an active legacy `tawala-platform` row at revision `m6g7h8i9j0k1`, upgrades through the deactivation migration, checks inactive state, downgrades one revision and checks the row remains inactive, then upgrades head again.
