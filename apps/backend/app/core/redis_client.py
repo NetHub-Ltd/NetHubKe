@@ -58,7 +58,7 @@ async def ensure_redis_ready(timeout_sec: float = 5.0) -> None:
         logger.info("Redis diagnostic check succeeded (PING ok)")
     except Exception as exc:  # noqa: BLE001
         logger.warning(f"Redis diagnostic check failed: {exc}")
-        raise RuntimeError(f"Redis diagnostic check failed: {exc}") from exc
+        raise RuntimeError(f"Redis unavailable or not ready: {exc}") from exc
 
 
 async def close_redis() -> None:
