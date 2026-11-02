@@ -117,7 +117,6 @@ jobs:
           createdb -h localhost -U nethub_ci nethub_migration_ci
           export FASTAPI_DB_NAME=nethub_migration_ci
           alembic upgrade m6g7h8i9j0k1
-          psql -v ON_ERROR_STOP=1 -h localhost -U nethub_ci -d nethub_migration_ci -c "INSERT INTO products (slug, name, audience, is_active, claim_profile, entitlement_policy) VALUES ('tawala-platform', 'Legacy Tawala', 'legacy-tawala-ci', TRUE, 'tawala-platform', 'organization_or_individual')"
           alembic upgrade head
           test "$(psql -h localhost -U nethub_ci -d nethub_migration_ci -tAc "SELECT count(*) FROM products WHERE slug = 'tawala-platform' AND is_active IS TRUE")" = "0"
           alembic downgrade -1
