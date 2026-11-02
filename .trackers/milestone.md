@@ -179,3 +179,10 @@
 - Docker/PostgreSQL/Redis readiness run #106 passed. Vercel status passed.
 - Codecov's upload endpoint returned `Repository not found`; the workflow is configured with `fail_ci_if_error: false`, and the GitHub Actions job passed with the coverage artifact generated.
 - Tests were run by GitHub Actions only; no local test execution is claimed.
+
+
+## Client integration contract planning — 2026-11-02
+- A documentation-only client contract draft is in `docs/CLIENT_INTEGRATION_CONTRACT.md` on branch `docs/client-bff-integration-contract`.
+- This work is explicitly parallel architecture documentation, not a claim that N1–N5 acceptance is complete and not authorization to start N6/N7 runtime work.
+- Current programme gate remains N1 (#42–#43), the earliest milestone identified by `docs/SSO_ARCHITECTURE_CONTRACT.md` as not demonstrably accepted. Closed issue state and historical CI alone are insufficient without mapped acceptance evidence.
+- Website reference-client implementation must be scheduled only after the relevant prerequisite gates are verified.

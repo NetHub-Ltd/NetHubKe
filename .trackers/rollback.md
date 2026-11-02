@@ -151,3 +151,10 @@
 - Docker/PostgreSQL/Redis readiness run #106 passed. Vercel status passed.
 - Codecov's upload endpoint returned `Repository not found`; the workflow is configured with `fail_ci_if_error: false`, and the GitHub Actions job passed with the coverage artifact generated.
 - Tests were run by GitHub Actions only; no local test execution is claimed.
+
+
+## Client integration contract draft rollback — 2026-11-02
+- Branch `docs/client-bff-integration-contract` adds a documentation-only client integration contract and tracker notes.
+- No application code, database migration, runtime configuration, feature flag, secret, or deployment behavior is changed.
+- If the contract is rejected or materially incorrect, revert the documentation PR as a unit. No runtime rollback or data migration is required.
+- Do not enable exchange or launch paths based solely on this draft. Keep all existing rollout gates and the N0–N10 acceptance order intact.
