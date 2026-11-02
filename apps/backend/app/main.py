@@ -54,7 +54,7 @@ async def lifespan(app: FastAPI):
     # Redis is an optional cache; PostgreSQL remains the durable source of truth.
 
     # --------------------------------------------------------------
-    # 3. Signing keys: bootstrap only when token exchange is enabled
+    # 2. Signing keys: bootstrap only when token exchange is enabled
     # --------------------------------------------------------------
     from app.services.tawala_token import ensure_signing_keys_ready, exchange_enabled
 
@@ -104,7 +104,7 @@ app.include_router(api_router)
 
 @app.get("/health", response_class=JSONResponse)
 async def health_check():
-    """Liveness: process is up. Readiness of DB/Redis is enforced at startup."""
+    """Liveness: process is up; PostgreSQL readiness is checked separately."""
     return JSONResponse(content={"status": "healthy"}, status_code=200)
 
 
