@@ -1,29 +1,46 @@
-import { auth } from "@/auth";
 import { backendFetch } from "@/lib/server/backend";
+import { readProvisionedServerAuth } from "@/lib/server/auth-session";
+import { toPublicServiceStatuses } from "@/lib/server/service-status";
 import { NextResponse } from "next/server";
 
-/**
- * BFF: browser → /api/nethub/services/my-status → FastAPI /api/v1/services/my-status
- * Does not expose BACKEND_URL to the client.
- */
-export async function GET() {
-  const session = await auth();
-  if (!session?.accessToken || session.error) {
-    return NextResponse.json({ detail: "Unauthorized" }, { status: 401 });
+export async function GET(request: Request) {
+  const auth = await readProvisionedServerAuth(request);
+  if (!auth) {
+    return NextResponse.json({ detail: "An active NetHub account is required" }, {
+      status: 401,
+      headers: { "Cache-Control": "no-store" },
+    });
   }
 
   try {
-    const res = await backendFetch("/services/my-status", {
-      accessToken: session.accessToken,
+    const response = await backendFetch("/services/my-status", {
+      accessToken: auth.accessToken,
       method: "GET",
     });
-    const data = await res.json().catch(() => ({}));
-    return NextResponse.json(data, { status: res.status });
-  } catch (e) {
-    console.error("[BFF] GET /services/my-status", e);
-    return NextResponse.json(
-      { detail: "Upstream unavailable" },
-      { status: 502 },
-    );
+    const data: unknown = await response.json().catch(() => null);
+    if (!response.ok) {
+      return NextResponse.json({ detail: "Unable to load service status" }, {
+        status: response.status,
+        headers: { "Cache-Control": "no-store" },
+      });
+    }
+
+    const publicData = toPublicServiceStatuses(data);
+    if (!publicData) {
+      return NextResponse.json({ detail: "Invalid service status response" }, {
+        status: 502,
+        headers: { "Cache-Control": "no-store" },
+      });
+    }
+    return NextResponse.json(publicData, {
+      status: 200,
+      headers: { "Cache-Control": "no-store" },
+    });
+  } catch (error) {
+    console.error("[BFF] GET /services/my-status failed:", error);
+    return NextResponse.json({ detail: "Service status unavailable" }, {
+      status: 502,
+      headers: { "Cache-Control": "no-store" },
+    });
   }
 }

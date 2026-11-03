@@ -1,10 +1,11 @@
 from __future__ import annotations
-from pydantic import Field
-from pydantic_settings import BaseSettings, SettingsConfigDict
-from functools import lru_cache
-
 
 from enum import Enum
+from functools import lru_cache
+
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
 
 class EnvironmentEnum(str, Enum):
     DEVELOPMENT = "development"
@@ -19,101 +20,85 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    # Basic App Settings
+    # Basic app settings
     app_name: str
     app_version: str
     image_tag: str
     startup_test: bool
 
-    # Database Settings
+    # PostgreSQL connection settings
     FASTAPI_DB_USER: str
     FASTAPI_DB_PASSWORD: str
     FASTAPI_DB_NAME: str
     FASTAPI_DB_HOST: str
     FASTAPI_DB_PORT: int = 5432
 
-    # OIDC IdP (IdP-agnostic). Prefer OIDC_*; KEYCLOAK_* remain env aliases.
-    # Set via OIDC_ISSUER / OIDC_JWKS_URL or KEYCLOAK_ISSUER_URL / KEYCLOAK_JWKS.
+    # Provider-neutral upstream OIDC configuration.
+    # All protocol endpoints are resolved from the issuer discovery document.
     oidc_issuer: str | None = None
-    oidc_jwks_url: str | None = None
-    keycloak_jwks: str | None = None
-    keycloak_issuer_url: str | None = None
+    oidc_role_claim_path: str = "roles"
 
-    # JWT audience expected in access tokens (API resource / client audience).
-    # Override with env AUDIENCE. Default nethub-api for Zitadel API app.
+    # Expected audience on upstream access tokens.
     audience: str = "nethub-api"
     algorithms: list[str] = ["RS256"]
-    jwks_cache_ttl: int = 300  # seconds; hard-capped to five minutes during validation
+    jwks_cache_ttl: int = 300
     allowed_origins: str
 
-    # Tawala hard-session exchange (ecosystem auth M2). Default OFF.
-    tawala_exchange_enabled: bool = False
-    # PEM-encoded RSA private key (PKCS8) used to sign aud=tawala-api tokens.
-    tawala_jwt_private_key: str = ""
-    tawala_jwt_issuer: str = "https://api.nethub.local"
-    tawala_jwt_audience: str = "tawala-api"
-    tawala_jwt_ttl_sec: int = 240  # 4 minutes; reserve 60s for verifier clock skew
-    # If true, tenant must have active subscription to service slug "tawala".
-    tawala_exchange_require_subscription: bool = False
+    # Shared product-token issuer configuration.
+    # The Product registry supplies each product's audience.
+    product_token_exchange_enabled: bool = False
+    product_token_private_key: str = ""
+    product_token_issuer: str = "https://api.nethub.local"
+    product_token_ttl_sec: int = 240
+    product_token_allow_env_pem: bool = False
 
-    # Redis (N2+) — JWKS and signing-key metadata cache
+    # Redis is a disposable cache; PostgreSQL remains authoritative.
     redis_url: str = "redis://localhost:6379/0"
     jwks_redis_ttl_sec: int = 120
 
-    # Managed signing keys: backend generates RSA; rotate when active key age exceeds max.
-    # Generate with `python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())'`.
-    # Keep stable across restarts and back it up separately from PostgreSQL.
+    # Encrypt private signing keys at rest; keep stable and back up separately.
     signing_key_encryption_key: str = ""
-    # Env PEM is opt-in only (TAWALA_JWT_ALLOW_ENV_PEM=true) — avoid PEM-in-env in k3s.
-    signing_key_max_age_hours: int = 168  # 7 days
-    signing_key_retire_overlap_hours: int = 24  # dual JWKS window after rotate
-    tawala_jwt_allow_env_pem: bool = False
+    signing_key_max_age_hours: int = 168
+    signing_key_retire_overlap_hours: int = 24
 
-
-
-
+    environment: EnvironmentEnum = Field(default=EnvironmentEnum.DEVELOPMENT)
 
     @property
     def idp_issuer(self) -> str:
-        """Resolved OIDC issuer URL (OIDC_ISSUER or KEYCLOAK_ISSUER_URL)."""
-        v = (self.oidc_issuer or self.keycloak_issuer_url or "").strip()
-        if not v:
-            raise ValueError("OIDC_ISSUER or KEYCLOAK_ISSUER_URL must be set")
-        return v.rstrip("/")
-
-    @property
-    def idp_jwks_url(self) -> str:
-        """Resolved JWKS URL (OIDC_JWKS_URL or KEYCLOAK_JWKS or issuer + /oauth/v2/keys)."""
-        v = (self.oidc_jwks_url or self.keycloak_jwks or "").strip()
-        if v:
-            return v
-        # Zitadel default; Keycloak would be /protocol/openid-connect/certs — prefer explicit env
-        return f"{self.idp_issuer}/oauth/v2/keys"
+        """Configured OIDC issuer; endpoint paths are obtained through discovery."""
+        value = (self.oidc_issuer or "").strip()
+        if not value:
+            raise ValueError("OIDC_ISSUER must be set")
+        return value
 
     @property
     def async_db_url(self) -> str:
-        return f"postgresql+asyncpg://{self.FASTAPI_DB_USER}:{self.FASTAPI_DB_PASSWORD}@{self.FASTAPI_DB_HOST}:{self.FASTAPI_DB_PORT}/{self.FASTAPI_DB_NAME}"
+        return (
+            f"postgresql+asyncpg://{self.FASTAPI_DB_USER}:{self.FASTAPI_DB_PASSWORD}"
+            f"@{self.FASTAPI_DB_HOST}:{self.FASTAPI_DB_PORT}/{self.FASTAPI_DB_NAME}"
+        )
 
     @property
     def sync_db_url(self) -> str:
-        return f"postgresql://{self.FASTAPI_DB_USER}:{self.FASTAPI_DB_PASSWORD}@{self.FASTAPI_DB_HOST}:{self.FASTAPI_DB_PORT}/{self.FASTAPI_DB_NAME}"
+        return (
+            f"postgresql://{self.FASTAPI_DB_USER}:{self.FASTAPI_DB_PASSWORD}"
+            f"@{self.FASTAPI_DB_HOST}:{self.FASTAPI_DB_PORT}/{self.FASTAPI_DB_NAME}"
+        )
 
-    # cors_origins: list[str] = ["http://localhost:3000"]
     @property
-    def cors_origins(self) -> list:
+    def cors_origins(self) -> list[str]:
         if not self.allowed_origins:
             return []
-        # Split by comma, strip whitespace, and filter out empty strings or "*"
-        return [f.strip() for f in self.allowed_origins.split(",") if f.strip() and f.strip() != "*"]
+        return [
+            origin.strip()
+            for origin in self.allowed_origins.split(",")
+            if origin.strip() and origin.strip() != "*"
+        ]
 
-    # In production, specify allowed origins
-    # Environment
-    environment: EnvironmentEnum = Field(
-        default=EnvironmentEnum.DEVELOPMENT,
-    )
 
 @lru_cache()
 def get_settings() -> Settings:
     return Settings()
+
 
 settings = get_settings()

@@ -1,110 +1,71 @@
-# Agent Operating Instructions — NetHubKe
+# NetHubKe — Engineering Agent Instructions
 
-> **Mandatory for all AI agents working on this repository.**
+These instructions exist to preserve project continuity and deliver working software. They are not a substitute for the user's current task or approval.
 
-## 1. Load Skills & Trackers First
+## 1. Start from authoritative project state
 
-Before proposing or implementing anything:
+Before repository work:
+1. Read this file.
+2. Read `.trackers/repo-state.md`, `.trackers/task.md`, and `.trackers/rollback.md`.
+3. Read the relevant issue/PR and the exact implementation files named by the current task.
 
-1. Read this file completely.
-2. Read `.trackers/repo-state.md`, `.trackers/task.md`, `.trackers/rollback.md`.
-3. **Complete the SSO Platform progress check (section 2)** — non-optional until the program umbrella is closed.
+Do not repeat discovery already recorded in current trackers, accepted PRs or validation reports. Reopen a settled area only when a specific changed file, failing check or contradictory piece of evidence requires it. Record corrections when earlier reports become stale.
 
----
+## 2. Product and architecture contract
 
-## 2. SSO Platform Program — Mandatory Progress Check (Non-Optional)
+NetHubKe is the identity, authorization and product-token control plane for NetHub products.
 
-> **Until the SSO platform program is fully complete, every AI agent session on this repository MUST check and report program progress before doing other work.**
+- **Upstream authentication:** NetHubKe integrates with a configured standards-compliant OIDC provider. The provider is replaceable; NetHubKe core must not depend on a named vendor, vendor endpoint path, SDK or proprietary claim schema.
+- **Provider boundary:** use OIDC discovery for authorization, token, JWKS, UserInfo and logout endpoints. Provider-specific claim mapping belongs in configuration/adapter code. Core consumes normalized, validated issuer + immutable subject identity.
+- **Canonical identity:** identity is keyed by exact normalized issuer + immutable subject. Email is mutable profile data, never the identity key. Account linking must be explicit and protected against email-only takeover.
+- **NetHubKe:** owns canonical ecosystem identity, product/service registration, global access policy, user/organization grants, entitlement evaluation, centralized administration/audit and product-token issuance.
+- **Product APIs:** validate short-lived, audience-specific NetHubKe JWTs locally through JWKS. They retain their business roles and resource permissions and do not call NetHubKe for per-request introspection on hot paths.
+- **Browser clients:** browser JavaScript calls only same-origin BFF routes. Upstream tokens, product JWTs, machine credentials and signing keys remain server-side.
+- **Persistence:** PostgreSQL is the durable source of truth. Redis is a disposable cache/coordination layer; cache failure must not turn a denial into an allow.
+- **Freshness:** the five-minute stale-access target is end-to-end across token TTL, refresh, policy/cache propagation, verifier JWKS refresh and clock skew. Never claim it from issuer TTL alone.
 
-This is **not optional**. It applies to every agent, every session, regardless of the user’s stated task (unless the user explicitly prioritizes a production hotfix and still receives a one-line program status).
+## 3. Execution expectations
 
-### 2.1 Program identity
+- Optimize for a working, reviewable outcome, not additional milestone lists or repeated approval gates.
+- Execute the user's explicit task end-to-end: inspect relevant state, implement, run available checks, fix failures, update durable records and deliver a PR.
+- Make ordinary engineering decisions within the approved architecture and scope without asking the user to approve each file or subtask.
+- Ask only when a decision changes product behavior, security posture, production configuration, data migration/compatibility, cost, or another user-owned boundary.
+- Do not create issues for bookkeeping. Create or update issues only for real implementation work or unresolved acceptance gaps, with exact scope and acceptance criteria.
+- Close issues only when code and evidence satisfy them, or mark them superseded/not-planned with the replacement decision recorded.
+- Distinguish implemented, tested, merged and production-verified. Never report one as another.
 
-**Architecture contract:** docs/SSO_ARCHITECTURE_CONTRACT.md (approved 2026-10-29; implementation remains separately gated). Product APIs validate NetHubKe-issued tokens locally via JWKS. Zitadel tokens terminate at NetHubKe except for any separately approved, time-bounded compatibility exception. The five-minute stale-access bound is end-to-end, not additive per cache layer.
+## 4. Repository workflow
 
-| Item | Value |
-|------|--------|
-| **Goal** | Zitadel = IdP; NetHubKe = IdP-agnostic product token issuer + central console (services, billing, SSO launch hop); product APIs trust NetHubKe JWKS |
-| **Project board** | https://github.com/orgs/NetHub-Ltd/projects/4 |
-| **Umbrella issue** | https://github.com/NetHub-Ltd/NetHubKe/issues/57 |
-| **Milestones** | **N0 → N10** (GitHub milestones on this repo) |
-| **Work issues** | #40–#56 (and any linked follow-ups on the board) |
-| **Design reference** | `NetHubKe_SSO_Platform_Audit_and_Dashboard_Redesign.pdf` (project artifacts) |
-| **Database** | **Postgres only** (no SQLite) |
-| **Cache** | Redis for JWKS, active kid, entitlements, rate limits |
+- Work on a topic/domain branch; PRs target `dev`.
+- Never commit directly to `dev`.
+- Do not merge a PR or change production settings/secrets unless the user explicitly authorizes it.
+- Prefer cohesive PRs that deliver a complete capability over one-issue-per-PR fragmentation.
+- Do not force-push, rebase, reset or squash to work around review findings.
+- Update all four `.trackers/` files for meaningful implementation state changes:
+  - `task.md`: exact current task and next concrete action.
+  - `repo-state.md`: verified branch/PR/code/test state.
+  - `milestone.md`: programme mapping only where it materially helps delivery.
+  - `rollback.md`: changed paths, migration/compatibility risks and rollback procedure.
+- Keep README, architecture/client contracts and environment examples aligned with actual code.
 
-### 2.2 Required actions at session start
+## 5. Engineering defaults
 
-Before implementing **any** feature, fix, or refactor, the agent **must**:
+- Backend: FastAPI, Python typing, SQLModel, PostgreSQL/asyncpg, Alembic, pytest, Loguru.
+- Frontend: Next.js App Router, TypeScript, Tailwind CSS, Auth.js, TanStack Query, Zod and Lucide.
+- Avoid TypeScript `any`; preserve strict typing.
+- Keep provider-specific logic out of core; do not add a second password store.
+- Validate all trust boundaries server-side. Never trust caller-supplied subject, audience, product identity, tenant, role, principal or entitlement.
+- Add meaningful negative-path tests for security-sensitive changes.
+- No secrets or private signing material in source control or browser bundles.
+- PostgreSQL is required for durable state; do not substitute SQLite.
 
-1. Open or query **Project #4** and/or issues **#40–#57**.
-2. Determine:
-   - Which milestone is **current** (first incomplete **N0 → N10** in order)
-   - Which issues in that milestone are open vs closed
-   - Whether feature flags for later milestones have been enabled early (they must not be, without explicit approval)
-3. **Report a short status block** to the user, for example:
+## 6. Delivery standard
 
-```text
-SSO program: N2 in progress — #44 open, #45 open. Exchange flag still off. Next: signing_keys + JWKS.
-```
+A task is delivered when:
+- The agreed behavior exists in code.
+- Relevant tests, lint, type checks, migrations and production builds have been run where available.
+- Failures are fixed or explicitly reported with evidence.
+- Documentation and trackers match the implementation.
+- A reviewable PR targeting `dev` is provided with changed files, decisions, validation results and remaining limitations.
 
-4. **Refuse to skip milestones.** Work proceeds **N0 → N1 → … → N10** unless the user explicitly reprioritizes **within** the approved program (e.g. docs in parallel). Agents must **not**:
-   - Jump to Billing UI (N8) or Launch hop (N7) before managed keys (N2) and generic exchange (N3) exist
-   - Put product private keys or long-lived product secrets in the frontend
-   - Introduce a second IdP login UI that bypasses Zitadel
-   - Use SQLite or non-Postgres primary stores
-   - Add per-request introspection hops from product apps into NetHub on hot paths (products verify JWTs locally via JWKS)
-   - Create cashier/staff rows for Tawala (or other product floor users) in the NetHub database
-
-5. If the user’s request conflicts with the above, the agent must **decline**, explain the dependency order, and point at the board.
-
-### 2.3 Non-blocking / flags rule
-
-New AS and console paths ship **behind flags default off** (or docs-only) until the matching milestone’s acceptance criteria are met on staging. Existing Zitadel OIDC login + `/users/sync` + Profile must keep working unless a milestone explicitly replaces them.
-
-### 2.4 Every push / PR rule
-
-- Topic branches; PRs target **`dev`** (not `master`/`main` unless user directs).
-- PR description must name the **milestone (N#)** and **issue number(s)**.
-- Do not merge work that is unrelated to the current program milestone without calling out drift and getting confirmation.
-- Update `.trackers/task.md` and `repo-state.md` on every meaningful state change.
-
-### 2.5 When the program is “fully done”
-
-Only when:
-
-- [ ] N0–N10 acceptance criteria met
-- [ ] Umbrella #57 closed
-- [ ] Project board shows program complete
-- [ ] Success criteria: one login, see services, launch Tawala via exchange, view billing, federated logout — on Postgres + Redis
-
-After that, this section may be reduced in a dedicated docs PR. **Until then, agents must keep checking progress every session.**
-
----
-
-## 3. Engineer Mode Defaults
-
-- Propose before large implementation; wait for approval when the user requires it.
-- Prefer small PRs aligned to a single issue/milestone.
-- Verify lint/tests/build for touched packages (`apps/backend`, `apps/frontend`).
-- No secrets in git; private signing material only on NetHubKe (DB/KMS), never in product frontends.
-
----
-
-## 4. Session Start Checklist
-
-```
-[ ] Read AGENTS.md (this file)
-[ ] SSO program progress check (section 2) — mandatory until #57 closed
-[ ] Report short N0–N10 status to the user
-[ ] Read .trackers/repo-state.md, task.md, rollback.md
-[ ] Confirm work maps to current milestone / open issue
-[ ] PR target = dev; cite milestone + issue in PR body
-[ ] Update trackers after changes
-```
-
----
-
-**Last updated:** 2026-10-29  
-**Program board:** https://github.com/orgs/NetHub-Ltd/projects/4  
-**Umbrella:** #57
+A plan, issue, unchecked acceptance list or open PR is not itself a delivered outcome.

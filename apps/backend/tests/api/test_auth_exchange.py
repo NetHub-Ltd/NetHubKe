@@ -162,15 +162,15 @@ async def test_product_links_requires_auth(client: AsyncClient):
 async def test_jwks_with_malformed_env_pem_still_200(
     client: AsyncClient, monkeypatch
 ):
-    """Regression: non-PEM TAWALA_JWT_PRIVATE_KEY must not 500 JWKS."""
+    """Regression: non-PEM PRODUCT_TOKEN_PRIVATE_KEY must not 500 JWKS."""
     from app.core import config as config_module
-    from app.services import tawala_token as tt
+    from app.services import product_tokens as tt
 
     async def no_cache(_key):
         return None
 
-    monkeypatch.setattr(config_module.settings, "tawala_jwt_private_key", "TEST_NON_PEM_ENV_VALUE_NOT_A_SECRET")
-    monkeypatch.setattr(tt.settings, "tawala_jwt_private_key", "TEST_NON_PEM_ENV_VALUE_NOT_A_SECRET")
+    monkeypatch.setattr(config_module.settings, "product_token_private_key", "TEST_NON_PEM_ENV_VALUE_NOT_A_SECRET")
+    monkeypatch.setattr(tt.settings, "product_token_private_key", "TEST_NON_PEM_ENV_VALUE_NOT_A_SECRET")
     monkeypatch.setattr(tt, "redis_get", no_cache)
     monkeypatch.setattr(tt, "redis_set", AsyncMock())
 
@@ -241,7 +241,7 @@ async def test_exchange_success_uses_server_resolved_identity_and_product_audien
     payload = response.json()
     assert payload["access_token"] == "signed-product-token"
     assert payload["product"] == "tawala"
-    assert payload["audience"] == "tawala-api"
+    assert payload["audience"] == "tawala-api-db-row"
     assert payload["principal"] == "owner"
     assert payload["org_id"] == str(tenant.id)
     minted.assert_awaited_once()
@@ -252,7 +252,7 @@ async def test_exchange_success_uses_server_resolved_identity_and_product_audien
     assert entitlement.await_args.kwargs["product"].id == product.id
     kwargs = minted.await_args.kwargs
     assert kwargs["product_slug"] == "tawala"
-    assert kwargs["audience"] == "tawala-api"
+    assert kwargs["audience"] == "tawala-api-db-row"
     assert kwargs["sub"] == str(user.id)
     assert kwargs["org_id"] == tenant.id
     assert kwargs["principal"] == "owner"
@@ -430,9 +430,10 @@ async def test_legacy_direct_idp_access_route_is_not_mounted(
 
 
 @pytest.mark.asyncio
-async def test_tawala_audience_override_cannot_collide_with_another_product(
+async def test_product_audience_comes_from_registry_without_environment_override(
     db_session, monkeypatch
 ):
+    """A shared issuer must use the audience registered for the requested product."""
     from app.api.v1.routes import auth
     from app.core.config import settings
     from app.db.models.models import Product
@@ -448,7 +449,7 @@ async def test_tawala_audience_override_cannot_collide_with_another_product(
         Product(
             slug="other-product",
             name="Other Product",
-            audience=settings.tawala_jwt_audience,
+            audience="tawala-api",
             is_active=False,
             claim_profile="standard",
         ),
@@ -471,5 +472,7 @@ async def test_tawala_audience_override_cannot_collide_with_another_product(
             principal_override=None,
         )
 
-    assert error.value.status_code == 503
-    assert "audience conflicts" in error.value.detail
+    # It proceeds past audience collision checking and fails only because the
+    # deliberately unmapped upstream identity has no canonical local account.
+    assert error.value.status_code == 404
+    assert "identity is not linked" in error.value.detail

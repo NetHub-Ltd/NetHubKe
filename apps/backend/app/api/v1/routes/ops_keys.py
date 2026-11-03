@@ -16,7 +16,7 @@ from app.core.config import settings
 from app.core.security import _decode_token
 from app.db.schemas.schemas import TokenData
 from app.db.models.models import EntitlementOverride, Product, Tenant, User, UserIdentity, SecurityAuditEvent
-from app.services.tawala_token import (
+from app.services.product_tokens import (
     rotate_signing_key,
     emergency_revoke_signing_key,
     prune_expired_retiring_keys,

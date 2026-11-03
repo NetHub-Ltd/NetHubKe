@@ -19,4 +19,4 @@ def test_db_urls():
 
 
 def test_exchange_defaults_off():
-    assert settings.tawala_exchange_enabled is False
+    assert settings.product_token_exchange_enabled is False

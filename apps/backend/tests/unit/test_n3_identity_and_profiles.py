@@ -9,7 +9,7 @@ from fastapi import HTTPException
 from app.crud.user import user_crud
 from app.db.models.models import User, UserIdentity
 from app.db.schemas.schemas import TokenData
-from app.services import tawala_token as tt
+from app.services import product_tokens as tt
 
 
 def test_user_identity_schema_has_unique_identity_and_user_issuer_constraints():
@@ -88,7 +88,7 @@ async def test_standard_profile_omits_tawala_only_claims(monkeypatch):
         private_key.public_key(),
         algorithms=["RS256"],
         audience="netpay-api",
-        issuer=tt.settings.tawala_jwt_issuer,
+        issuer=tt.settings.product_token_issuer,
     )
     assert claims["product"] == "netpay"
     assert claims["aud"] == "netpay-api"

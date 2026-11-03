@@ -3,7 +3,7 @@
 Priority for private key material:
 1. Active row in signing_keys (Postgres)
 2. Bootstrap: generate RSA and insert if exchange enabled and table empty
-3. Fallback: TAWALA_JWT_PRIVATE_KEY env PEM (dev/emergency only)
+3. Fallback: PRODUCT_TOKEN_PRIVATE_KEY env PEM (shared dev/emergency fallback only)
 """
 from __future__ import annotations
 
@@ -37,7 +37,7 @@ from app.utils.logging import logger
 
 
 def exchange_enabled() -> bool:
-    return bool(getattr(settings, "tawala_exchange_enabled", False))
+    return bool(getattr(settings, "product_token_exchange_enabled", False))
 
 
 _ENCRYPTED_PEM_PREFIX = "enc:v1:"
@@ -128,23 +128,23 @@ def _load_env_private_key():
     Misconfigured secrets (hex tokens, JWT strings, etc.) must not 500 JWKS.
     """
     # Env PEM disabled by default — keys are generated and stored in Postgres.
-    if not bool(getattr(settings, "tawala_jwt_allow_env_pem", False)):
+    if not bool(getattr(settings, "product_token_allow_env_pem", False)):
         return None
-    pem = (getattr(settings, "tawala_jwt_private_key", None) or "").strip()
+    pem = (getattr(settings, "product_token_private_key", None) or "").strip()
     if not pem:
         return None
     pem = pem.replace("\\n", "\n")
     # Quick reject of clearly non-PEM material (common misconfig: hex secret / password)
     if "BEGIN" not in pem.upper():
         logger.warning(
-            "TAWALA_JWT_PRIVATE_KEY is set but is not PEM (missing BEGIN); ignoring env key"
+            "PRODUCT_TOKEN_PRIVATE_KEY is set but is not PEM (missing BEGIN); ignoring env key"
         )
         return None
     try:
         return serialization.load_pem_private_key(pem.encode("utf-8"), password=None)
     except Exception as exp:  # noqa: BLE001
         logger.warning(
-            f"TAWALA_JWT_PRIVATE_KEY is set but failed to parse as PEM; ignoring env key: {exp}"
+            f"PRODUCT_TOKEN_PRIVATE_KEY is set but failed to parse as PEM; ignoring env key: {exp}"
         )
         return None
 
@@ -440,7 +440,7 @@ async def bootstrap_signing_key(db: AsyncSession) -> SigningKey:
     env_key = _load_env_private_key()
     if env_key is not None:
         kid = "nethub-env-bootstrap"
-        pem = (settings.tawala_jwt_private_key or "").strip().replace("\\n", "\n")
+        pem = (settings.product_token_private_key or "").strip().replace("\\n", "\n")
         jwk = public_jwk_from_private(env_key, kid)
     else:
         kid, pem, jwk, _ = _generate_rsa_keypair()
@@ -548,7 +548,7 @@ async def build_jwks_document(db: AsyncSession) -> dict[str, Any]:
             if jwk:
                 keys.extend(jwk)
 
-    # Opt-in env PEM only (TAWALA_JWT_ALLOW_ENV_PEM=true)
+    # Opt-in env PEM only (PRODUCT_TOKEN_ALLOW_ENV_PEM=true)
     if not keys:
         env_key = _load_env_private_key()
         if env_key is not None:
@@ -566,26 +566,6 @@ def get_jwks() -> dict[str, Any]:
     if env_key is None:
         return {"keys": []}
     return {"keys": [public_jwk_from_private(env_key, "nethub-env-bootstrap")]}
-
-
-async def mint_tawala_access_token(
-    db: AsyncSession,
-    *,
-    sub: str,
-    org_id: UUID,
-    principal: str,
-    email: Optional[str] = None,
-) -> tuple[str, int]:
-    """Backward-compatible Tawala mint; delegates to product mint."""
-    return await mint_product_access_token(
-        db,
-        product_slug="tawala",
-        audience=getattr(settings, "tawala_jwt_audience", "tawala-api") or "tawala-api",
-        sub=sub,
-        org_id=org_id,
-        principal=principal,
-        email=email,
-    )
 
 
 async def get_product_by_slug(db: AsyncSession, slug: str):
@@ -633,7 +613,7 @@ async def ensure_tawala_product(db: AsyncSession):
     row = Product(
         slug="tawala",
         name="Tawala",
-        audience=getattr(settings, "tawala_jwt_audience", "tawala-api") or "tawala-api",
+        audience="tawala-api",
         is_active=True,
         claim_profile="tawala",
         notes="Hard-session exchange; org_id + principal owner|terminal",
@@ -653,7 +633,7 @@ async def mint_product_access_token(
     org_id: Optional[UUID],
     principal: str,
     email: Optional[str] = None,
-    claim_profile: str = "tawala",
+    claim_profile: str = "standard",
 ) -> tuple[str, int]:
     """Mint RS256 product access token using the registered server-side claim profile."""
     if not exchange_enabled():
@@ -671,12 +651,12 @@ async def mint_product_access_token(
 
     private_key, kid = await get_active_signing_key(db)
     now = int(time.time())
-    ttl = min(max(1, int(getattr(settings, "tawala_jwt_ttl_sec", 240))), 240)
+    ttl = min(max(1, int(getattr(settings, "product_token_ttl_sec", 240))), 240)
     exp = now + ttl
     claims: dict[str, Any] = {
         "sub": str(sub),
         "product": product_slug,
-        "iss": settings.tawala_jwt_issuer,
+        "iss": settings.product_token_issuer,
         "aud": audience,
         "iat": now,
         "exp": exp,

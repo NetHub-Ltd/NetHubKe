@@ -56,7 +56,7 @@ async def lifespan(app: FastAPI):
     # --------------------------------------------------------------
     # 2. Signing keys: bootstrap only when token exchange is enabled
     # --------------------------------------------------------------
-    from app.services.tawala_token import ensure_signing_keys_ready, exchange_enabled
+    from app.services.product_tokens import ensure_signing_keys_ready, exchange_enabled
 
     if exchange_enabled():
         try:

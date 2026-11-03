@@ -56,14 +56,13 @@ jobs:
       FASTAPI_DB_NAME: nethub_ci
       FASTAPI_DB_HOST: localhost
       FASTAPI_DB_PORT: "5432"
-      KEYCLOAK_ISSUER_URL: https://idp.test/realms/nethub
-      KEYCLOAK_JWKS: https://idp.test/realms/nethub/protocol/openid-connect/certs
+      OIDC_ISSUER: https://idp.test/realms/nethub
+      OIDC_ROLE_CLAIM_PATH: roles
       AUDIENCE: nethub-api
       ALLOWED_ORIGINS: http://localhost:3000
       REDIS_URL: redis://localhost:6379/0
-      TAWALA_EXCHANGE_ENABLED: "false"
-      TAWALA_JWT_ISSUER: http://localhost:8000
-      TAWALA_JWT_AUDIENCE: tawala-api
+      PRODUCT_TOKEN_EXCHANGE_ENABLED: "false"
+      PRODUCT_TOKEN_ISSUER: http://localhost:8000
       JWKS_REDIS_TTL_SEC: "60"
 
     steps:

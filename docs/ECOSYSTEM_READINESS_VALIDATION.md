@@ -377,3 +377,40 @@ These are targeted missing tests for identified security boundaries, not a reque
 - Historical CI evidence is attributed to the exact commit/head recorded in the trackers/PR, not presented as a new run performed by this validation.
 - No live Zitadel staging login, actual deployed environment values, or real product resource-server verifier was available for measurement.
 - No code, migration, deployment, feature flag or issue state has been changed. The only repository write is this findings document on `validation/ecosystem-readiness`.
+
+## 2026-11-03 current-branch reconciliation (supersedes stale findings where noted)
+
+**Source of truth:** current implementation on `feat/first-client-idp-agnostic-bff`, based on PR #170 head. The earlier findings below were recorded against an older state and must not be repeated as current facts without checking the named files.
+
+### Corrected findings
+
+- **Canonical user resolution / route scoping:** current `users/me`, `product_links`, `billing` and `services/my-status` handlers use `get_current_user_record`. The earlier concern that these routes re-resolved users by email is no longer current. Identity lifecycle is covered by `tests/api/test_identity_lifecycle.py`; issues #159 and #163 were closed after code/test review.
+- **Legacy Path A access endpoint:** `apps/backend/app/services/access.py` remains as a service, but the current `api_router.py` does not mount an `access` router. The direct upstream-token access endpoint is therefore not an active public route. Issue #137 was closed as superseded; do not treat the unused service module as a live API.
+- **Product audience uniqueness:** PR #170 branch contains `Product.__table_args__` with `uq_products_audience` and migration `m6g7h8i9j0k1_unique_product_audiences.py`. The migration checks duplicates and fails with the conflicting audiences/slugs rather than silently rewriting rows. Tracked by #172; included in the consolidated branch.
+- **Auth.js public session:** the current session callback intentionally does not copy `accessToken`, `refreshToken` or `idToken` into the public session. The actual failure was that BFF handlers nevertheless read `session.accessToken`, so authenticated BFF requests could not obtain the bearer. Issue #171 fixes this through server-side decoding of the encrypted Auth.js JWT cookie.
+- **Product token exposure:** the existing exchange BFF returned the upstream product-token response to browser code and the launch helper placed the token in a URL fragment. The branch disables the browser exchange endpoint with HTTP 410 and disables the launch helper. Secure product launch is not claimed complete.
+- **Provider-specific OIDC assumptions:** the earlier dev code used vendor-specific endpoint fallbacks and role parsing. Issue #80 and this branch replace these with discovery-advertised JWKS/UserInfo/token/logout endpoints and an explicit configurable role-claim path. The branch passed backend CI (237 tests, 77.46% coverage), frontend lint/build and 11 auth/BFF security tests; alternate discovery endpoint layouts are covered by backend tests.
+
+### Still open / not proven
+
+- Five-minute stale-access bound remains unproven end-to-end across actual product verifiers, token refresh, JWKS caches and clock skew (#164).
+- Product-side local verifier interoperability remains outside this website BFF implementation (#162).
+- Product launch is disabled pending a single-use, short-lived launch-code redemption flow; do not enable the old token-fragment flow.
+- Product audience migration and provider-neutral OIDC code require fresh backend CI and Alembic upgrade/downgrade evidence.
+- Website BFF requires frontend lint/build and a real browser integration check: OIDC callback → successful `/users/sync` → profile/services BFF calls → federated logout.
+
+### Branch implementation evidence
+
+- Branch: `feat/first-client-idp-agnostic-bff`
+- Parent commit: `73ecbcea14e01af84807f4518c4a0171f006a52c`
+- New issue: #171 (website BFF), existing issue #80 (provider-neutral OIDC), #172 (unique product audiences).
+- Validation status: CI green (backend 237 passed, 77.46%; Alembic upgrade/downgrade/re-upgrade; Docker/Postgres/Redis readiness; frontend lint/build; 11 auth/BFF tests). OIDC-configured browser smoke remains pending.
+
+
+## Final review note — 2026-11-03
+
+- PR #173 is open, mergeable and targets `dev`; PR #170 is closed as superseded. Latest branch head: `5b71c6a7820af93ece705e9fc8416c6754b3c064`.
+- Latest GitHub Actions: backend CI 41622960491 (237 passed, 77.51% coverage; Alembic upgrade/downgrade/re-upgrade passed), readiness 41622960484 (Docker/PostgreSQL/Redis passed), frontend CI 41622960475 (lint, production build, 11 security tests passed).
+- Vercel status reports `build-rate-limit`; the GitHub Actions frontend production build is green, but no Vercel preview URL is available. This is a preview-platform limit, not a failed application build.
+- Remaining related open work: #171 browser smoke with configured OIDC credentials; #162 product-side local verifier evidence; #164 measured five-minute stale-access behavior; #165 product integration validation; #149 secure one-time launch-code handoff; #150 billing/settings/operational readiness.
+- #80/#79/#81/#158/#160/#172 are linked to PR #173 and will close on merge. #148/#152/#161 and already-complete/superseded issues have been closed with evidence. #57 and #135 remain open as programme/history records.

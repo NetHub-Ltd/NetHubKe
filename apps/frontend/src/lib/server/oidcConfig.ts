@@ -1,90 +1,109 @@
+import "server-only";
 /**
- * IdP-agnostic OIDC settings for Auth.js and federated logout.
- * Prefer OIDC_*; KEYCLOAK_* remain aliases for existing deploys.
+ * Provider-neutral OIDC configuration for Auth.js and RP-initiated logout.
+ * The configured issuer is the only provider-specific input; endpoints come
+ * from its OIDC discovery document.
  *
- * Issuer/client must not throw at module load — Next.js collects page data
- * during `next build` and will import auth.ts without runtime secrets (Vercel).
+ * Values must remain lazy because Next.js imports auth.ts during build without
+ * production runtime secrets.
  */
-
 const BUILD_PLACEHOLDER_ISSUER = "https://build-placeholder.invalid";
 const BUILD_PLACEHOLDER_CLIENT = "build-placeholder-client";
 
 function readIssuer(): string {
-  return (
-    process.env.OIDC_ISSUER?.trim() ||
-    process.env.KEYCLOAK_ISSUER?.trim() ||
-    ""
-  );
+  return process.env.OIDC_ISSUER?.trim() || "";
 }
 
 function readClientId(): string {
-  return (
-    process.env.OIDC_CLIENT_ID?.trim() ||
-    process.env.KEYCLOAK_CLIENT_ID?.trim() ||
-    ""
-  );
+  return process.env.OIDC_CLIENT_ID?.trim() || "";
 }
 
-/** True when real IdP env is present (not build placeholder). */
 export function isOidcConfigured(): boolean {
   return Boolean(readIssuer() && readClientId());
 }
 
 export function oidcIssuer(): string {
-  const v = readIssuer();
-  if (v) return v.replace(/\/$/, "");
-  return BUILD_PLACEHOLDER_ISSUER;
+  const value = readIssuer();
+  return value || BUILD_PLACEHOLDER_ISSUER;
 }
 
 export function oidcClientId(): string {
-  const v = readClientId();
-  if (v) return v;
-  return BUILD_PLACEHOLDER_CLIENT;
+  return readClientId() || BUILD_PLACEHOLDER_CLIENT;
 }
 
 export function oidcClientSecret(): string {
-  return (
-    process.env.OIDC_CLIENT_SECRET?.trim() ||
-    process.env.KEYCLOAK_CLIENT_SECRET?.trim() ||
-    ""
-  );
+  return process.env.OIDC_CLIENT_SECRET?.trim() || "";
 }
 
 export function assertOidcConfigured(): void {
-  if (!readIssuer()) {
-    throw new Error("OIDC_ISSUER or KEYCLOAK_ISSUER must be set");
-  }
-  if (!readClientId()) {
-    throw new Error("OIDC_CLIENT_ID or KEYCLOAK_CLIENT_ID must be set");
-  }
+  if (!readIssuer()) throw new Error("OIDC_ISSUER must be set");
+  if (!readClientId()) throw new Error("OIDC_CLIENT_ID must be set");
 }
 
-type Discovery = {
-  token_endpoint?: string;
-  end_session_endpoint?: string;
+export type OidcDiscovery = {
+  issuer: string;
   authorization_endpoint?: string;
+  token_endpoint?: string;
+  userinfo_endpoint?: string;
   jwks_uri?: string;
+  end_session_endpoint?: string;
 };
 
-let discoveryCache: { at: number; data: Discovery } | null = null;
+let discoveryCache: { at: number; data: OidcDiscovery } | null = null;
 
-/** OIDC discovery document (cached ~1h in-process). */
-export async function oidcDiscovery(): Promise<Discovery> {
+/** Fetch and validate the configured issuer's standard OIDC discovery document. */
+export async function oidcDiscovery(): Promise<OidcDiscovery> {
   assertOidcConfigured();
+
   const now = Date.now();
-  if (discoveryCache && now - discoveryCache.at < 3600_000) {
+  if (discoveryCache && now - discoveryCache.at < 300_000) {
     return discoveryCache.data;
   }
+
   const issuer = oidcIssuer();
-  const url = `${issuer}/.well-known/openid-configuration`;
-  const res = await fetch(url, {
+  const discoveryUrl = new URL(issuer.replace(/\/$/, "") + "/.well-known/openid-configuration");
+  const response = await fetch(discoveryUrl, {
     headers: { Accept: "application/json" },
-    next: { revalidate: 3600 },
+    cache: "no-store",
+    signal: AbortSignal.timeout(5_000),
   });
-  if (!res.ok) {
-    throw new Error(`OIDC discovery failed: ${res.status} ${url}`);
+  if (!response.ok) {
+    throw new Error(`OIDC discovery failed with status ${response.status}`);
   }
-  const data = (await res.json()) as Discovery;
-  discoveryCache = { at: now, data };
-  return data;
+
+  const data: unknown = await response.json();
+  if (typeof data !== "object" || data === null || Array.isArray(data)) {
+    throw new Error("OIDC discovery returned an invalid document");
+  }
+
+  const metadata = data as Partial<OidcDiscovery>;
+  if (
+    typeof metadata.issuer !== "string" ||
+    metadata.issuer !== issuer
+  ) {
+    throw new Error("OIDC discovery issuer does not match OIDC_ISSUER");
+  }
+
+  // Production deployments must not follow provider metadata to plaintext HTTP.
+  if (process.env.NODE_ENV === "production") {
+    if (new URL(issuer).protocol !== "https:") {
+      throw new Error("OIDC_ISSUER must use HTTPS in production");
+    }
+    for (const endpoint of [
+      metadata.authorization_endpoint,
+      metadata.token_endpoint,
+      metadata.userinfo_endpoint,
+      metadata.jwks_uri,
+      metadata.end_session_endpoint,
+    ]) {
+      if (!endpoint) continue;
+      const parsed = new URL(endpoint);
+      if (parsed.protocol !== "https:") {
+        throw new Error("OIDC discovery contains a non-HTTPS endpoint");
+      }
+    }
+  }
+
+  discoveryCache = { at: now, data: metadata as OidcDiscovery };
+  return discoveryCache.data;
 }

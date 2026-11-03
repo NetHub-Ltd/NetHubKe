@@ -42,7 +42,7 @@ async def test_startup_does_not_require_redis(monkeypatch):
     from fastapi import FastAPI
 
     from app import main
-    from app.services import tawala_token
+    from app.services import product_tokens
 
     session = AsyncMock()
     result = MagicMock()
@@ -54,7 +54,7 @@ async def test_startup_does_not_require_redis(monkeypatch):
     close_redis = AsyncMock()
 
     monkeypatch.setattr(main, "AsyncSessionLocal", lambda: manager)
-    monkeypatch.setattr(tawala_token, "exchange_enabled", lambda: False)
+    monkeypatch.setattr(product_tokens, "exchange_enabled", lambda: False)
     monkeypatch.setattr(main, "close_redis", close_redis)
 
     async with main.lifespan(FastAPI()):

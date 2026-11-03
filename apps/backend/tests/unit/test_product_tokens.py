@@ -12,7 +12,14 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from fastapi import HTTPException
 
-from app.services import tawala_token as tt
+from app.services import product_tokens as tt
+
+
+def test_new_product_defaults_to_standard_claim_profile():
+    from app.db.models.models import Product
+
+    product = Product(slug="example", name="Example", audience="example-api")
+    assert product.claim_profile == "standard"
 
 
 @pytest.fixture
@@ -37,7 +44,7 @@ def test_public_jwk(rsa_pem):
 
 def test_get_jwks_env(rsa_pem):
     pem, _ = rsa_pem
-    s = MagicMock(tawala_jwt_private_key=pem, tawala_jwt_allow_env_pem=True)
+    s = MagicMock(product_token_private_key=pem, product_token_allow_env_pem=True)
     with patch.object(tt, "settings", s):
         doc = tt.get_jwks()
     assert len(doc["keys"]) == 1
@@ -45,7 +52,7 @@ def test_get_jwks_env(rsa_pem):
 
 
 def test_get_jwks_empty():
-    with patch.object(tt, "settings", MagicMock(tawala_jwt_private_key="")):
+    with patch.object(tt, "settings", MagicMock(product_token_private_key="")):
         assert tt.get_jwks() == {"keys": []}
 
 
@@ -58,18 +65,18 @@ def test_generate_keypair_sign():
 
 
 def test_exchange_enabled_false():
-    with patch.object(tt, "settings", MagicMock(tawala_exchange_enabled=False)):
+    with patch.object(tt, "settings", MagicMock(product_token_exchange_enabled=False)):
         assert tt.exchange_enabled() is False
 
 
 def test_exchange_enabled_true():
-    with patch.object(tt, "settings", MagicMock(tawala_exchange_enabled=True)):
+    with patch.object(tt, "settings", MagicMock(product_token_exchange_enabled=True)):
         assert tt.exchange_enabled() is True
 
 
 def test_load_env_private_key_empty():
     with patch.object(
-        tt, "settings", MagicMock(tawala_jwt_private_key="", tawala_jwt_allow_env_pem=True)
+        tt, "settings", MagicMock(product_token_private_key="", product_token_allow_env_pem=True)
     ):
         assert tt._load_env_private_key() is None
 
@@ -79,7 +86,7 @@ def test_load_env_private_key_valid(rsa_pem):
     with patch.object(
         tt,
         "settings",
-        MagicMock(tawala_jwt_private_key=pem, tawala_jwt_allow_env_pem=True),
+        MagicMock(product_token_private_key=pem, product_token_allow_env_pem=True),
     ):
         key = tt._load_env_private_key()
     assert key is not None
@@ -90,7 +97,7 @@ def test_load_env_private_key_blocked_without_allow(rsa_pem):
     with patch.object(
         tt,
         "settings",
-        MagicMock(tawala_jwt_private_key=pem, tawala_jwt_allow_env_pem=False),
+        MagicMock(product_token_private_key=pem, product_token_allow_env_pem=False),
     ):
         assert tt._load_env_private_key() is None
 
@@ -107,8 +114,13 @@ async def test_mint_disabled():
     db = AsyncMock()
     with patch.object(tt, "exchange_enabled", return_value=False):
         with pytest.raises(HTTPException) as ei:
-            await tt.mint_tawala_access_token(
-                db, sub="s", org_id=uuid.uuid4(), principal="owner"
+            await tt.mint_product_access_token(
+                db,
+                product_slug="tawala",
+                audience="tawala-api",
+                sub="s",
+                org_id=uuid.uuid4(),
+                principal="owner",
             )
     assert ei.value.status_code == 503
 
@@ -118,8 +130,14 @@ async def test_mint_bad_principal():
     db = AsyncMock()
     with patch.object(tt, "exchange_enabled", return_value=True):
         with pytest.raises(HTTPException) as ei:
-            await tt.mint_tawala_access_token(
-                db, sub="s", org_id=uuid.uuid4(), principal="admin"
+            await tt.mint_product_access_token(
+                db,
+                product_slug="tawala",
+                audience="tawala-api",
+                sub="s",
+                org_id=uuid.uuid4(),
+                principal="admin",
+                claim_profile="tawala",
             )
     assert ei.value.status_code == 400
 
@@ -161,9 +179,9 @@ async def test_build_jwks_empty_db_env_fallback(rsa_pem):
                     tt,
                     "settings",
                     MagicMock(
-                        tawala_jwt_private_key=pem,
-                        tawala_jwt_allow_env_pem=True,
-                        tawala_exchange_enabled=False,
+                        product_token_private_key=pem,
+                        product_token_allow_env_pem=True,
+                        product_token_exchange_enabled=False,
                         jwks_redis_ttl_sec=60,
                     ),
                 ):
@@ -222,7 +240,7 @@ async def test_mint_product_success(rsa_pem):
             with patch.object(
                 tt,
                 "settings",
-                MagicMock(tawala_jwt_issuer="http://iss", tawala_jwt_ttl_sec=60),
+                MagicMock(product_token_issuer="http://iss", product_token_ttl_sec=60),
             ):
                 token, exp = await tt.mint_product_access_token(
                     db,
@@ -232,6 +250,7 @@ async def test_mint_product_success(rsa_pem):
                     org_id=uuid.uuid4(),
                     principal="owner",
                     email="a@example.com",
+                    claim_profile="tawala",
                 )
     assert isinstance(token, str) and len(token) > 20
     assert exp > int(time.time())
@@ -252,7 +271,7 @@ async def test_mint_product_success_token_claims_and_signature(rsa_pem):
             with patch.object(
                 tt,
                 "settings",
-                MagicMock(tawala_jwt_issuer="https://api.example.test", tawala_jwt_ttl_sec=60),
+                MagicMock(product_token_issuer="https://api.example.test", product_token_ttl_sec=60),
             ):
                 token, exp = await tt.mint_product_access_token(
                     db,
@@ -262,6 +281,7 @@ async def test_mint_product_success_token_claims_and_signature(rsa_pem):
                     org_id=org_id,
                     principal="terminal",
                     email="user@example.com",
+                    # Omitted claim_profile must resolve to the common standard profile.
                 )
 
     header = jwt.get_unverified_header(token)
@@ -275,8 +295,10 @@ async def test_mint_product_success_token_claims_and_signature(rsa_pem):
         issuer="https://api.example.test",
     )
     assert claims["sub"] == "canonical-user-123"
-    assert claims["org_id"] == str(org_id)
-    assert claims["principal"] == "terminal"
+    # The shared standard profile must not leak Tawala-specific organization
+    # or principal claims into other products.
+    assert "org_id" not in claims
+    assert "principal" not in claims
     assert claims["product"] == "netpay"
     assert claims["iat"] >= now
     assert isinstance(claims["jti"], str) and len(claims["jti"]) >= 32
@@ -299,6 +321,7 @@ async def test_mint_rejects_unknown_principal_without_loading_key():
                     sub="sub-1",
                     org_id=uuid.uuid4(),
                     principal="admin",
+                    claim_profile="tawala",
                 )
     assert error.value.status_code == 400
     get_key.assert_not_awaited()

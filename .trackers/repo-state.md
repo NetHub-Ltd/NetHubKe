@@ -160,3 +160,35 @@
 - The same policy applies to every browser-based product; each uses its own trusted BFF. Backend/machine clients remain server-to-server, and product APIs validate NetHubKe JWTs locally via JWKS.
 - No application code, schema, feature flag, secret, or deployment setting changed. This documentation work is parallel planning only; it does not skip N0–N10. N1 (#42–#43) remains the earliest milestone whose acceptance evidence is not demonstrably complete per the architecture contract.
 - Draft requires review on session storage, NetHubKe audience/scopes, first-login failure semantics, one-time launch-code handoff, and non-browser client transport.
+
+## N1 acceptance validation and shared product-token configuration — 2026-11-03
+- N1 validation baseline: PR #145 is merged; historical backend/readiness CI passed. PR #168 later passed 227 backend tests at 76.83% coverage. N1 issue #42/#43 remain closed with unchecked historical acceptance boxes; evidence is mapped in `docs/validation/N1_ACCEPTANCE_VALIDATION.md`.
+- Investigation found `TAWALA_EXCHANGE_ENABLED` was a global product-token exchange kill switch, despite its Tawala-specific name. Other Tawala-prefixed settings configured shared issuer, TTL, PEM fallback, and a product audience override; `TAWALA_EXCHANGE_REQUIRE_SUBSCRIPTION` was unused.
+- Branch `fix/shared-product-token-configuration` replaces shared settings with `PRODUCT_TOKEN_*`, removes the audience override in favor of `Product.audience`, removes the unused subscription setting, updates docs/env example/root README and adds N1 validation report.
+- Exchange remains globally default-off. No deployment settings, secrets, database schema, production behavior, merge or rollout were changed. Fresh branch CI is pending.
+- Additional Tawala-specific defaults removed: new Product rows and generic token-mint calls now default to the common `standard` claim profile; the Tawala profile is selected explicitly for Tawala. Generic signing/JWKS service and tests renamed to `product_tokens.py` / `test_product_tokens.py`.
+- CI first attempt #165 failed at pytest collection because six test modules still imported the renamed `tawala_token` module. Updated all six imports to `product_tokens`; fresh backend CI #168 and readiness #129 are running. The initial 42.17% coverage is invalid because collection stopped before tests executed.
+- Final verification: backend CI #175 (run `41608428220`) passed 228 tests, 76.85% coverage, per-file coverage, and Alembic upgrade/downgrade; readiness #136 (`41608427606`) passed `/health` and `/ready`; Vercel preview is successful. Codecov reports Repository not found but is non-blocking; coverage artifact uploaded.
+- Removed `NEXT_PUBLIC_API_URL` from the frontend env example to align with BFF-only browser transport. The generated OpenAPI client still has a hardcoded localhost base URL; its import/use graph is not verified and it is not an approved browser transport. BFF integration remains a separate follow-up.
+- PR #170 remains open against `dev` and is not merged. Backend CI #175 and readiness #136 passed; the Vercel preview for the latest docs/environment-template commit is still pending. N1 issue #42/#43 checklists remain unchanged and are not marked accepted by this PR.
+
+## 2026-11-03 — Current delivery state
+
+- Working branch: `feat/first-client-idp-agnostic-bff`.
+- Branch base: PR #170 head `73ecbcea14e01af84807f4518c4a0171f006a52c`; this intentionally carries the shared product-token configuration refactor and unique product-audience migration forward.
+- Target: `dev`; no merge/deployment performed.
+- Predecessor PR #170: open, unmerged at last check; this branch is intended to supersede it with a consolidated first-client PR.
+- New/active implementation issues: #80, #171, #172.
+- Completed issue closures: #75, #116, #117, #144, #146, #159, #163. #137 closed as superseded by the approved product-token architecture.
+- Current code correction: public Auth.js session intentionally contains no bearer tokens. Previous BFF handlers incorrectly read `session.accessToken`; the new server-only cookie reader resolves this without exposing tokens to browser code.
+- Product launch remains disabled; the browser exchange route returns 410 pending one-time server-to-server launch-code redemption.
+- CI verified: backend 237 passed / 77.46% coverage; Alembic upgrade/downgrade/re-upgrade passed; Docker/Postgres/Redis readiness passed; frontend lint/build and 11 security tests passed. Browser smoke with deployed OIDC configuration remains pending. PR #173 is open, mergeable, targets dev; no merge/deployment performed.
+
+
+## Final review note — 2026-11-03
+
+- PR #173 is open, mergeable and targets `dev`; PR #170 is closed as superseded. Latest branch head: `5b71c6a7820af93ece705e9fc8416c6754b3c064`.
+- Latest GitHub Actions: backend CI 41622960491 (237 passed, 77.51% coverage; Alembic upgrade/downgrade/re-upgrade passed), readiness 41622960484 (Docker/PostgreSQL/Redis passed), frontend CI 41622960475 (lint, production build, 11 security tests passed).
+- Vercel status reports `build-rate-limit`; the GitHub Actions frontend production build is green, but no Vercel preview URL is available. This is a preview-platform limit, not a failed application build.
+- Remaining related open work: #171 browser smoke with configured OIDC credentials; #162 product-side local verifier evidence; #164 measured five-minute stale-access behavior; #165 product integration validation; #149 secure one-time launch-code handoff; #150 billing/settings/operational readiness.
+- #80/#79/#81/#158/#160/#172 are linked to PR #173 and will close on merge. #148/#152/#161 and already-complete/superseded issues have been closed with evidence. #57 and #135 remain open as programme/history records.

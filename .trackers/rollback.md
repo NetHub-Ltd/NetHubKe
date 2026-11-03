@@ -158,3 +158,55 @@
 - No application code, database migration, runtime configuration, feature flag, secret, or deployment behavior is changed.
 - If the contract is rejected or materially incorrect, revert the documentation PR as a unit. No runtime rollback or data migration is required.
 - Do not enable exchange or launch paths based solely on this draft. Keep all existing rollout gates and the N0–N10 acceptance order intact.
+
+## Shared product-token configuration and N1 documentation reconciliation — 2026-11-03
+- Branch: `fix/shared-product-token-configuration`, targeting `dev`; no deployment settings or secrets are modified.
+- Runtime configuration changes: global `PRODUCT_TOKEN_*` settings replace Tawala-prefixed global settings; Product registry audience replaces the Tawala environment override; the unused subscription setting is removed.
+- Exchange remains disabled by default. If branch CI or review fails, revert this PR as one unit. No schema/data rollback is required.
+- Before any future exchange enablement, inspect deployment environments and replace old `TAWALA_*` names with the shared `PRODUCT_TOKEN_*` equivalents. This PR does not change live environment values.
+- Preserve the stable signing-key encryption secret and existing PostgreSQL signing-key rows; do not rotate, regenerate or replace signing keys as part of this configuration refactor.
+- No merge, deployment, production flag change or secret mutation is authorized by this work.
+- Additional Tawala-specific defaults removed: new Product rows and generic token-mint calls now default to the common `standard` claim profile; the Tawala profile is selected explicitly for Tawala. Generic signing/JWKS service and tests renamed to `product_tokens.py` / `test_product_tokens.py`.
+- CI first attempt #165 failed at pytest collection because six test modules still imported the renamed `tawala_token` module. Updated all six imports to `product_tokens`; fresh backend CI #168 and readiness #129 are running. The initial 42.17% coverage is invalid because collection stopped before tests executed.
+- Final verification: backend CI #175 (run `41608428220`) passed 228 tests, 76.85% coverage, per-file coverage, and Alembic upgrade/downgrade; readiness #136 (`41608427606`) passed `/health` and `/ready`; Vercel preview is successful. Codecov reports Repository not found but is non-blocking; coverage artifact uploaded.
+- Removed `NEXT_PUBLIC_API_URL` from the frontend env example to align with BFF-only browser transport. The generated OpenAPI client still has a hardcoded localhost base URL; its import/use graph is not verified and it is not an approved browser transport. BFF integration remains a separate follow-up.
+- PR #170 remains open against `dev` and is not merged. Backend CI #175 and readiness #136 passed; the Vercel preview for the latest docs/environment-template commit is still pending. N1 issue #42/#43 checklists remain unchanged and are not marked accepted by this PR.
+
+## 2026-11-03 — First-client branch rollback notes
+
+**Branch:** `feat/first-client-idp-agnostic-bff`  
+**Parent:** PR #170 head `73ecbcea14e01af84807f4518c4a0171f006a52c`
+
+**Changed areas:**
+- Frontend Auth.js/OIDC config, server-only session credential reader, logout, registration, profile/service/billing BFF handlers and disabled exchange/launch helper.
+- Backend OIDC settings, discovery-based JWT/JWKS/UserInfo validation, configurable role claim extraction and associated unit tests.
+- Backend/frontend environment examples and OIDC/BFF/launch/architecture/README documentation.
+- Inherited PR #170 shared product-token config, product token module rename, generic claim-profile defaults, and unique product-audience migration.
+
+**Risk/compatibility:**
+- Runtime config now requires generic `OIDC_ISSUER`; old `KEYCLOAK_*` aliases are removed. No production environment was changed.
+- If the configured provider emits roles outside the `roles` or `groups` claims, set `OIDC_ROLE_CLAIM_PATH` to its configured claim path before relying on privileged role mapping. NetHubKe core does not hardcode a provider namespace.
+- BFF routes require a successful `/users/sync` result and active canonical user. IdP-only sessions remain signed in but cannot access protected dashboard data.
+- Product exchange is deliberately disabled at the browser boundary; Tawala launch must not be re-enabled until a single-use server-to-server launch-code flow exists.
+- Migration `m6g7h8i9j0k1_unique_product_audiences` is inherited from PR #170. It fails with duplicate audience diagnostics rather than silently rewriting data.
+
+**Rollback:** before merge, revert the branch commits or close the PR without merging; no production rollback is needed. If merged later, revert the consolidated PR as a unit. Do not selectively remove the unique-audience migration after products depend on it. Any production environment-variable rollback must be coordinated separately; no runtime secrets were modified here.
+
+
+## CI verification — 2026-11-03
+
+- PR: #173 — `feat(auth): make website first client provider-neutral and BFF-secure`.
+- Backend CI: run 41622960491 — 237 passed, 77.51% coverage; Alembic upgrade, downgrade and re-upgrade passed.
+- Backend readiness: run 41622960484 — Docker/PostgreSQL/Redis readiness passed.
+- Frontend CI: run 41622960475 — lint, production build and 11 auth/BFF security regression tests passed.
+- PR #170 was closed as superseded by #173; its changes are included in the consolidated branch.
+- PR #173 remains open and mergeable against dev. No production settings, secrets, migrations or feature flags were changed in a deployed environment.
+
+
+## Final review note — 2026-11-03
+
+- PR #173 is open, mergeable and targets `dev`; PR #170 is closed as superseded. Latest branch head: `5b71c6a7820af93ece705e9fc8416c6754b3c064`.
+- Latest GitHub Actions: backend CI 41622960491 (237 passed, 77.51% coverage; Alembic upgrade/downgrade/re-upgrade passed), readiness 41622960484 (Docker/PostgreSQL/Redis passed), frontend CI 41622960475 (lint, production build, 11 security tests passed).
+- Vercel status reports `build-rate-limit`; the GitHub Actions frontend production build is green, but no Vercel preview URL is available. This is a preview-platform limit, not a failed application build.
+- Remaining related open work: #171 browser smoke with configured OIDC credentials; #162 product-side local verifier evidence; #164 measured five-minute stale-access behavior; #165 product integration validation; #149 secure one-time launch-code handoff; #150 billing/settings/operational readiness.
+- #80/#79/#81/#158/#160/#172 are linked to PR #173 and will close on merge. #148/#152/#161 and already-complete/superseded issues have been closed with evidence. #57 and #135 remain open as programme/history records.

@@ -3,9 +3,9 @@
 **Status:** Draft for review  
 **Programme:** #57 — NetHubKe SSO Platform  
 **Architecture baseline:** `docs/SSO_ARCHITECTURE_CONTRACT.md`  
-**Planning context:** #142; N0–N10 sequence remains authoritative  
+**Planning context:** #142; N0–N10 labels are historical traceability, not delivery gates  
 **Scope:** Website/BFF reference integration and reusable contracts for all future clients  
-**Implementation status:** Contract only. This document does not enable exchange, launch, or deployment flags.
+**Implementation status:** Contract for the first website client. Actual route readiness is tracked by implementation PRs and CI; this document does not enable product exchange or launch.
 
 ## 1. Non-negotiable integration rule
 
@@ -29,7 +29,7 @@ PostgreSQL (source of truth) / Redis (optional cache)
 The browser:
 - Calls only same-origin website routes (for example, `/api/account/*` and `/api/services/*`).
 - Never calls the NetHubKe hostname, API origin, or `/api/v1/*` endpoints.
-- Never receives a Zitadel access token, refresh token, ID token, NetHubKe product token, client secret, signing key, or machine credential.
+- Never receives upstream OIDC access, refresh or ID tokens, NetHubKe product token, client secret, signing key, or machine credential.
 - Never receives NetHubKe's internal API base URL through a `NEXT_PUBLIC_*` variable, generated browser SDK, HTML, source map, or runtime configuration.
 - Receives only the minimum application data needed to render the current page.
 
@@ -46,7 +46,7 @@ This rule applies to every browser-based NetHub client, not just the NetHubKe we
 
 | Client class | Authentication entry | NetHubKe transport | Token custody |
 |---|---|---|---|
-| Browser website / web product | Zitadel OIDC Authorization Code flow, handled by its BFF/Auth.js | Browser → same-origin BFF → NetHubKe | BFF only; browser gets an opaque HttpOnly session cookie |
+| Browser website / web product | OIDC Authorization Code flow with the configured provider, handled by its BFF/Auth.js | Browser → same-origin BFF → NetHubKe | BFF only; browser gets an opaque HttpOnly session cookie |
 | Native mobile / desktop | OIDC Authorization Code + PKCE using system browser | Native client uses a narrowly scoped public-client flow only if explicitly supported; privileged operations go through its trusted backend | OS secure storage for user tokens; no client secret or signing key |
 | Product backend / machine client | Registered machine identity and client authentication | Server-to-server directly to NetHubKe | Backend secret store; scoped, audience-restricted machine token |
 | Product resource API | NetHubKe-issued product JWT | No per-request NetHubKe call; local signature/JWKS validation | Product API process |
@@ -58,14 +58,14 @@ Product APIs must not call NetHubKe for per-request introspection on hot paths. 
 ## 3. Browser authentication and BFF session
 
 1. The browser navigates to the website's sign-in route.
-2. Auth.js initiates OIDC Authorization Code flow with Zitadel. The browser may be redirected to Zitadel's authorization endpoint; this is an OIDC navigation, not a browser API call to NetHubKe.
+2. Auth.js initiates OIDC Authorization Code flow with the configured OIDC provider. The browser may be redirected to the provider's authorization endpoint; this is an OIDC navigation, not a browser API call to NetHubKe.
 3. Auth.js handles the callback and code exchange on the server. PKCE/state/nonce validation is required; use a confidential client when the configured deployment has a client secret.
 4. The BFF retains upstream access/refresh/ID tokens in server-only session state. If Auth.js JWT sessions are used, the session cookie must remain encrypted, HttpOnly, Secure in production, and unavailable to client JavaScript. Do not copy token fields into the public session callback.
 5. The browser receives only the opaque session cookie and a safe session/profile DTO.
 6. BFF route handlers call NetHubKe with the upstream access token whose issuer and audience are accepted by the configured NetHubKe API. The API audience must be explicitly configured and tested; `openid profile email` alone is not proof that the access token is intended for NetHubKe.
 7. The BFF refreshes/reacquires upstream credentials server-side. If refresh fails or the upstream session is no longer valid, it clears or invalidates the application session and requires re-authentication.
 
-A successful Zitadel login is not, by itself, proof that the NetHubKe account is active, linked, or entitled. The BFF must represent identity initialization and NetHubKe authorization failures distinctly; it must not silently substitute an IdP-only profile and present it as an initialized NetHubKe account.
+A successful the configured OIDC provider login is not, by itself, proof that the NetHubKe account is active, linked, or entitled. The BFF must represent identity initialization and NetHubKe authorization failures distinctly; it must not silently substitute an IdP-only profile and present it as an initialized NetHubKe account.
 
 ### Cookie and request protections
 
@@ -99,14 +99,14 @@ The current API paths below are observed in the repository. Their presence does 
 
 | NetHubKe endpoint | Intended use | Contract notes |
 |---|---|---|
-| `POST /api/v1/users/sync` | First-login/JIT identity initialization | BFF forwards validated Zitadel access token server-side. Identity key is issuer + immutable subject; email is mutable profile data, never an account-linking key. Do not use as an every-request profile read. |
+| `POST /api/v1/users/sync` | First-login/JIT identity initialization | BFF forwards validated the configured OIDC provider access token server-side. Identity key is issuer + immutable subject; email is mutable profile data, never an account-linking key. Do not use as an every-request profile read. |
 | `GET /api/v1/users/me` | Canonical profile read | Requires `user:read`; resolve by canonical upstream identity; disabled/deleted identities fail closed. |
 | `PATCH /api/v1/users/me` | Own-profile update | Requires `user:write`; allow only explicitly user-editable fields. |
 | `GET /api/v1/services/get-services` | Public service catalogue | Public catalogue metadata only; public availability is distinct from authentication requirements and entitlement. |
 | `GET /api/v1/services/my-status` | Existing connection-status view | Current implementation uses a free-tier heuristic for `trial`; it is not sufficient as authoritative access/entitlement state. |
 | `GET /api/v1/users/me/product-links` | Read linked product organization IDs | Authenticated user context; return only links belonging to the caller's tenant. |
 | `PUT /api/v1/users/me/product-links` | Link tenant to product organization | Sensitive mutation; owner/admin policy, input validation and durable audit are required. Do not expose as an ordinary profile edit. |
-| `POST /api/v1/auth/exchange` | Exchange upstream identity for product-specific JWT | Server-side BFF only. Request product slug only; do not trust caller-supplied principal, audience, subject, org ID, roles, or entitlement. Exchange remains default-off until its milestone gates are accepted. |
+| `POST /api/v1/auth/exchange` | Exchange upstream identity for product-specific JWT | Server-side BFF only. Request product slug only; do not trust caller-supplied principal, audience, subject, org ID, roles, or entitlement. Exchange is controlled by one global `PRODUCT_TOKEN_EXCHANGE_ENABLED` gate, default-off for every product until its milestone gates are accepted. There are no per-product exchange environment flags; the requested slug selects the registered Product row and its audience/policy. |
 | `GET /api/v1/auth/jwks.json` | Product resource-server key discovery | Consumed by product backends/resource servers, not exposed as a browser credential endpoint. Public keys only. |
 | `GET /api/v1/billing/*` | Read-only billing view when accepted | BFF maps only persisted billing data. No billing mutation/payment collection is implied. |
 
@@ -147,7 +147,7 @@ Required protections: registered redirect allowlist, exact audience/product bind
 ## 8. Logout, expiry, refresh and revocation
 
 - Local logout clears the BFF session and cookies.
-- Federated logout is initiated server-side using the OIDC end-session metadata and a registered post-logout redirect URI. The browser may navigate to Zitadel to complete the IdP logout.
+- Federated logout is initiated server-side using the OIDC end-session metadata and a registered post-logout redirect URI. The browser may navigate to the configured OIDC provider to complete the IdP logout.
 - Upstream access-token refresh is performed server-side only. Refresh-token rotation must replace the stored refresh token when returned.
 - A refresh failure invalidates the authenticated BFF session; do not continue using expired credentials or silently fall back to IdP-only identity.
 - Product JWT expiry is enforced by product APIs locally. Normal grant removal, account disable, organization entitlement revocation and service disable must meet the approved five-minute end-to-end stale-access bound.
@@ -202,7 +202,7 @@ These are repository observations, not permission to change runtime behavior:
 1. The existing Auth.js callback retains an IdP-only session when `/users/sync` fails. The reference-client contract requires an explicit uninitialized/degraded state and must not present that session as a fully initialized NetHubKe account.
 2. OIDC authorization currently requests `openid profile email`; the accepted NetHubKe API audience must be explicitly requested/configured and verified in a real token.
 3. Existing `/services/my-status` derives `trial` from tenant tier when no product link exists. This is not an authoritative entitlement decision and must not drive launch authorization.
-4. Existing `/auth/exchange` exchanges an upstream IdP bearer for a product JWT and is default-off. It must remain server-side and gated until N3–N5 acceptance and staging requirements are met.
+4. Existing `/auth/exchange` exchanges an upstream IdP bearer for a product JWT and is controlled by the shared, global `PRODUCT_TOKEN_EXCHANGE_ENABLED` gate (default false). It must remain server-side and gated until N3–N5 acceptance and staging requirements are met. Product audiences come only from the Product registry; no Tawala-specific environment override exists.
 5. The N7 launch transaction/redeem boundary must be verified before any browser redirect to a product is enabled.
 6. Current BFF helper supports a server-side bearer-token request, but its use must be restricted to server modules and wrapped by typed, explicit BFF route handlers.
 7. The exact API audience/scope contract and machine-client authentication/rotation contract need environment and implementation verification.
@@ -219,9 +219,9 @@ This contract is a documentation/planning deliverable and does not authorize ski
 ## 14. Decisions required to freeze this contract
 
 1. **BFF session storage:** accept Auth.js encrypted HttpOnly JWT session for the first website client, or require server-side session storage before integration?
-2. **NetHubKe audience:** confirm the exact Zitadel project/API audience and required scopes used by the upstream access token.
-3. **First-login failure policy:** should a user whose Zitadel login succeeds but NetHubKe identity sync fails be signed out, or remain in a restricted `identity_pending` session that can only retry initialization?
+2. **NetHubKe audience:** confirm the exact the configured OIDC provider project/API audience and required scopes used by the upstream access token.
+3. **First-login failure policy:** should a user whose the configured OIDC provider login succeeds but NetHubKe identity sync fails be signed out, or remain in a restricted `identity_pending` session that can only retry initialization?
 4. **Launch handoff:** approve the one-time launch-code redemption model as the standard browser-to-product handoff, subject to N7 implementation and security acceptance.
 5. **Non-browser clients:** confirm that backend/machine clients authenticate directly server-to-server, while all browser clients are required to use their own BFF.
 
-No runtime implementation, feature flag, schema, secret, or deployment setting is changed by this draft.
+No runtime implementation, feature flag, schema, secret, or deployment setting is changed by this contract document.

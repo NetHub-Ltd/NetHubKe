@@ -1,9 +1,12 @@
-"""JWT validation for the NetHubKe resource server (OIDC IdP-agnostic)."""
+"""OIDC access-token validation using provider discovery metadata."""
 
 from __future__ import annotations
 
 from functools import lru_cache
+from threading import Lock
+from time import monotonic
 from typing import Any
+from urllib.parse import urlsplit
 
 import httpx
 import jwt
@@ -21,74 +24,129 @@ bearer_scheme = HTTPBearer(auto_error=False)
 
 __all__ = ["bearer_scheme", "_decode_token", "merge_scope_claims", "extract_roles"]
 
+_DISCOVERY_TTL_SECONDS = 300
+_discovery_cache: dict[str, tuple[float, dict[str, Any]]] = {}
+_discovery_lock = Lock()
+
+
+def _validate_endpoint(url: str, *, label: str) -> str:
+    """Reject malformed endpoints and plaintext transport in production."""
+    parsed = urlsplit(url)
+    if parsed.scheme not in {"https", "http"} or not parsed.netloc:
+        raise ValueError(f"OIDC discovery contains an invalid {label}")
+    environment = getattr(settings.environment, "value", settings.environment)
+    if environment == "production" and parsed.scheme != "https":
+        raise ValueError(f"OIDC discovery contains a non-HTTPS {label}")
+    return url
+
+
+def _get_oidc_discovery(issuer: str) -> dict[str, Any]:
+    """Fetch standard OIDC metadata with a short bounded process-local cache."""
+    normalized_issuer = issuer
+    now = monotonic()
+    with _discovery_lock:
+        cached = _discovery_cache.get(normalized_issuer)
+        if cached and now - cached[0] < _DISCOVERY_TTL_SECONDS:
+            return cached[1]
+
+    try:
+        _validate_endpoint(normalized_issuer, label="issuer")
+        discovery_base = normalized_issuer[:-1] if normalized_issuer.endswith(chr(47)) else normalized_issuer
+        discovery_url = f"{discovery_base}/.well-known/openid-configuration"
+        with httpx.Client(timeout=5.0, follow_redirects=False) as client:
+            response = client.get(
+                discovery_url,
+                headers={"Accept": "application/json", "User-Agent": "NetHubKe-OIDC"},
+            )
+            response.raise_for_status()
+            metadata = response.json()
+    except (httpx.HTTPError, ValueError) as exc:
+        logger.error("OIDC discovery failed for configured issuer: {}", normalized_issuer)
+        raise HTTPException(status_code=503, detail="Identity provider discovery unavailable") from exc
+
+    if not isinstance(metadata, dict):
+        raise HTTPException(status_code=503, detail="Identity provider discovery document is invalid")
+
+    discovered_issuer = metadata.get("issuer")
+    if not isinstance(discovered_issuer, str) or discovered_issuer != normalized_issuer:
+        raise HTTPException(status_code=503, detail="Identity provider discovery issuer mismatch")
+
+    jwks_uri = metadata.get("jwks_uri")
+    if not isinstance(jwks_uri, str) or not jwks_uri:
+        raise HTTPException(status_code=503, detail="Identity provider discovery has no jwks_uri")
+
+    try:
+        _validate_endpoint(jwks_uri, label="jwks_uri")
+        for key in ("authorization_endpoint", "token_endpoint", "userinfo_endpoint", "end_session_endpoint"):
+            endpoint = metadata.get(key)
+            if endpoint is not None:
+                if not isinstance(endpoint, str) or not endpoint:
+                    raise ValueError(f"OIDC discovery contains an invalid {key}")
+                _validate_endpoint(endpoint, label=key)
+    except ValueError as exc:
+        raise HTTPException(status_code=503, detail="Identity provider discovery contains an unsafe endpoint") from exc
+
+    with _discovery_lock:
+        _discovery_cache[normalized_issuer] = (monotonic(), metadata)
+    return metadata
+
 
 @lru_cache(maxsize=4)
 def _get_jwks_client(jwks_url: str, lifespan: int) -> PyJWKClient:
-    """Reuse a bounded JWKS client; PyJWT refreshes its JWKS set after lifespan."""
-    return PyJWKClient(uri=jwks_url, cache_jwk_set=True, lifespan=lifespan,
-                       cache_keys=False, timeout=5,
-                       headers={"User-Agent": "FastAPI-Resource-Server", "Accept": "application/json"})
+    """Reuse a bounded JWKS client; PyJWT refreshes the key set after lifespan."""
+    return PyJWKClient(
+        uri=jwks_url,
+        cache_jwk_set=True,
+        lifespan=lifespan,
+        cache_keys=False,
+        timeout=5,
+        headers={"User-Agent": "NetHubKe-Resource-Server", "Accept": "application/json"},
+    )
 
 
-def _userinfo_url(issuer: str) -> str:
-    base = issuer.rstrip("/")
-    # Zitadel / many OIDC providers
-    return f"{base}/oidc/v1/userinfo"
-
-
-def _fetch_userinfo(access_token: str, issuer: str) -> dict[str, Any]:
-    """
-    OIDC UserInfo — used when the access token is a JWT without profile claims
-    (Zitadel puts email/name on the ID token / userinfo, not on the access token).
-    """
-    url = _userinfo_url(issuer)
+def _fetch_userinfo(access_token: str, userinfo_endpoint: str) -> dict[str, Any]:
+    """Fetch standard OIDC UserInfo when the access token omits profile claims."""
     try:
-        with httpx.Client(timeout=5.0) as client:
-            resp = client.get(
-                url,
+        with httpx.Client(timeout=5.0, follow_redirects=False) as client:
+            response = client.get(
+                userinfo_endpoint,
                 headers={
                     "Authorization": f"Bearer {access_token}",
                     "Accept": "application/json",
                 },
             )
-    except httpx.HTTPError as e:
-        logger.error("UserInfo request failed | {}", str(e))
-        raise HTTPException(
-            status_code=401,
-            detail="Unable to load user profile from identity provider",
-        ) from e
+    except httpx.HTTPError as exc:
+        logger.error("OIDC UserInfo request failed: {}", str(exc))
+        raise HTTPException(status_code=401, detail="Unable to load identity profile") from exc
 
-    if resp.status_code != 200:
-        logger.warning(
-            "UserInfo rejected | status={} body={}",
-            resp.status_code,
-            resp.text[:200],
-        )
-        raise HTTPException(
-            status_code=401,
-            detail="Token missing email claim and UserInfo unavailable",
-        )
+    if response.status_code != 200:
+        logger.warning("OIDC UserInfo rejected with status={}", response.status_code)
+        raise HTTPException(status_code=401, detail="Identity provider rejected UserInfo request")
 
-    data = resp.json()
+    data = response.json()
     if not isinstance(data, dict):
-        raise HTTPException(status_code=401, detail="Invalid UserInfo response")
+        raise HTTPException(status_code=401, detail="Identity provider returned invalid UserInfo")
     return data
 
 
 def _decode_token(token: str) -> TokenData:
-    """
-    Validate a bearer access token against the configured IdP JWKS.
-
-    Checks: signature (RS256), exp, issuer, audience (from settings).
-    If the JWT has no email (typical for Zitadel access tokens), fetch
-    profile claims from the OIDC UserInfo endpoint with the same token.
-    """
+    """Validate signature, issuer, audience and required claims using OIDC metadata."""
     try:
+        # Reject malformed compact JWTs before attempting provider discovery.
+        # This preserves a deterministic 401 for garbage credentials even if
+        # the configured provider is temporarily unavailable.
+        if not isinstance(token, str) or token.count(".") != 2:
+            raise HTTPException(status_code=401, detail="Invalid credentials")
+        try:
+            jwt.get_unverified_header(token)
+        except exceptions.PyJWTError as exc:
+            raise HTTPException(status_code=401, detail="Invalid credentials") from exc
+
         issuer = settings.idp_issuer
-        jwks_url = settings.idp_jwks_url
-        logger.debug("OIDC Issuer | {} | JWKS | {}", issuer, jwks_url)
+        metadata = _get_oidc_discovery(issuer)
+        jwks_uri = str(metadata["jwks_uri"])
         jwks_lifespan = max(1, min(300, int(settings.jwks_cache_ttl)))
-        jwks_client = _get_jwks_client(jwks_url, jwks_lifespan)
+        jwks_client = _get_jwks_client(jwks_uri, jwks_lifespan)
         signing_key = jwks_client.get_signing_key_from_jwt(token)
 
         payload = jwt.decode(
@@ -102,58 +160,53 @@ def _decode_token(token: str) -> TokenData:
         )
 
         raw_scope = merge_scope_claims(payload)
-        roles = extract_roles(payload)
+        roles = extract_roles(payload, settings.oidc_role_claim_path)
 
         email = payload.get("email")
         name = payload.get("name")
         preferred = payload.get("preferred_username")
         email_verified = payload.get("email_verified", False)
 
-        # Zitadel (and some IdPs): profile claims live on ID token / UserInfo only
         if not email:
-            logger.info("Access token has no email; fetching OIDC UserInfo")
-            info = _fetch_userinfo(token, issuer)
-            email = info.get("email") or email
+            userinfo_endpoint = metadata.get("userinfo_endpoint")
+            if not isinstance(userinfo_endpoint, str) or not userinfo_endpoint:
+                raise HTTPException(status_code=401, detail="Token has no email and provider has no UserInfo endpoint")
+            info = _fetch_userinfo(token, userinfo_endpoint)
+            userinfo_sub = info.get("sub")
+            if userinfo_sub is not None and userinfo_sub != payload.get("sub"):
+                raise HTTPException(status_code=401, detail="UserInfo subject does not match access token")
+            email = info.get("email")
             name = info.get("name") or name
-            preferred = (
-                info.get("preferred_username")
-                or info.get("username")
-                or preferred
-            )
+            preferred = info.get("preferred_username") or preferred
             if "email_verified" in info:
                 email_verified = bool(info.get("email_verified"))
-            # Merge any roles from userinfo if present
-            roles = extract_roles({**payload, **info}) or roles
+            roles = extract_roles({**payload, **info}, settings.oidc_role_claim_path) or roles
 
         if not email:
-            logger.warning("Auth Fail | Token and UserInfo missing email claim")
-            raise HTTPException(status_code=401, detail="Token missing email claim")
+            raise HTTPException(status_code=401, detail="Identity token is missing required email claim")
 
-        validate_data = {
-            "sub": str(payload.get("sub") or ""),
-            "iss": str(payload.get("iss") or issuer),
-            "email": email,
-            "preferred_username": preferred,
-            "name": name,
-            "email_verified": email_verified,
-            "roles": roles,
-            "scope": raw_scope,
-        }
-        return TokenData(**validate_data)
+        return TokenData(
+            sub=str(payload.get("sub") or ""),
+            iss=str(payload.get("iss") or issuer),
+            email=email,
+            preferred_username=preferred,
+            name=name,
+            email_verified=email_verified,
+            roles=roles,
+            scope=raw_scope,
+        )
 
     except exceptions.ExpiredSignatureError:
-        logger.warning("Auth Fail | Token expired")
+        logger.warning("Authentication failed: upstream token expired")
         raise HTTPException(status_code=401, detail="Token has expired")
     except exceptions.InvalidAudienceError:
-        logger.error(
-            "Auth Fail | Token audience mismatch | expected={}", settings.audience
-        )
+        logger.warning("Authentication failed: upstream token audience mismatch")
         raise HTTPException(status_code=401, detail="Invalid token audience")
     except exceptions.InvalidIssuerError:
-        logger.error("Auth Fail | Token issuer mismatch")
+        logger.warning("Authentication failed: upstream token issuer mismatch")
         raise HTTPException(status_code=401, detail="Invalid token issuer")
     except HTTPException:
         raise
-    except Exception as e:
-        logger.error("Auth Fail | JWT Error: {}", str(e))
+    except Exception as exc:
+        logger.error("Authentication failed while validating upstream JWT: {}", str(exc))
         raise HTTPException(status_code=401, detail="Invalid credentials")

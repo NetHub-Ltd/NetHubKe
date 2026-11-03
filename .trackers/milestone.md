@@ -186,3 +186,32 @@
 - This work is explicitly parallel architecture documentation, not a claim that N1–N5 acceptance is complete and not authorization to start N6/N7 runtime work.
 - Current programme gate remains N1 (#42–#43), the earliest milestone identified by `docs/SSO_ARCHITECTURE_CONTRACT.md` as not demonstrably accepted. Closed issue state and historical CI alone are insufficient without mapped acceptance evidence.
 - Website reference-client implementation must be scheduled only after the relevant prerequisite gates are verified.
+
+## N1 acceptance validation / configuration reconciliation — 2026-11-03
+- N1 code and historical CI evidence are present: PR #145 merged; later backend CI #145 on PR #168 passed 227 tests at 76.83% coverage. The N1 #42/#43 historical checklists remain unchecked and are not silently marked accepted.
+- Documentation gap identified: AUTH_MATRIX did not fully list generic exchange/JWKS behavior and the global gate; Product Claim Profiles still described the removed Tawala audience override.
+- Configuration gap identified: Tawala-named settings actually controlled shared product-token issuer, TTL, PEM fallback and global exchange. Refactored to `PRODUCT_TOKEN_*`; removed product audience override and unused subscription flag. Exchange remains default-off globally.
+- Current branch `fix/shared-product-token-configuration`; fresh CI and review pending. N5 five-minute end-to-end verifier acceptance remains unproven and is not closed by this work.
+- Additional Tawala-specific defaults removed: new Product rows and generic token-mint calls now default to the common `standard` claim profile; the Tawala profile is selected explicitly for Tawala. Generic signing/JWKS service and tests renamed to `product_tokens.py` / `test_product_tokens.py`.
+- CI first attempt #165 failed at pytest collection because six test modules still imported the renamed `tawala_token` module. Updated all six imports to `product_tokens`; fresh backend CI #168 and readiness #129 are running. The initial 42.17% coverage is invalid because collection stopped before tests executed.
+- Final verification: backend CI #175 (run `41608428220`) passed 228 tests, 76.85% coverage, per-file coverage, and Alembic upgrade/downgrade; readiness #136 (`41608427606`) passed `/health` and `/ready`; Vercel preview is successful. Codecov reports Repository not found but is non-blocking; coverage artifact uploaded.
+- Removed `NEXT_PUBLIC_API_URL` from the frontend env example to align with BFF-only browser transport. The generated OpenAPI client still has a hardcoded localhost base URL; its import/use graph is not verified and it is not an approved browser transport. BFF integration remains a separate follow-up.
+- PR #170 remains open against `dev` and is not merged. Backend CI #175 and readiness #136 passed; the Vercel preview for the latest docs/environment-template commit is still pending. N1 issue #42/#43 checklists remain unchanged and are not marked accepted by this PR.
+
+## 2026-11-03 — Delivery grouping (not a milestone gate)
+
+Current prioritized outcome: first working website client.
+
+1. Provider-neutral OIDC boundary (#80): discovery-based backend validation, configurable claim mapping, generic frontend login/refresh/logout.
+2. Website BFF (#171): server-only encrypted-session credential access, canonical-account requirement, safe profile/service DTOs, same-origin mutation checks, safe logout.
+3. Product audience isolation (#172): unique audience migration already exists in the inherited PR #170 branch; retain its CI/migration evidence and close only after the consolidated PR merges.
+
+Other open issues remain only where they represent separate required behavior (for example #152, #162, #164, #165). Historical N0–N10 labels are traceability; they must not block or restart this delivery.
+
+
+## Delivery checkpoint — 2026-11-03
+
+- First website client implementation is in PR #173 and CI is green.
+- Completed implementation group: provider-neutral OIDC boundary, Auth.js session/BFF security, safe profile/service DTOs, disabled browser product launch, shared product-token configuration and unique audience enforcement.
+- Issues #148, #152 and #161 closed with code/test evidence. #136/#138/#137 superseded Path A work closed as not planned. Other already-implemented issues #75/#116/#117/#144/#146/#159/#163 closed.
+- Remaining separate requirements: #171 browser smoke after OIDC config, #162 product-side local verifier evidence, #164 five-minute end-to-end stale-access measurement, #165 complete product integration validation. Product launch remains disabled until server-to-server one-time redemption exists.

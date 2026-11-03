@@ -183,3 +183,47 @@
 - Draft: `docs/CLIENT_INTEGRATION_CONTRACT.md` on `docs/client-bff-integration-contract`.
 - Covers browser/BFF flow, Auth.js/Zitadel session boundary, canonical identity, service access, product exchange/launch handoff, logout/refresh, errors, client classes, and conformance requirements.
 - Documentation only; no runtime changes or flag enablement. The contract is pending user review and must be reconciled with N0–N10 acceptance order. N1 (#42–#43) remains earliest not-demonstrably-accepted milestone.
+
+## Current task — N1 evidence reconciliation and shared product-token configuration (2026-11-03)
+- User approved Phase 2 and requested removal of misleading per-product runtime configuration, documentation reconciliation and an up-to-date root README.
+- Branch: `fix/shared-product-token-configuration`, base `dev` after PR #169 merge.
+- Investigation: `tawala_exchange_enabled` was a global exchange kill switch; Tawala-prefixed issuer/TTL/key-fallback settings were also global. The Tawala audience override conflicted with Product registry authority. The subscription-required setting was unused.
+- Changes: replace with shared `PRODUCT_TOKEN_*` settings (exchange default false); source audience only from Product registry; remove unused subscription setting; update tests, backend env example, AUTH_MATRIX, PRODUCT_CLAIM_PROFILES, client contract, README and N1 validation report.
+- No per-product deployment env variables are introduced. Product-specific audience and claim profile remain registry metadata; product business permissions remain product-owned.
+- Verification pending fresh GitHub Actions for this branch. No deployment/secret changes or merge authorized.
+- Additional Tawala-specific defaults removed: new Product rows and generic token-mint calls now default to the common `standard` claim profile; the Tawala profile is selected explicitly for Tawala. Generic signing/JWKS service and tests renamed to `product_tokens.py` / `test_product_tokens.py`.
+- CI first attempt #165 failed at pytest collection because six test modules still imported the renamed `tawala_token` module. Updated all six imports to `product_tokens`; fresh backend CI #168 and readiness #129 are running. The initial 42.17% coverage is invalid because collection stopped before tests executed.
+- Final verification: backend CI #175 (run `41608428220`) passed 228 tests, 76.85% coverage, per-file coverage, and Alembic upgrade/downgrade; readiness #136 (`41608427606`) passed `/health` and `/ready`; Vercel preview is successful. Codecov reports Repository not found but is non-blocking; coverage artifact uploaded.
+- Removed `NEXT_PUBLIC_API_URL` from the frontend env example to align with BFF-only browser transport. The generated OpenAPI client still has a hardcoded localhost base URL; its import/use graph is not verified and it is not an approved browser transport. BFF integration remains a separate follow-up.
+- PR #170 remains open against `dev` and is not merged. Backend CI #175 and readiness #136 passed; the Vercel preview for the latest docs/environment-template commit is still pending. N1 issue #42/#43 checklists remain unchanged and are not marked accepted by this PR.
+
+## 2026-11-03 — First website client implementation
+
+**Objective:** make the NetHubKe website a working first browser client through generic OIDC login and secure same-origin BFF routes.
+
+**Implementation branch:** `feat/first-client-idp-agnostic-bff` (created from PR #170 head `73ecbcea14e01af84807f4518c4a0171f006a52c`). PR #170 changes are included as the shared product-token configuration prerequisite.
+
+**Issues:** #80 (provider-neutral OIDC discovery/claim mapping), #171 (website BFF session and API integration), #172 (unique product audiences; already implemented in the included #170 changes).
+
+**Completed in this branch so far:**
+- Added server-only Auth.js JWT cookie reader; BFF no longer depends on tokens being copied into the public session.
+- Protected profile, service-status and billing BFF routes with a provisioned/active NetHub identity check.
+- Added same-origin mutation checks, profile payload allowlisting and response filtering.
+- Disabled browser-facing product exchange (HTTP 410) and removed the browser token-fragment launch helper.
+- Routed registration through Auth.js OIDC authorization handling.
+- Updated federated logout and frontend OIDC discovery to use provider metadata, without vendor endpoint fallbacks.
+- Replaced backend JWKS/UserInfo endpoint construction with OIDC discovery and configurable role-claim mapping.
+- Added backend tests for two different discovery endpoint layouts, issuer mismatch and configurable role claims.
+- Removed provider-specific config aliases and the unused empty legacy provider module.
+- Updated architecture, BFF, launch, environment and README documentation.
+
+**CI verified:** Backend CI run 41622960491 passed 237 tests at 77.51% coverage; Alembic upgrade/downgrade/re-upgrade passed. Backend readiness run 41622960484 passed. Frontend CI run 41622960475 passed lint, production build and 11 auth/BFF security tests. **Still pending:** browser smoke test with the configured OIDC client and provider role-claim mapping. Product launch remains disabled.
+
+
+## Final review note — 2026-11-03
+
+- PR #173 is open, mergeable and targets `dev`; PR #170 is closed as superseded. Latest branch head: `5b71c6a7820af93ece705e9fc8416c6754b3c064`.
+- Latest GitHub Actions: backend CI 41622960491 (237 passed, 77.51% coverage; Alembic upgrade/downgrade/re-upgrade passed), readiness 41622960484 (Docker/PostgreSQL/Redis passed), frontend CI 41622960475 (lint, production build, 11 security tests passed).
+- Vercel status reports `build-rate-limit`; the GitHub Actions frontend production build is green, but no Vercel preview URL is available. This is a preview-platform limit, not a failed application build.
+- Remaining related open work: #171 browser smoke with configured OIDC credentials; #162 product-side local verifier evidence; #164 measured five-minute stale-access behavior; #165 product integration validation; #149 secure one-time launch-code handoff; #150 billing/settings/operational readiness.
+- #80/#79/#81/#158/#160/#172 are linked to PR #173 and will close on merge. #148/#152/#161 and already-complete/superseded issues have been closed with evidence. #57 and #135 remain open as programme/history records.

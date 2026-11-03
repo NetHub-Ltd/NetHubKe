@@ -11,15 +11,15 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlmodel import select
 
 from app.db.models.models import SecurityAuditEvent, SigningKey
-from app.services.tawala_token import (build_jwks_document, emergency_revoke_signing_key, ensure_fresh_signing_key, get_active_signing_key, rotate_signing_key)
-from app.services import tawala_token as token_service
+from app.services.product_tokens import (build_jwks_document, emergency_revoke_signing_key, ensure_fresh_signing_key, get_active_signing_key, rotate_signing_key)
+from app.services import product_tokens as token_service
 
 
 @pytest.mark.asyncio
 @pytest.mark.integration
 async def test_concurrent_manual_rotations_leave_exactly_one_active_key(test_engine, db_session):
     """Independent PostgreSQL sessions serialize rotation state transitions."""
-    from app.services.tawala_token import _generate_rsa_keypair
+    from app.services.product_tokens import _generate_rsa_keypair
 
     kid, pem, jwk, _ = _generate_rsa_keypair()
     db_session.add(SigningKey(kid=kid, status="active", algorithm="RS256", private_pem=pem, public_jwk=jwk))
@@ -48,7 +48,7 @@ async def test_concurrent_manual_rotations_leave_exactly_one_active_key(test_eng
 @pytest.mark.integration
 async def test_concurrent_auto_rotation_only_replaces_stale_key_once(test_engine, db_session):
     """Workers that observed the same stale key re-check freshness under lock."""
-    from app.services.tawala_token import _generate_rsa_keypair
+    from app.services.product_tokens import _generate_rsa_keypair
 
     kid, pem, jwk, _ = _generate_rsa_keypair()
     stale = SigningKey(kid=kid, status="active", algorithm="RS256", private_pem=pem, public_jwk=jwk)
