@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from fastapi import HTTPException
 
-from app.services import tawala_token as tt
+from app.services import product_tokens as tt
 
 
 @pytest.fixture
