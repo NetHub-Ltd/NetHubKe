@@ -430,9 +430,10 @@ async def test_legacy_direct_idp_access_route_is_not_mounted(
 
 
 @pytest.mark.asyncio
-async def test_tawala_audience_override_cannot_collide_with_another_product(
+async def test_product_audience_comes_from_registry_without_environment_override(
     db_session, monkeypatch
 ):
+    """A shared issuer must use the audience registered for the requested product."""
     from app.api.v1.routes import auth
     from app.core.config import settings
     from app.db.models.models import Product
@@ -471,5 +472,7 @@ async def test_tawala_audience_override_cannot_collide_with_another_product(
             principal_override=None,
         )
 
-    assert error.value.status_code == 503
-    assert "audience conflicts" in error.value.detail
+    # It proceeds past audience collision checking and fails only because the
+    # deliberately unmapped upstream identity has no canonical local account.
+    assert error.value.status_code == 404
+    assert "identity is not linked" in error.value.detail
