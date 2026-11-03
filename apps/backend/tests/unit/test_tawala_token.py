@@ -107,8 +107,13 @@ async def test_mint_disabled():
     db = AsyncMock()
     with patch.object(tt, "exchange_enabled", return_value=False):
         with pytest.raises(HTTPException) as ei:
-            await tt.mint_tawala_access_token(
-                db, sub="s", org_id=uuid.uuid4(), principal="owner"
+            await tt.mint_product_access_token(
+                db,
+                product_slug="tawala",
+                audience="tawala-api",
+                sub="s",
+                org_id=uuid.uuid4(),
+                principal="owner",
             )
     assert ei.value.status_code == 503
 
@@ -118,8 +123,13 @@ async def test_mint_bad_principal():
     db = AsyncMock()
     with patch.object(tt, "exchange_enabled", return_value=True):
         with pytest.raises(HTTPException) as ei:
-            await tt.mint_tawala_access_token(
-                db, sub="s", org_id=uuid.uuid4(), principal="admin"
+            await tt.mint_product_access_token(
+                db,
+                product_slug="tawala",
+                audience="tawala-api",
+                sub="s",
+                org_id=uuid.uuid4(),
+                principal="admin",
             )
     assert ei.value.status_code == 400
 
