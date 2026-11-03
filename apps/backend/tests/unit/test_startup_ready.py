@@ -28,7 +28,7 @@ async def test_ensure_redis_ready_fails_hard():
 
 @pytest.mark.asyncio
 async def test_ensure_signing_keys_ready_bootstraps_when_empty():
-    from app.services import tawala_token as tt
+    from app.services import product_tokens as tt
 
     db = AsyncMock()
     result = MagicMock()
