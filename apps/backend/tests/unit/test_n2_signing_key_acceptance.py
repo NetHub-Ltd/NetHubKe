@@ -214,7 +214,7 @@ async def test_product_token_lifetime_is_hard_capped_at_four_minutes(monkeypatch
     _, _, _, private_key = tt._generate_rsa_keypair()
     monkeypatch.setattr(tt, "exchange_enabled", lambda: True)
     monkeypatch.setattr(tt, "get_active_signing_key", AsyncMock(return_value=(private_key, "test-kid")))
-    monkeypatch.setattr(tt, "settings", MagicMock(tawala_jwt_ttl_sec=28800, tawala_jwt_issuer="https://issuer.test"))
+    monkeypatch.setattr(tt, "settings", MagicMock(product_token_ttl_sec=28800, product_token_issuer="https://issuer.test"))
     token, expires_at = await tt.mint_product_access_token(
         AsyncMock(), product_slug="example", audience="example-api",
         sub="user-1", org_id=None, principal="user", claim_profile="standard",
