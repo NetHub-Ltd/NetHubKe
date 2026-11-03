@@ -183,3 +183,11 @@
 - Draft: `docs/CLIENT_INTEGRATION_CONTRACT.md` on `docs/client-bff-integration-contract`.
 - Covers browser/BFF flow, Auth.js/Zitadel session boundary, canonical identity, service access, product exchange/launch handoff, logout/refresh, errors, client classes, and conformance requirements.
 - Documentation only; no runtime changes or flag enablement. The contract is pending user review and must be reconciled with N0–N10 acceptance order. N1 (#42–#43) remains earliest not-demonstrably-accepted milestone.
+
+## Current task — N1 evidence reconciliation and shared product-token configuration (2026-11-03)
+- User approved Phase 2 and requested removal of misleading per-product runtime configuration, documentation reconciliation and an up-to-date root README.
+- Branch: `fix/shared-product-token-configuration`, base `dev` after PR #169 merge.
+- Investigation: `tawala_exchange_enabled` was a global exchange kill switch; Tawala-prefixed issuer/TTL/key-fallback settings were also global. The Tawala audience override conflicted with Product registry authority. The subscription-required setting was unused.
+- Changes: replace with shared `PRODUCT_TOKEN_*` settings (exchange default false); source audience only from Product registry; remove unused subscription setting; update tests, backend env example, AUTH_MATRIX, PRODUCT_CLAIM_PROFILES, client contract, README and N1 validation report.
+- No per-product deployment env variables are introduced. Product-specific audience and claim profile remain registry metadata; product business permissions remain product-owned.
+- Verification pending fresh GitHub Actions for this branch. No deployment/secret changes or merge authorized.
