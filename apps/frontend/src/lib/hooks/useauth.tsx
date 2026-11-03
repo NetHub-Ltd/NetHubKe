@@ -18,6 +18,7 @@ export function useUser() {
   const isUnauthenticated = sessionStatus === "unauthenticated";
   const isLoadingSession = sessionStatus === "loading";
   const isAuthenticated = sessionStatus === "authenticated" && !isPoisoned;
+  const isProvisioned = session?.backendSynced === true;
 
   const {
     data: backendUser,
@@ -45,7 +46,7 @@ export function useUser() {
       }
       return parsed.data;
     },
-    enabled: isAuthenticated,
+    enabled: isAuthenticated && isProvisioned,
     retry: 1,
     staleTime: 1000 * 60 * 5,
   });
@@ -73,6 +74,7 @@ export function useUser() {
     if (isLoadingSession) return "loading";
     if (isPoisoned) return "stale";
     if (isUnauthenticated) return "unauthenticated";
+    if (isAuthenticated && !isProvisioned) return "error";
     if (isAuthenticated && isLoadingUser) return "loading";
     if (isAuthenticated && user) return "authenticated";
     if (isAuthenticated && fetchError) return "error";
@@ -85,7 +87,9 @@ export function useUser() {
     status: authStatus,
     error: isPoisoned
       ? "Session Expired"
-      : fetchError
+      : isAuthenticated && !isProvisioned
+        ? new Error("Your NetHub account has not been initialized")
+        : fetchError
         ? fetchError
         : null,
     backendSynced: Boolean(user),
