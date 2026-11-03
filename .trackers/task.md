@@ -227,3 +227,17 @@
 - Vercel status reports `build-rate-limit`; the GitHub Actions frontend production build is green, but no Vercel preview URL is available. This is a preview-platform limit, not a failed application build.
 - Remaining related open work: #171 browser smoke with configured OIDC credentials; #162 product-side local verifier evidence; #164 measured five-minute stale-access behavior; #165 product integration validation; #149 secure one-time launch-code handoff; #150 billing/settings/operational readiness.
 - #80/#79/#81/#158/#160/#172 are linked to PR #173 and will close on merge. #148/#152/#161 and already-complete/superseded issues have been closed with evidence. #57 and #135 remain open as programme/history records.
+
+
+## Shared IdP resource-server audit — 2026-11-03
+
+- Audit baseline: merged dev SHA `fdb4a3eabbd8a385d9d96ee12344d89fa52fdd29`; PR #173 is merged.
+- Audit branch: `audit/shared-idp-resource-contract`.
+- Findings and scope: `docs/SHARED_CLIENT_INTEGRATION_READINESS.md`.
+- Confirmed foundation: provider-neutral OIDC discovery/JWKS validation; issuer + subject canonical identity; active-user checks; scope dependency; transactional first-login sync; PostgreSQL entitlement evaluator.
+- Confirmed functional gap: `GET /services/my-status` reports connection/trial heuristics, not entitlement. The existing evaluator is used by the default-off product-token exchange path. A client-neutral read-only service-access endpoint is required and must reuse the evaluator.
+- Security/configuration gap: actual Zitadel issuer, shared API audience, client registrations, scope mapping, access-token TTL and IdP-side disablement behavior have not been evidenced by live conformance tests. Add explicit client-ID-token rejection via distinct API audience.
+- Legacy product-token exchange/JWKS/signing subsystem remains default-off. Do not extend it or use it for NetHubKe API calls. Audit deployed product consumers before removal.
+- Corrected the SSO architecture, client integration and backend auth-matrix documents on this branch to remove the second-token-issuer architecture.
+- Minimal work grouping: (1) shared resource-server contract + authoritative service-access endpoint; (2) security/freshness + same-contract acceptance for website, Tawala and NetPay.
+- Frontend redesign, launch-code handoff, deployment, production configuration and feature-flag enablement are excluded. No runtime code/schema changes have been made.
