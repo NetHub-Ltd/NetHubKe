@@ -105,6 +105,6 @@ Optional/profile-specific claims are documented in [PRODUCT_CLAIM_PROFILES.md](P
 
 ## 8. N1 acceptance evidence
 
-- Generic exchange and JWKS route tests live in `apps/backend/tests/api/test_auth_exchange.py`; signing/JWKS helper tests live in `apps/backend/tests/unit/test_tawala_token.py` (legacy test filename).
+- Generic exchange and JWKS route tests live in `apps/backend/tests/api/test_auth_exchange.py`; signing/JWKS helper tests live in `apps/backend/tests/unit/test_product_tokens.py` (legacy test filename).
 - Backend CI executes `pytest tests/`; latest verified baseline on PR #168 was 227 passed at 76.83% coverage. The shared-configuration refactor requires fresh CI before acceptance.
 - N1 issue #42/#43 checklists remain historical, unchecked records; see `docs/validation/N1_ACCEPTANCE_VALIDATION.md` for mapped evidence and the documentation correction.
