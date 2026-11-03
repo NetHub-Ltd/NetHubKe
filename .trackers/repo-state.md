@@ -171,3 +171,15 @@
 - Final verification: backend CI #175 (run `41608428220`) passed 228 tests, 76.85% coverage, per-file coverage, and Alembic upgrade/downgrade; readiness #136 (`41608427606`) passed `/health` and `/ready`; Vercel preview is successful. Codecov reports Repository not found but is non-blocking; coverage artifact uploaded.
 - Removed `NEXT_PUBLIC_API_URL` from the frontend env example to align with BFF-only browser transport. The generated OpenAPI client still has a hardcoded localhost base URL; its import/use graph is not verified and it is not an approved browser transport. BFF integration remains a separate follow-up.
 - PR #170 remains open against `dev` and is not merged. Backend CI #175 and readiness #136 passed; the Vercel preview for the latest docs/environment-template commit is still pending. N1 issue #42/#43 checklists remain unchanged and are not marked accepted by this PR.
+
+## 2026-11-03 — Current delivery state
+
+- Working branch: `feat/first-client-idp-agnostic-bff`.
+- Branch base: PR #170 head `73ecbcea14e01af84807f4518c4a0171f006a52c`; this intentionally carries the shared product-token configuration refactor and unique product-audience migration forward.
+- Target: `dev`; no merge/deployment performed.
+- Predecessor PR #170: open, unmerged at last check; this branch is intended to supersede it with a consolidated first-client PR.
+- New/active implementation issues: #80, #171, #172.
+- Completed issue closures: #75, #116, #117, #144, #146, #159, #163. #137 closed as superseded by the approved product-token architecture.
+- Current code correction: public Auth.js session intentionally contains no bearer tokens. Previous BFF handlers incorrectly read `session.accessToken`; the new server-only cookie reader resolves this without exposing tokens to browser code.
+- Product launch remains disabled; the browser exchange route returns 410 pending one-time server-to-server launch-code redemption.
+- CI and runtime verification are pending for this branch. Do not report it as merged or production-ready.
