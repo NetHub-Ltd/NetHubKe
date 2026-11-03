@@ -1,6 +1,5 @@
 /**
  * Server-only calls to NetHubKe resource server (Architecture A).
- * Always: Authorization: Bearer <IdP access token>
  */
 
 const base = () => {
@@ -10,6 +9,10 @@ const base = () => {
   }
   return url.replace(/\/$/, "");
 };
+
+export function getBackendBaseUrl(): string | undefined {
+  return process.env.NETHUB_API_URL?.replace(/\/$/, "");
+}
 
 export type NetHubUser = {
   id: string;
@@ -22,16 +25,19 @@ export type NetHubUser = {
 
 async function backendFetch(
   path: string,
-  accessToken: string,
+  accessToken: string | undefined,
   init?: RequestInit
 ): Promise<Response> {
+  const headers: Record<string, string> = {
+    Accept: "application/json",
+    ...(init?.headers as Record<string, string> | undefined),
+  };
+  if (accessToken) {
+    headers.Authorization = `Bearer ${accessToken}`;
+  }
   return fetch(`${base()}${path}`, {
     ...init,
-    headers: {
-      Accept: "application/json",
-      Authorization: `Bearer ${accessToken}`,
-      ...(init?.headers || {}),
-    },
+    headers,
     cache: "no-store",
   });
 }
@@ -51,7 +57,6 @@ export async function syncUser(accessToken: string): Promise<NetHubUser> {
 export async function getMe(accessToken: string): Promise<NetHubUser> {
   const res = await backendFetch("/api/v1/users/me", accessToken);
   if (res.status === 404) {
-    // First visit: provision then read
     return syncUser(accessToken);
   }
   if (!res.ok) {
@@ -59,4 +64,42 @@ export async function getMe(accessToken: string): Promise<NetHubUser> {
     throw new Error(`me failed: ${res.status} ${text}`);
   }
   return res.json() as Promise<NetHubUser>;
+}
+
+export type ProbeResult = {
+  ok: boolean;
+  status?: number;
+  body?: unknown;
+  error?: string;
+  url: string;
+  ms: number;
+};
+
+export async function probeBackend(path: string): Promise<ProbeResult> {
+  const url = `${base()}${path}`;
+  const start = Date.now();
+  try {
+    const res = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(8000) });
+    const text = await res.text();
+    let body: unknown = text;
+    try {
+      body = JSON.parse(text);
+    } catch {
+      /* keep text */
+    }
+    return {
+      ok: res.ok,
+      status: res.status,
+      body,
+      url,
+      ms: Date.now() - start,
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : String(err),
+      url,
+      ms: Date.now() - start,
+    };
+  }
 }
