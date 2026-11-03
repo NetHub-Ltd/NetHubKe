@@ -82,8 +82,9 @@ def test_decode_expired(rsa_key):
     assert error.value.status_code == 401
 
 
-def test_decode_wrong_audience(rsa_key):
-    token = _token(rsa_key, aud="other")
+def test_decode_rejects_id_token_client_audience(rsa_key):
+    """A client ID token must not pass as a NetHubKe API access token."""
+    token = _token(rsa_key, aud="nethubke-website-client")
     with _patch_jwks(rsa_key.public_key()):
         with pytest.raises(HTTPException):
             security_mod._decode_token(token)
