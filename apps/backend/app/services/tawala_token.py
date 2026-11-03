@@ -568,27 +568,6 @@ def get_jwks() -> dict[str, Any]:
     return {"keys": [public_jwk_from_private(env_key, "nethub-env-bootstrap")]}
 
 
-async def mint_tawala_access_token(
-    db: AsyncSession,
-    *,
-    sub: str,
-    org_id: UUID,
-    principal: str,
-    email: Optional[str] = None,
-) -> tuple[str, int]:
-    """Backward-compatible Tawala mint; delegates to product mint."""
-    product = await get_product_by_slug(db, "tawala")
-    return await mint_product_access_token(
-        db,
-        product_slug=product.slug,
-        audience=product.audience,
-        sub=sub,
-        org_id=org_id,
-        principal=principal,
-        email=email,
-    )
-
-
 async def get_product_by_slug(db: AsyncSession, slug: str):
     """Load active product by slug or raise 404/400."""
     from app.db.models.models import Product
