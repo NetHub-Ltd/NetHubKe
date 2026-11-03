@@ -1,3 +1,4 @@
+import "server-only";
 /**
  * Provider-neutral OIDC configuration for Auth.js and RP-initiated logout.
  * The configured issuer is the only provider-specific input; endpoints come
