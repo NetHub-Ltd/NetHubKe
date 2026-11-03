@@ -222,7 +222,7 @@ async def test_mint_product_success(rsa_pem):
             with patch.object(
                 tt,
                 "settings",
-                MagicMock(tawala_jwt_issuer="http://iss", tawala_jwt_ttl_sec=60),
+                MagicMock(product_token_issuer="http://iss", product_token_ttl_sec=60),
             ):
                 token, exp = await tt.mint_product_access_token(
                     db,
@@ -252,7 +252,7 @@ async def test_mint_product_success_token_claims_and_signature(rsa_pem):
             with patch.object(
                 tt,
                 "settings",
-                MagicMock(tawala_jwt_issuer="https://api.example.test", tawala_jwt_ttl_sec=60),
+                MagicMock(product_token_issuer="https://api.example.test", product_token_ttl_sec=60),
             ):
                 token, exp = await tt.mint_product_access_token(
                     db,
