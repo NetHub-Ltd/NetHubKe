@@ -88,6 +88,11 @@ The code path was therefore platform-wide despite the Tawala prefix.
 | `TAWALA_JWT_AUDIENCE` | Product-specific environment override that could supersede the Product registry audience | Removed; `Product.audience` is now the sole source |
 | `TAWALA_EXCHANGE_REQUIRE_SUBSCRIPTION` | Declared in Settings/example but not read by the exchange path; entitlement checks already run unconditionally | Removed as dead configuration |
 
+Additional Tawala-specific defaults found outside environment configuration:
+- The `Product.claim_profile` ORM default was `tawala`, which made new product rows inherit Tawala-only `org_id` / `principal` claims unless explicitly overridden. Its default is now `standard`.
+- `mint_product_access_token` also defaulted to the Tawala claim profile. Its default is now `standard`; the Tawala profile is selected explicitly by the registered Tawala product row.
+- The generic signing/JWKS implementation and its unit tests were named `tawala_token.py` / `test_tawala_token.py`. They are now `product_tokens.py` / `test_product_tokens.py`; all known runtime and test imports were updated.
+
 Already-shared settings retained:
 - `SIGNING_KEY_ENCRYPTION_KEY`
 - `SIGNING_KEY_MAX_AGE_HOURS`
@@ -131,9 +136,9 @@ The new environment names are intentionally not aliases for the old `TAWALA_*` n
 
 Changes made on `fix/shared-product-token-configuration`:
 
-- Replaced Tawala-prefixed runtime environment settings with shared `PRODUCT_TOKEN_*` settings.
+- Replaced Tawala-prefixed runtime environment settings with shared `PRODUCT_TOKEN_*` settings; renamed the generic issuer service/tests to `product_tokens.py` / `test_product_tokens.py`.
 - Removed the per-product audience environment override; the Product registry supplies the audience.
-- Removed the unused subscription requirement setting.
+- Removed the unused subscription requirement setting and changed new product/token claim-profile defaults from Tawala to `standard`.
 - Updated backend unit/API tests and environment example.
 - Updated the authentication matrix, product claim-profile documentation, client integration contract and root README.
 - Added this validation report and updated repository trackers.
