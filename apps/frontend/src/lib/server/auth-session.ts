@@ -3,6 +3,7 @@ import { getToken } from "next-auth/jwt";
 import { headers } from "next/headers";
 import type { NextRequest } from "next/server";
 import type { JWT } from "next-auth/jwt";
+import { getProvisionedAuthContext } from "./auth-session-policy";
 export { isSameOriginMutation } from "./auth-session-policy";
 
 type CanonicalUser = {
@@ -53,19 +54,5 @@ export async function readProvisionedServerAuth(
   request?: Request,
 ): Promise<{ accessToken: string; userId: string } | null> {
   const token = await readServerAuthToken(request);
-  const user = token?.user;
-  if (
-    !token ||
-    !user ||
-    token.error === "RefreshAccessTokenError" ||
-    token.backendSynced !== true ||
-    user.isActive !== true ||
-    typeof user.id !== "string" ||
-    typeof token.accessToken !== "string" ||
-    !token.accessToken
-  ) {
-    return null;
-  }
-
-  return { accessToken: token.accessToken, userId: user.id };
+  return getProvisionedAuthContext(token);
 }
