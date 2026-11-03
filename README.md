@@ -90,7 +90,7 @@ NetHubKe/
 | Database and migrations | PostgreSQL, Alembic, asyncpg |
 | Cache | Redis (optional) |
 | Product-token signing | RS256, PostgreSQL-managed signing keys, JWKS |
-| Website | Next.js 16, React 19, TypeScript, Auth.js |
+| Website | Next.js 16, React 19, TypeScript, Tailwind CSS 4, Auth.js, Lucide |
 | Frontend data/API | TanStack Query, Zod, Axios, generated OpenAPI client |
 | Tests | pytest, backend CI, frontend lint/build checks |
 
