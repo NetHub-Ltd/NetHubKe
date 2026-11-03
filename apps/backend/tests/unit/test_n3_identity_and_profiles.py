@@ -88,7 +88,7 @@ async def test_standard_profile_omits_tawala_only_claims(monkeypatch):
         private_key.public_key(),
         algorithms=["RS256"],
         audience="netpay-api",
-        issuer=tt.settings.tawala_jwt_issuer,
+        issuer=tt.settings.product_token_issuer,
     )
     assert claims["product"] == "netpay"
     assert claims["aud"] == "netpay-api"
