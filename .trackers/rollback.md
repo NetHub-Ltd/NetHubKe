@@ -158,3 +158,11 @@
 - No application code, database migration, runtime configuration, feature flag, secret, or deployment behavior is changed.
 - If the contract is rejected or materially incorrect, revert the documentation PR as a unit. No runtime rollback or data migration is required.
 - Do not enable exchange or launch paths based solely on this draft. Keep all existing rollout gates and the N0–N10 acceptance order intact.
+
+## Shared product-token configuration and N1 documentation reconciliation — 2026-11-03
+- Branch: `fix/shared-product-token-configuration`, targeting `dev`; no deployment settings or secrets are modified.
+- Runtime configuration changes: global `PRODUCT_TOKEN_*` settings replace Tawala-prefixed global settings; Product registry audience replaces the Tawala environment override; the unused subscription setting is removed.
+- Exchange remains disabled by default. If branch CI or review fails, revert this PR as one unit. No schema/data rollback is required.
+- Before any future exchange enablement, inspect deployment environments and replace old `TAWALA_*` names with the shared `PRODUCT_TOKEN_*` equivalents. This PR does not change live environment values.
+- Preserve the stable signing-key encryption secret and existing PostgreSQL signing-key rows; do not rotate, regenerate or replace signing keys as part of this configuration refactor.
+- No merge, deployment, production flag change or secret mutation is authorized by this work.
