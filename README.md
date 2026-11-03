@@ -86,7 +86,7 @@ NetHubKe/
 | Area | Technology |
 |---|---|
 | Identity provider | Zitadel (OIDC); validation is IdP-agnostic |
-| Backend API | Python, FastAPI, Pydantic, SQLModel |
+| Backend API | Python, FastAPI, Pydantic, SQLModel, Loguru |
 | Database and migrations | PostgreSQL, Alembic, asyncpg |
 | Cache | Redis (optional) |
 | Product-token signing | RS256, PostgreSQL-managed signing keys, JWKS |
