@@ -207,3 +207,5 @@
 - Remaining acceptance: actual Zitadel issuer/audience/scopes and all three client registrations; client-ID-token rejection; access-token TTL/JWKS/clock behavior; five-minute freshness proof. Frontend redesign and launch-code work are excluded.
 
 - Follow-up audit detail: UserInfo enrichment currently accepts a missing subject claim; this is recorded as a fail-closed fix in #165. NetPay dev uses independent M2M credentials; Tawala Core main currently exposes local password/session auth. No changes were made to either product repository.
+
+- PR #174 is open against dev: https://github.com/NetHub-Ltd/NetHubKe/pull/174. Documentation/audit only; no runtime implementation. GitHub Actions test/readiness/GitGuardian checks were in progress at checkpoint. No merge authorized.
