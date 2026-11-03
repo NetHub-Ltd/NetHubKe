@@ -191,3 +191,4 @@
 - Changes: replace with shared `PRODUCT_TOKEN_*` settings (exchange default false); source audience only from Product registry; remove unused subscription setting; update tests, backend env example, AUTH_MATRIX, PRODUCT_CLAIM_PROFILES, client contract, README and N1 validation report.
 - No per-product deployment env variables are introduced. Product-specific audience and claim profile remain registry metadata; product business permissions remain product-owned.
 - Verification pending fresh GitHub Actions for this branch. No deployment/secret changes or merge authorized.
+- Additional Tawala-specific defaults removed: new Product rows and generic token-mint calls now default to the common `standard` claim profile; the Tawala profile is selected explicitly for Tawala. Generic signing/JWKS service and tests renamed to `product_tokens.py` / `test_product_tokens.py`.
