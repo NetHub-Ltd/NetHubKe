@@ -40,7 +40,7 @@ All products share one issuer, one managed signing-key set, one global exchange 
 
 ## Adding another product
 
-1. Register its stable slug, exact audience, active state and claim profile in the PostgreSQL `products` registry.
+1. Register its stable slug, exact audience and active state in the PostgreSQL `products` registry. New products default to the common `standard` claim profile; opt into a legacy profile only when a verified product contract requires it.
 2. Document its required claims here and add positive/negative contract tests.
 3. Resolve any external organization identifier through a product-specific link; never assume the NetHub tenant UUID is valid in another product.
 4. Keep exchange disabled until the rollout and staging acceptance gate is met.
