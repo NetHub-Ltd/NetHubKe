@@ -83,8 +83,5 @@ jobs:
           OIDC_ISSUER: https://example.com
           OIDC_CLIENT_ID: ci-client
           OIDC_CLIENT_SECRET: ci-secret
-          KEYCLOAK_CLIENT_ID: ci-client
-          KEYCLOAK_CLIENT_SECRET: ci-secret
-          KEYCLOAK_ISSUER: https://example.com
           BACKEND_URL: http://127.0.0.1:8000/api/v1
         run: npm run build
