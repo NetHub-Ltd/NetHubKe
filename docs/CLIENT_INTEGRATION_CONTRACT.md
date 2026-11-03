@@ -106,7 +106,7 @@ The current API paths below are observed in the repository. Their presence does 
 | `GET /api/v1/services/my-status` | Existing connection-status view | Current implementation uses a free-tier heuristic for `trial`; it is not sufficient as authoritative access/entitlement state. |
 | `GET /api/v1/users/me/product-links` | Read linked product organization IDs | Authenticated user context; return only links belonging to the caller's tenant. |
 | `PUT /api/v1/users/me/product-links` | Link tenant to product organization | Sensitive mutation; owner/admin policy, input validation and durable audit are required. Do not expose as an ordinary profile edit. |
-| `POST /api/v1/auth/exchange` | Exchange upstream identity for product-specific JWT | Server-side BFF only. Request product slug only; do not trust caller-supplied principal, audience, subject, org ID, roles, or entitlement. Exchange remains default-off until its milestone gates are accepted. |
+| `POST /api/v1/auth/exchange` | Exchange upstream identity for product-specific JWT | Server-side BFF only. Request product slug only; do not trust caller-supplied principal, audience, subject, org ID, roles, or entitlement. Exchange is controlled by one global `PRODUCT_TOKEN_EXCHANGE_ENABLED` gate, default-off for every product until its milestone gates are accepted. There are no per-product exchange environment flags; the requested slug selects the registered Product row and its audience/policy. |
 | `GET /api/v1/auth/jwks.json` | Product resource-server key discovery | Consumed by product backends/resource servers, not exposed as a browser credential endpoint. Public keys only. |
 | `GET /api/v1/billing/*` | Read-only billing view when accepted | BFF maps only persisted billing data. No billing mutation/payment collection is implied. |
 
@@ -202,7 +202,7 @@ These are repository observations, not permission to change runtime behavior:
 1. The existing Auth.js callback retains an IdP-only session when `/users/sync` fails. The reference-client contract requires an explicit uninitialized/degraded state and must not present that session as a fully initialized NetHubKe account.
 2. OIDC authorization currently requests `openid profile email`; the accepted NetHubKe API audience must be explicitly requested/configured and verified in a real token.
 3. Existing `/services/my-status` derives `trial` from tenant tier when no product link exists. This is not an authoritative entitlement decision and must not drive launch authorization.
-4. Existing `/auth/exchange` exchanges an upstream IdP bearer for a product JWT and is default-off. It must remain server-side and gated until N3–N5 acceptance and staging requirements are met.
+4. Existing `/auth/exchange` exchanges an upstream IdP bearer for a product JWT and is controlled by the shared, global `PRODUCT_TOKEN_EXCHANGE_ENABLED` gate (default false). It must remain server-side and gated until N3–N5 acceptance and staging requirements are met. Product audiences come only from the Product registry; no Tawala-specific environment override exists.
 5. The N7 launch transaction/redeem boundary must be verified before any browser redirect to a product is enabled.
 6. Current BFF helper supports a server-side bearer-token request, but its use must be restricted to server modules and wrapped by typed, explicit BFF route handlers.
 7. The exact API audience/scope contract and machine-client authentication/rotation contract need environment and implementation verification.
@@ -224,4 +224,4 @@ This contract is a documentation/planning deliverable and does not authorize ski
 4. **Launch handoff:** approve the one-time launch-code redemption model as the standard browser-to-product handoff, subject to N7 implementation and security acceptance.
 5. **Non-browser clients:** confirm that backend/machine clients authenticate directly server-to-server, while all browser clients are required to use their own BFF.
 
-No runtime implementation, feature flag, schema, secret, or deployment setting is changed by this draft.
+No runtime implementation, feature flag, schema, secret, or deployment setting is changed by this contract document.
