@@ -18,7 +18,7 @@
 | **A3** | IdP-agnostic token validation | **PR2** | JWT verify + deps; unit tests with fixed keys/claims |
 | **A4** | User API | **PR3** | `POST /sync`, `GET/PATCH /me` + API tests |
 | **A5** | Container image | **PR4** | Dockerfile/entrypoint; `build_and_push` can build |
-| **A6** | Staging soak | Pending | Real IdP token → sync/me on staging |
+| **A6** | Staging soak | **PR5 runbook** | Real IdP token → sync/me on staging |
 
 **Later (not bare minimum — do not pull forward):** entitlements catalogue, billing, admin identity linking UI, frontend, product token exchange.
 
@@ -242,3 +242,11 @@ Reject or request changes if the PR:
 | Validate | A6 | Staging evidence |
 
 All implementation PRs target **`dev`**. No direct pushes to `dev`/`main`.
+
+
+## A6 materials
+
+- `docs/A6_STAGING_SOAK.md`
+- `apps/backend/scripts/a6_soak.sh`
+- `apps/backend/scripts/a6_soak.py`
+- Evidence on the A6 GitHub issue after a real IdP run
