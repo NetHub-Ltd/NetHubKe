@@ -186,3 +186,9 @@
 - This work is explicitly parallel architecture documentation, not a claim that N1–N5 acceptance is complete and not authorization to start N6/N7 runtime work.
 - Current programme gate remains N1 (#42–#43), the earliest milestone identified by `docs/SSO_ARCHITECTURE_CONTRACT.md` as not demonstrably accepted. Closed issue state and historical CI alone are insufficient without mapped acceptance evidence.
 - Website reference-client implementation must be scheduled only after the relevant prerequisite gates are verified.
+
+## N1 acceptance validation / configuration reconciliation — 2026-11-03
+- N1 code and historical CI evidence are present: PR #145 merged; later backend CI #145 on PR #168 passed 227 tests at 76.83% coverage. The N1 #42/#43 historical checklists remain unchecked and are not silently marked accepted.
+- Documentation gap identified: AUTH_MATRIX did not fully list generic exchange/JWKS behavior and the global gate; Product Claim Profiles still described the removed Tawala audience override.
+- Configuration gap identified: Tawala-named settings actually controlled shared product-token issuer, TTL, PEM fallback and global exchange. Refactored to `PRODUCT_TOKEN_*`; removed product audience override and unused subscription flag. Exchange remains default-off globally.
+- Current branch `fix/shared-product-token-configuration`; fresh CI and review pending. N5 five-minute end-to-end verifier acceptance remains unproven and is not closed by this work.
