@@ -8,7 +8,7 @@
 
 NetHubKe is the central identity, authorization and product-token service for the NetHub product ecosystem.
 
-**Zitadel is the current OpenID Connect identity provider. NetHubKe is IdP-agnostic:** it validates upstream OIDC access tokens, maintains canonical ecosystem identity and access policy, and issues short-lived product JWTs. Product APIs validate those JWTs locally through NetHubKe's public JWKS endpoint.
+**the configured OIDC provider is the current OpenID Connect identity provider. NetHubKe is IdP-agnostic:** it validates upstream OIDC access tokens, maintains canonical ecosystem identity and access policy, and issues short-lived product JWTs. Product APIs validate those JWTs locally through NetHubKe's public JWKS endpoint.
 
 NetHubKe is not a replacement login provider and is not intended to sit in the request path of every product API call.
 
@@ -38,7 +38,7 @@ Product-owned business authorization
 ### Non-negotiable trust boundaries
 
 - Browser applications call their own same-origin server-side BFF. Browser JavaScript must not call the NetHubKe API origin directly.
-- Zitadel access, refresh and ID tokens, NetHubKe product JWTs, machine credentials and signing keys remain server-side.
+- the configured OIDC provider access, refresh and ID tokens, NetHubKe product JWTs, machine credentials and signing keys remain server-side.
 - NetHubKe is authoritative for canonical ecosystem identity and product/service entitlement decisions.
 - Product APIs validate NetHubKe JWT signatures locally using JWKS. They do not call NetHubKe for per-request introspection on hot paths.
 - Product-specific business roles and operational permissions remain inside the product.
@@ -85,7 +85,7 @@ NetHubKe/
 
 | Area | Technology |
 |---|---|
-| Identity provider | Zitadel (OIDC); validation is IdP-agnostic |
+| Identity provider | the configured OIDC provider (OIDC); validation is IdP-agnostic |
 | Backend API | Python, FastAPI, Pydantic, SQLModel, Loguru |
 | Database and migrations | PostgreSQL, Alembic, asyncpg |
 | Cache | Redis (optional) |
@@ -135,7 +135,7 @@ cp .env.example .env.local
 pnpm dev
 ```
 
-Configure the Zitadel OIDC application and its callback URL using the values documented in `apps/frontend/.env.example`. The frontend's NetHubKe backend URL is server-only configuration; do not expose it through a `NEXT_PUBLIC_*` variable.
+Configure the the configured OIDC provider OIDC application and its callback URL using the values documented in `apps/frontend/.env.example`. The frontend's NetHubKe backend URL is server-only configuration; do not expose it through a `NEXT_PUBLIC_*` variable.
 
 ### Tests and quality checks
 
