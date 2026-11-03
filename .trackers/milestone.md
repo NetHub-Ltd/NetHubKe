@@ -207,3 +207,11 @@ Current prioritized outcome: first working website client.
 3. Product audience isolation (#172): unique audience migration already exists in the inherited PR #170 branch; retain its CI/migration evidence and close only after the consolidated PR merges.
 
 Other open issues remain only where they represent separate required behavior (for example #152, #162, #164, #165). Historical N0–N10 labels are traceability; they must not block or restart this delivery.
+
+
+## Delivery checkpoint — 2026-11-03
+
+- First website client implementation is in PR #173 and CI is green.
+- Completed implementation group: provider-neutral OIDC boundary, Auth.js session/BFF security, safe profile/service DTOs, disabled browser product launch, shared product-token configuration and unique audience enforcement.
+- Issues #148, #152 and #161 closed with code/test evidence. #136/#138/#137 superseded Path A work closed as not planned. Other already-implemented issues #75/#116/#117/#144/#146/#159/#163 closed.
+- Remaining separate requirements: #171 browser smoke after OIDC config, #162 product-side local verifier evidence, #164 five-minute end-to-end stale-access measurement, #165 complete product integration validation. Product launch remains disabled until server-to-server one-time redemption exists.
