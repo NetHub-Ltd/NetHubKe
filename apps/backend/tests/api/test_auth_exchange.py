@@ -169,8 +169,8 @@ async def test_jwks_with_malformed_env_pem_still_200(
     async def no_cache(_key):
         return None
 
-    monkeypatch.setattr(config_module.settings, "tawala_jwt_private_key", "TEST_NON_PEM_ENV_VALUE_NOT_A_SECRET")
-    monkeypatch.setattr(tt.settings, "tawala_jwt_private_key", "TEST_NON_PEM_ENV_VALUE_NOT_A_SECRET")
+    monkeypatch.setattr(config_module.settings, "product_token_private_key", "TEST_NON_PEM_ENV_VALUE_NOT_A_SECRET")
+    monkeypatch.setattr(tt.settings, "product_token_private_key", "TEST_NON_PEM_ENV_VALUE_NOT_A_SECRET")
     monkeypatch.setattr(tt, "redis_get", no_cache)
     monkeypatch.setattr(tt, "redis_set", AsyncMock())
 
@@ -448,7 +448,7 @@ async def test_tawala_audience_override_cannot_collide_with_another_product(
         Product(
             slug="other-product",
             name="Other Product",
-            audience=settings.tawala_jwt_audience,
+            audience="tawala-api",
             is_active=False,
             claim_profile="standard",
         ),
