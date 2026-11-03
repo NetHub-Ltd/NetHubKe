@@ -1,4 +1,4 @@
-name: Backend CI (pytest)
+name: Backend CI
 
 on:
   push:
@@ -12,13 +12,28 @@ on:
       - "apps/backend/**"
       - ".github/workflows/backend-ci.yml"
 
-defaults:
-  run:
-    working-directory: apps/backend
+env:
+  APP_NAME: NetHubKe
+  APP_VERSION: 0.1.0
+  IMAGE_TAG: ci
+  ENVIRONMENT: development
+  ALLOWED_ORIGINS: http://localhost:3000
+  FASTAPI_DB_USER: nethub_ci
+  FASTAPI_DB_PASSWORD: nethub_ci
+  FASTAPI_DB_HOST: localhost
+  FASTAPI_DB_PORT: "5432"
+  FASTAPI_DB_NAME: nethub_ci
+  OIDC_ISSUER: https://idp.test/realms/nethub
+  OIDC_JWKS_URL: https://idp.test/realms/nethub/protocol/openid-connect/certs
+  AUDIENCE: nethub-api
 
 jobs:
-  test:
+  pytest:
+    name: Pytest (Postgres)
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/backend
     services:
       postgres:
         image: postgres:16-alpine
@@ -33,20 +48,6 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
-    env:
-      APP_NAME: NetHubKe
-      APP_VERSION: 0.1.0
-      IMAGE_TAG: ci
-      ENVIRONMENT: development
-      ALLOWED_ORIGINS: http://localhost:3000
-      FASTAPI_DB_USER: nethub_ci
-      FASTAPI_DB_PASSWORD: nethub_ci
-      FASTAPI_DB_HOST: localhost
-      FASTAPI_DB_PORT: "5432"
-      FASTAPI_DB_NAME: nethub_ci
-      OIDC_ISSUER: https://idp.test/realms/nethub
-      OIDC_JWKS_URL: https://idp.test/realms/nethub/protocol/openid-connect/certs
-      AUDIENCE: nethub-api
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -58,3 +59,99 @@ jobs:
         run: pip install -r requirements-dev.txt
       - name: Run pytest
         run: pytest -q
+
+  alembic:
+    name: Alembic upgrade head
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/backend
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: nethub_ci
+          POSTGRES_PASSWORD: nethub_ci
+          POSTGRES_DB: nethub_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U nethub_ci -d nethub_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: apps/backend/requirements-dev.txt
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+      - name: Alembic upgrade head
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from alembic import command
+          from alembic.config import Config
+          from sqlalchemy import create_engine, text
+          from app.core.config import settings
+
+          root = Path(".")
+          cfg = Config(str(root / "alembic.ini"))
+          cfg.set_main_option("script_location", str(root / "alembic"))
+          cfg.set_main_option("sqlalchemy.url", settings.sync_database_uri)
+
+          engine = create_engine(settings.sync_database_uri)
+          with engine.begin() as conn:
+              conn.execute(text("DROP SCHEMA public CASCADE"))
+              conn.execute(text("CREATE SCHEMA public"))
+          engine.dispose()
+
+          command.upgrade(cfg, "head")
+
+          engine = create_engine(settings.sync_database_uri)
+          with engine.connect() as conn:
+              tables = {r[0] for r in conn.execute(text(
+                  "SELECT tablename FROM pg_tables WHERE schemaname = 'public'"
+              ))}
+          engine.dispose()
+          required = {"users", "user_identities", "tenants", "alembic_version"}
+          missing = required - tables
+          if missing:
+              raise SystemExit(f"missing tables after upgrade: {missing}")
+          print("alembic_upgrade_ok", sorted(tables))
+          PY
+
+  startup:
+    name: FastAPI startup smoke
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/backend
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: nethub_ci
+          POSTGRES_PASSWORD: nethub_ci
+          POSTGRES_DB: nethub_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U nethub_ci -d nethub_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: apps/backend/requirements-dev.txt
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+      - name: Import app and GET /health
+        run: python scripts/smoke_startup.py
