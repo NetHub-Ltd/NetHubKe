@@ -1,48 +1,46 @@
-"""IdP-agnostic role extraction from OIDC access/ID token payloads."""
+"""Normalize standard OIDC role/group claims using configured claim mapping."""
+
 from __future__ import annotations
 
 from typing import Any
 
 
-def extract_roles(payload: dict[str, Any]) -> list[str]:
-    """
-    Collect roles from common IdP claim shapes without preferring one vendor.
+def _read_claim_path(payload: dict[str, Any], claim_path: str) -> Any:
+    """Read a configured dot-separated claim path without provider-specific logic."""
+    value: Any = payload
+    for part in (segment for segment in claim_path.split(".") if segment):
+        if not isinstance(value, dict):
+            return None
+        value = value.get(part)
+    return value
 
-    Order (first non-empty wins as primary source; all unique merged):
-    - Keycloak: realm_access.roles
-    - Zitadel: urn:zitadel:iam:org:project:roles (map keys) or "roles"
-    - Generic: groups (string list)
+
+def _claim_values(value: Any) -> list[str]:
+    if isinstance(value, list):
+        return [str(item) for item in value if item is not None and str(item).strip()]
+    if isinstance(value, dict):
+        return [str(key) for key in value if str(key).strip()]
+    if isinstance(value, str) and value.strip():
+        return [value.strip()]
+    return []
+
+
+def extract_roles(payload: dict[str, Any], claim_path: str = "roles") -> list[str]:
+    """
+    Normalize roles from the configured claim and standard groups claim.
+
+    Provider-specific claim names/paths are supplied through OIDC_ROLE_CLAIM_PATH;
+    this module intentionally contains no provider names or vendor claim schemas.
     """
     found: list[str] = []
+    if claim_path.strip():
+        found.extend(_claim_values(_read_claim_path(payload, claim_path.strip())))
+    found.extend(_claim_values(payload.get("groups")))
 
-    realm = payload.get("realm_access")
-    if isinstance(realm, dict):
-        roles = realm.get("roles")
-        if isinstance(roles, list):
-            found.extend(str(r) for r in roles if r is not None)
-
-    # Zitadel project roles: {"projectId": {"roleName": ...}} or similar
-    zitadel_roles = payload.get("urn:zitadel:iam:org:project:roles")
-    if isinstance(zitadel_roles, dict):
-        found.extend(str(k) for k in zitadel_roles.keys())
-    elif isinstance(zitadel_roles, list):
-        found.extend(str(r) for r in zitadel_roles if r is not None)
-
-    top_roles = payload.get("roles")
-    if isinstance(top_roles, list):
-        found.extend(str(r) for r in top_roles if r is not None)
-    elif isinstance(top_roles, dict):
-        found.extend(str(k) for k in top_roles.keys())
-
-    groups = payload.get("groups")
-    if isinstance(groups, list):
-        found.extend(str(g) for g in groups if g is not None)
-
-    # de-dupe preserve order
     seen: set[str] = set()
-    out: list[str] = []
-    for r in found:
-        if r and r not in seen:
-            seen.add(r)
-            out.append(r)
-    return out
+    normalized: list[str] = []
+    for role in found:
+        if role not in seen:
+            seen.add(role)
+            normalized.append(role)
+    return normalized
