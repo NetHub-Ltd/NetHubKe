@@ -10,8 +10,8 @@ import {
 
 /**
  * OIDC login must succeed even when FastAPI is unreachable.
- * Backend /users/sync enriches the session when available; it must not
- * wipe the cookie on failure (that blocked /dashboard after Zitadel auth).
+ * Backend /users/sync enriches the encrypted server session when available.
+ * A login without a canonical NetHubKe identity is not sufficient for BFF data.
  */
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
@@ -171,8 +171,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 async function refreshAccessToken(token: JWT): Promise<JWT> {
   try {
     const discovery = await oidcDiscovery();
-    const tokenEndpoint =
-      discovery.token_endpoint || `${oidcIssuer()}/oauth/v2/token`;
+    const tokenEndpoint = discovery.token_endpoint;
+    if (!tokenEndpoint) {
+      throw new Error("OIDC discovery does not advertise a token_endpoint");
+    }
 
     const body = new URLSearchParams({
       client_id: oidcClientId(),
