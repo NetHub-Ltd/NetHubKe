@@ -4,19 +4,20 @@ import type { JWT } from "next-auth/jwt";
 
 function isSecureAuthUrl(): boolean {
   const url = process.env.AUTH_URL || process.env.NEXTAUTH_URL || "";
-  return url.startsWith("https://");
+  return (
+    process.env.AUTH_USE_SECURE_COOKIES === "true" ||
+    url.startsWith("https://") ||
+    process.env.VERCEL === "1"
+  );
 }
 
-/** Auth.js v5 cookie name depends on HTTPS. */
+/** Must match apps/frontend/src/auth.ts cookie naming. */
 export function sessionCookieName(): string {
   return isSecureAuthUrl()
     ? "__Secure-authjs.session-token"
     : "authjs.session-token";
 }
 
-/**
- * Server-only: read Auth.js JWT (includes IdP access + id tokens when present).
- */
 export async function getAuthJwt(): Promise<JWT | null> {
   const cookieStore = await cookies();
   const all = cookieStore.getAll();
@@ -24,7 +25,6 @@ export async function getAuthJwt(): Promise<JWT | null> {
   const name = sessionCookieName();
   const secure = isSecureAuthUrl();
 
-  // Try explicit cookie name first, then default getToken resolution
   const attempts: Array<{ cookieName?: string; salt?: string; secureCookie?: boolean }> = [
     { cookieName: name, salt: name, secureCookie: secure },
     { secureCookie: secure },
@@ -53,7 +53,7 @@ export async function getAuthJwt(): Promise<JWT | null> {
       });
       if (token) return token as JWT;
     } catch {
-      // try next strategy
+      /* try next */
     }
   }
   return null;
@@ -87,5 +87,11 @@ export async function listAuthCookieNames(): Promise<string[]> {
   return cookieStore
     .getAll()
     .map((c) => c.name)
-    .filter((n) => n.includes("auth") || n.includes("session") || n.includes("next-auth"));
+    .filter(
+      (n) =>
+        n.includes("auth") ||
+        n.includes("session") ||
+        n.includes("pkce") ||
+        n.includes("next-auth")
+    );
 }
