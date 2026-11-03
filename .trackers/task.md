@@ -196,3 +196,25 @@
 - Final verification: backend CI #175 (run `41608428220`) passed 228 tests, 76.85% coverage, per-file coverage, and Alembic upgrade/downgrade; readiness #136 (`41608427606`) passed `/health` and `/ready`; Vercel preview is successful. Codecov reports Repository not found but is non-blocking; coverage artifact uploaded.
 - Removed `NEXT_PUBLIC_API_URL` from the frontend env example to align with BFF-only browser transport. The generated OpenAPI client still has a hardcoded localhost base URL; its import/use graph is not verified and it is not an approved browser transport. BFF integration remains a separate follow-up.
 - PR #170 remains open against `dev` and is not merged. Backend CI #175 and readiness #136 passed; the Vercel preview for the latest docs/environment-template commit is still pending. N1 issue #42/#43 checklists remain unchanged and are not marked accepted by this PR.
+
+## 2026-11-03 — First website client implementation
+
+**Objective:** make the NetHubKe website a working first browser client through generic OIDC login and secure same-origin BFF routes.
+
+**Implementation branch:** `feat/first-client-idp-agnostic-bff` (created from PR #170 head `73ecbcea14e01af84807f4518c4a0171f006a52c`). PR #170 changes are included as the shared product-token configuration prerequisite.
+
+**Issues:** #80 (provider-neutral OIDC discovery/claim mapping), #171 (website BFF session and API integration), #172 (unique product audiences; already implemented in the included #170 changes).
+
+**Completed in this branch so far:**
+- Added server-only Auth.js JWT cookie reader; BFF no longer depends on tokens being copied into the public session.
+- Protected profile, service-status and billing BFF routes with a provisioned/active NetHub identity check.
+- Added same-origin mutation checks, profile payload allowlisting and response filtering.
+- Disabled browser-facing product exchange (HTTP 410) and removed the browser token-fragment launch helper.
+- Routed registration through Auth.js OIDC authorization handling.
+- Updated federated logout and frontend OIDC discovery to use provider metadata, without vendor endpoint fallbacks.
+- Replaced backend JWKS/UserInfo endpoint construction with OIDC discovery and configurable role-claim mapping.
+- Added backend tests for two different discovery endpoint layouts, issuer mismatch and configurable role claims.
+- Removed provider-specific config aliases and the unused empty legacy provider module.
+- Updated architecture, BFF, launch, environment and README documentation.
+
+**Not yet verified:** GitHub Actions for this branch; frontend lint/build; backend pytest and Alembic upgrade/downgrade; end-to-end browser login → sync → profile/services; production provider role-claim mapping. Do not mark this task delivered until CI passes and the remaining manual integration check is reported.
