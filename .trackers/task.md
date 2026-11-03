@@ -227,3 +227,15 @@
 - Vercel status reports `build-rate-limit`; the GitHub Actions frontend production build is green, but no Vercel preview URL is available. This is a preview-platform limit, not a failed application build.
 - Remaining related open work: #171 browser smoke with configured OIDC credentials; #162 product-side local verifier evidence; #164 measured five-minute stale-access behavior; #165 product integration validation; #149 secure one-time launch-code handoff; #150 billing/settings/operational readiness.
 - #80/#79/#81/#158/#160/#172 are linked to PR #173 and will close on merge. #148/#152/#161 and already-complete/superseded issues have been closed with evidence. #57 and #135 remain open as programme/history records.
+
+
+## Shared IdP resource access implementation — PR #175
+
+- Branch: `feat/shared-idp-resource-access`, based on dev SHA `fdb4a3eabbd8a385d9d96ee12344d89fa52fdd29`.
+- PR: https://github.com/NetHub-Ltd/NetHubKe/pull/175.
+- Changed `apps/backend/app/api/v1/routes/services.py`: added GET `/api/v1/services/{slug}/access`, requiring an active canonical user and `user:read`; tenant is resolved from that user; deleted/missing tenant denies; decision reuses PostgreSQL-backed `check_entitled`.
+- Changed `apps/backend/app/core/security.py`: UserInfo subject must be present and exactly match the validated access-token subject before UserInfo claims are used.
+- Tests: new API tests for allowed membership, no entitlement, cross-tenant membership, inactive service, missing scope and unknown product; unit tests for missing/mismatched/matching UserInfo subject.
+- No schema/migration, new token type, frontend, production config or feature-flag changes.
+- GitHub Actions at PR creation: GitGuardian and Vercel checks passed; backend test and readiness were still running. Do not claim test success until both complete.
+- No merge authorized.
