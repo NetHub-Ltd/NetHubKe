@@ -70,14 +70,9 @@ jobs:
             -e FASTAPI_DB_PORT=5432 \
             -e REDIS_URL=redis://host.docker.internal:6379/0 \
             -e OIDC_ISSUER=https://idp.test/realms/nethub \
-            -e OIDC_JWKS_URL=https://idp.test/realms/nethub/protocol/openid-connect/certs \
-            -e KEYCLOAK_ISSUER_URL=https://idp.test/realms/nethub \
-            -e KEYCLOAK_JWKS=https://idp.test/realms/nethub/protocol/openid-connect/certs \
+            -e OIDC_ROLE_CLAIM_PATH=roles \
             -e AUDIENCE=nethub-api \
             -e ALLOWED_ORIGINS=http://localhost:3000 \
-            -e TAWALA_EXCHANGE_ENABLED=false \
-            -e TAWALA_JWT_ISSUER=http://localhost:8000 \
-            -e TAWALA_JWT_AUDIENCE=tawala-api \
             nethub-api:ci
 
       - name: Wait for /health and /ready
