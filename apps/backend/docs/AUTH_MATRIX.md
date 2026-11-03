@@ -2,110 +2,95 @@
 
 ## 1. Trust boundaries
 
-- **Upstream identity provider:** any standards-compliant OIDC provider configured through OIDC discovery. NetHubKe validates upstream access-token signature, issuer, audience, expiry and required claims; provider-specific protocol endpoints are not hardcoded in core.
-- **NetHubKe:** canonical ecosystem identity, product/service entitlement decisions and product-token issuer.
-- **Product resource APIs:** validate NetHubKe JWTs locally using `GET /api/v1/auth/jwks.json`; enforce product-owned business roles and permissions.
-- **Browser applications:** call their own same-origin BFF. They must not call the NetHubKe API origin directly or receive bearer tokens.
-- **Persistence:** PostgreSQL is authoritative. Redis is a disposable cache.
+- **Zitadel:** sole identity provider and token issuer.
+- **NetHubKe API:** protected resource server and centralized authorization/resource API. It validates Zitadel access tokens, resolves canonical identity and enforces NetHubKe-managed resource/service access.
+- **NetHubKe website, Tawala and NetPay:** clients using the same API audience and bearer-token validation contract. Each has its own Zitadel OIDC client registration.
+- **Product applications:** retain their own domain roles and resource-level authorization.
+- **PostgreSQL:** authoritative identity, tenant, product and entitlement state. Redis is a disposable cache.
 
-Product APIs must not perform per-request introspection against NetHubKe on hot paths.
+NetHubKe does not provide login/password management, OAuth authorization-server endpoints, token brokering or replacement API tokens.
 
-## 2. Upstream OIDC validation
+## 2. Upstream access-token validation
 
 | Setting | Purpose |
 |---|---|
-| `OIDC_ISSUER` | Expected upstream issuer and discovery-document location |
-| `AUDIENCE` | Expected audience on the upstream OIDC access token |
-| `ALGORITHMS` | Signature algorithm allowlist; RS256 by default |
-| `JWKS_CACHE_TTL` | Upstream JWKS cache TTL; validation hard-caps it at 300 seconds |
-| `OIDC_ROLE_CLAIM_PATH` | Optional dot-separated role claim path; defaults to the standard `roles` claim |
+| OIDC_ISSUER | Exact configured Zitadel issuer and discovery-document base |
+| AUDIENCE | Shared NetHubKe API audience; not a client ID |
+| ALGORITHMS | Explicit asymmetric signing-algorithm allowlist; RS256 is current default |
+| JWKS_CACHE_TTL | Upstream JWKS cache TTL, hard-capped at 300 seconds |
+| OIDC_ROLE_CLAIM_PATH | Optional dot-separated role claim path |
 
-NetHubKe fetches `{OIDC_ISSUER}/.well-known/openid-configuration`, verifies that the document issuer exactly matches OIDC_ISSUER, and uses the advertised `jwks_uri` and `userinfo_endpoint`. The frontend Auth.js integration uses the same issuer and standard discovery metadata for authorization, token refresh and RP-initiated logout. Provider-specific endpoint paths are not constructed by NetHubKe.
+NetHubKe fetches OIDC discovery from the configured issuer, requires exact discovery issuer equality and uses the advertised jwks_uri and userinfo_endpoint. Discovery is cached for 300 seconds. The JWKS client cache is bounded to at most 300 seconds.
 
-The validator requires `exp`, `iat` and `sub`. Missing/invalid credentials, issuer, audience, signature or required claims fail with 401. UserInfo subject, when used, must match the validated access-token subject. A valid upstream identity is not automatically an active or entitled NetHubKe account.
+The current validator checks signature, configured algorithm, issuer, API audience, exp, iat and sub; present nbf is validated. It applies 10 seconds of clock leeway. Missing/invalid credentials fail closed.
 
-Provider-specific role/group claims are mapped through OIDC_ROLE_CLAIM_PATH configuration. Core claim normalization supports configured role claims and the standard groups claim; it does not contain provider-specific claim schemas.
+The API audience must be distinct from client IDs so a client ID token is rejected. Verify this against the actual Zitadel project configuration and include an ID-token rejection test. Do not assume a provider-independent typ/token_use marker.
 
-## 3. Shared product-token configuration
+A valid upstream token is not sufficient by itself: protected resources also require a mapped, active canonical local user and required scopes.
 
-All registered products use one product-token integration:
+## 3. Canonical identity and scopes
 
-| Setting | Behavior |
-|---|---|
-| `PRODUCT_TOKEN_EXCHANGE_ENABLED` | Global exchange gate; defaults to `false` and applies to every product |
-| `PRODUCT_TOKEN_ISSUER` | Shared `iss` claim for all product JWTs |
-| `PRODUCT_TOKEN_TTL_SEC` | Shared token lifetime, hard-capped at 240 seconds |
-| `PRODUCT_TOKEN_PRIVATE_KEY` | Optional shared PEM fallback for local/emergency use |
-| `PRODUCT_TOKEN_ALLOW_ENV_PEM` | Explicit opt-in for that shared fallback; defaults to `false` |
-| `SIGNING_KEY_ENCRYPTION_KEY` | Encrypts PostgreSQL-managed private keys at rest |
-| `SIGNING_KEY_MAX_AGE_HOURS` | Shared signing-key rotation age |
-| `SIGNING_KEY_RETIRE_OVERLAP_HOURS` | Shared overlap before retiring old public keys |
-
-There are no product-specific environment settings. The product registry is the sole source of each product's audience and registered claim profile. Product audience uniqueness is enforced in PostgreSQL. A product slug selects its registry row; it does not select a separate signing integration.
-
-The global exchange gate is not a per-product switch. When false, exchange requests fail closed with 503 and signing-key bootstrap/automatic rotation is skipped. The JWKS endpoint remains public and may serve already-persisted active/retiring public keys; a JWKS read must not create signing state while exchange is disabled.
-
-Private PEM environment fallback is opt-in and shared. Production should use PostgreSQL-managed keys encrypted with the stable SIGNING_KEY_ENCRYPTION_KEY; keep that key outside the database and back it up independently.
+- Canonical mapping key: exact issuer + subject.
+- Email is mutable profile data and is never an identity key.
+- POST /users/sync may initialize the caller's identity from a valid access token. Email-only linking is rejected; explicit account linking is a separate privileged operation with verified identity proof.
+- get_current_user validates the bearer, resolves the canonical identity and rejects inactive/deleted users.
+- require_scopes applies operation-specific scopes after authentication.
+- Tenant context is resolved from the canonical local user, not caller-supplied IDs.
 
 ## 4. Route matrix
 
-| Method | Path | Authentication | Purpose / notes |
+| Method | Path | Authentication | Purpose |
 |---|---|---|---|
-| GET | `/health` | None | Liveness |
-| GET | `/ready` | None | PostgreSQL/schema readiness |
-| GET | `/api/v1/services/get-services` | None | Public service catalogue; not an entitlement grant |
-| POST | `/api/v1/users/sync` | Valid upstream OIDC bearer | JIT identity initialization using canonical issuer + immutable subject |
-| GET | `/api/v1/users/me` | Bearer + active local user | Own profile; `user:read` |
-| PATCH | `/api/v1/users/me` | Bearer + active local user | Own profile; `user:write` |
-| GET | `/api/v1/users/me/product-links` | Bearer + active local user | Read product organization links for caller's tenant |
-| PUT | `/api/v1/users/me/product-links` | Bearer + authorized owner/admin | Sensitive product organization-link mutation; audit required |
-| GET | `/api/v1/auth/jwks.json` | None | Public product-token JWKS; public keys only |
-| POST | `/api/v1/auth/exchange` | Valid upstream OIDC bearer | Generic product-token exchange; global gate; product slug only |
-| POST | `/api/v1/auth/exchange/tawala` | Valid upstream OIDC bearer | Legacy compatibility alias; same global gate and policy path |
-| GET | `/api/v1/billing/*` | Route-specific bearer/scope | Billing reads; inspect individual route policy before use |
+| GET | /health | None | Liveness |
+| GET | /ready | None | PostgreSQL/schema readiness |
+| GET | /api/v1/services/get-services | None | Public catalogue; not an entitlement grant |
+| POST | /api/v1/users/sync | Valid Zitadel access token | Initialize canonical identity |
+| GET | /api/v1/users/me | Active canonical user + user:read | Own profile |
+| PATCH | /api/v1/users/me | Active canonical user + user:write | Own allowed profile fields |
+| GET | /api/v1/services/my-status | Active canonical user + user:read | Product connection/link status only; not entitlement |
+| GET | /api/v1/services/{slug}/access | Required: active canonical user + user:read | Authoritative service-access decision; reuse entitlement evaluator |
+| GET | /api/v1/users/me/product-links | Active canonical user + user:read | Links scoped to caller tenant |
+| PUT | /api/v1/users/me/product-links | Active canonical user + user:write + owner/admin policy | Sensitive link mutation with durable audit |
+| GET | /api/v1/billing/summary | Active canonical user + user:read | Own tenant billing summary |
+| POST | /api/v1/services/seed-services | Active canonical user + services:admin | Admin catalogue seed |
+| POST | /api/v1/services/create-service | Active canonical user + services:admin | Admin catalogue mutation |
 
-The Tawala exchange alias is retained for compatibility; new clients should use the generic POST /api/v1/auth/exchange endpoint.
+## 5. Authoritative service access
 
-## 5. Exchange decision sequence
+The existing GET /services/my-status reports link/connection state and uses a free-tier heuristic for trial. It is not an authorization decision.
 
-When the global exchange gate is enabled, NetHubKe must:
+The required GET /services/{slug}/access resource must resolve the active canonical user, resolve the registered product/service, deny unknown/inactive/deleted records, reuse app/services/entitlements.py::check_entitled for subscription/membership/policy/override evaluation, and return a minimal typed allow/deny result with a stable reason code.
 
-1. Validate upstream token provenance and derive the canonical issuer + subject.
-2. Resolve the canonical local user; email is mutable profile data, never the identity key.
-3. Reject deleted, disabled or unlinked users.
-4. Resolve the requested active product from the PostgreSQL registry.
-5. Read the product audience and registered claim profile from that row.
-6. Evaluate the product's organization/individual entitlement policy against PostgreSQL-authoritative state.
-7. Resolve only claims allowed by the registered profile.
-8. Mint a short-lived RS256 JWT using the shared managed signing-key set.
+Do not trust caller-supplied user/tenant IDs, roles, organization IDs or entitlements. Do not duplicate the evaluator.
 
-Caller-supplied audience, subject, organization ID, roles, entitlement and privileged claims are never trusted. A product token must be rejected by every other product audience.
+## 6. Legacy product-token subsystem — disabled, not client contract
 
-## 6. Token contract
+The repository retains POST /api/v1/auth/exchange and the Tawala alias, GET /api/v1/auth/jwks.json, product-token signing/key-management services and related schema/configuration.
 
-Common claims:
+PRODUCT_TOKEN_EXCHANGE_ENABLED defaults to false. Keep it disabled. These endpoints are not part of the shared Zitadel access-token contract and must not be used to call NetHubKe APIs.
 
-- `iss`: shared NetHubKe product-token issuer.
-- `sub`: canonical NetHubKe user identifier.
-- `aud`: exact audience from the requested Product registry row.
-- `iat`, `exp`: issue and expiry times.
-- `jti`: unique token identifier.
-- `product`: registered product slug.
-- JOSE `kid` and `alg`: managed signing-key ID and fixed RS256 algorithm.
+Audit actual deployed Tawala/NetPay and external consumers before removal. If there is no separately approved product-API use, remove exchange/JWKS/key management, schema and configuration as one coherent cleanup. Do not extend it or add launch-code redemption.
 
-Optional/profile-specific claims are documented in [PRODUCT_CLAIM_PROFILES.md](PRODUCT_CLAIM_PROFILES.md). Product-specific business permissions remain product-owned.
+## 7. Freshness and failure behavior
 
-## 7. Failure and rollout behavior
+Current repository facts:
+- Canonical user state is checked against PostgreSQL on protected requests.
+- Entitlement evaluation reads PostgreSQL and has no entitlement cache.
+- OIDC discovery cache: 300 seconds.
+- JWKS cache: configurable, hard-capped at 300 seconds.
+- JWT clock leeway: 10 seconds.
+- Actual Zitadel access-token TTL and IdP-side account-disable propagation are not yet evidenced.
 
-- Exchange disabled: 503; no identity/product lookup, signing-key bootstrap or token mint side effect.
-- Missing/invalid upstream bearer: 401.
-- Unknown product: 404.
-- Disabled account/product or missing entitlement: 403.
-- Product audience collision or unsupported claim profile: fail closed.
-- PostgreSQL unavailable: startup/readiness fails. Redis unavailable: cache operations degrade without changing PostgreSQL authorization decisions.
-- Product JWTs are hard-capped at 240 seconds. The five-minute stale-access objective still requires measured end-to-end verifier JWKS refresh, clock-skew and emergency key-invalidation behavior; issuer TTL alone does not prove it.
+Keep the five-minute stale-access requirement open until actual token lifetime, JWKS behavior, clock tolerance and revocation propagation are measured end-to-end. Do not use the former 240-second product-token TTL as evidence.
 
-## 8. N1 acceptance evidence
+Missing/invalid/expired bearer returns 401; missing scope, disabled/deleted user and missing entitlement return 403; unknown/inactive service returns 404/403 according to disclosure policy. Discovery/JWKS/database unavailability fails closed.
 
-- Generic exchange and JWKS route tests live in `apps/backend/tests/api/test_auth_exchange.py`; signing/JWKS helper tests live in `apps/backend/tests/unit/test_product_tokens.py`.
-- Backend CI and readiness workflow are the authoritative execution evidence; see the current PR checks before claiming acceptance.
+## 8. Focused test locations
+
+- apps/backend/tests/unit/test_security.py
+- apps/backend/tests/unit/test_security_userinfo.py
+- apps/backend/tests/api/test_users_auth_required.py
+- apps/backend/tests/api/test_users_happy.py
+- apps/backend/tests/api/test_services.py
+
+Add focused tests for the shared client conformance matrix and authoritative service-access resource. GitHub Actions is the execution evidence. No live Zitadel client conformance or five-minute staging proof is currently recorded.
