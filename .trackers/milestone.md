@@ -192,3 +192,4 @@
 - Documentation gap identified: AUTH_MATRIX did not fully list generic exchange/JWKS behavior and the global gate; Product Claim Profiles still described the removed Tawala audience override.
 - Configuration gap identified: Tawala-named settings actually controlled shared product-token issuer, TTL, PEM fallback and global exchange. Refactored to `PRODUCT_TOKEN_*`; removed product audience override and unused subscription flag. Exchange remains default-off globally.
 - Current branch `fix/shared-product-token-configuration`; fresh CI and review pending. N5 five-minute end-to-end verifier acceptance remains unproven and is not closed by this work.
+- Additional Tawala-specific defaults removed: new Product rows and generic token-mint calls now default to the common `standard` claim profile; the Tawala profile is selected explicitly for Tawala. Generic signing/JWKS service and tests renamed to `product_tokens.py` / `test_product_tokens.py`.
