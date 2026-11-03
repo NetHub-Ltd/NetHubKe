@@ -179,7 +179,7 @@ The backend example file is `apps/backend/.env.example`. Important settings incl
 
 ### Product registry data
 
-Each registered product's exact JWT audience is stored in the PostgreSQL `products` registry. NetHubKe reads the audience from that row; there is no per-product environment-variable audience override. Entitlement policy and the registered claim profile are also product metadata, not separate deployment flags.
+Each registered product's exact JWT audience is stored in the PostgreSQL `products` registry. NetHubKe reads the audience from that row; there is no per-product environment-variable audience override. Entitlement policy and the registered claim profile are also product metadata, not separate deployment flags. New product registrations default to the common `standard` claim profile; Tawala's legacy profile is explicit.
 
 All products use the same exchange endpoint, issuer, managed signing-key set and global exchange gate. The requested product slug selects the registered product and its audience/policy; it does not select a separate integration configuration.
 
