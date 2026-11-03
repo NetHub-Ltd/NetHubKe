@@ -11,8 +11,9 @@ from sqlmodel import select
 
 from app.api.deps import SessionDep, get_current_user_record, require_scopes
 from app.crud.services import service_crud
-from app.db.models.models import Service, Product, ProductLink, User
+from app.db.models.models import Service, Product, ProductLink, Tenant, User
 from app.db.schemas.schemas import ServiceCreateIn, ServiceRead, TokenData
+from app.services.entitlements import check_entitled
 from app.utils.data.services_data import SERVICES_SEED_DATA
 
 router = APIRouter()
@@ -177,3 +178,61 @@ async def my_service_status(
                 )
             )
     return out
+
+
+class ServiceAccessRead(BaseModel):
+    """Minimal authoritative access decision for the authenticated caller."""
+
+    slug: str
+    allowed: bool
+    reason_code: Literal["allowed", "not_entitled"]
+
+
+@router.get("/{slug}/access", response_model=ServiceAccessRead)
+async def read_my_service_access(
+    slug: str,
+    db: SessionDep,
+    user: User = Depends(get_current_user_record),
+    _token_data: TokenData = Depends(require_scopes(["user:read"])),
+) -> ServiceAccessRead:
+    """Return the caller's current entitlement decision for one registered product.
+
+    The caller identity and tenant are derived only from the validated IdP token
+    and canonical local user. Connection status and frontend tier heuristics are
+    deliberately not used as authorization evidence.
+    """
+    normalized_slug = slug.strip().lower()
+    product = (
+        await db.exec(
+            select(Product).where(
+                Product.slug == normalized_slug,
+                Product.deleted_at.is_(None),  # type: ignore[union-attr]
+            )
+        )
+    ).first()
+    if product is None:
+        raise HTTPException(status_code=404, detail="Service not found")
+
+    allowed = False
+    if user.tenant_id is not None:
+        tenant = (
+            await db.exec(
+                select(Tenant).where(
+                    Tenant.id == user.tenant_id,
+                    Tenant.deleted_at.is_(None),  # type: ignore[union-attr]
+                )
+            )
+        ).first()
+        if tenant is not None:
+            allowed = await check_entitled(
+                db,
+                tenant_id=tenant.id,
+                user_id=user.id,
+                product=product,
+            )
+
+    return ServiceAccessRead(
+        slug=product.slug,
+        allowed=allowed,
+        reason_code="allowed" if allowed else "not_entitled",
+    )
