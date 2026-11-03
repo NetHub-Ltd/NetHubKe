@@ -34,9 +34,8 @@ _TEST_ENV = {
     "AUDIENCE": "nethub-backend",
     "ALLOWED_ORIGINS": "http://localhost:3000,http://test",
     "REDIS_URL": os.environ.get("REDIS_URL", "redis://localhost:6379/0"),
-    "TAWALA_EXCHANGE_ENABLED": "false",
-    "TAWALA_JWT_ISSUER": "http://localhost:8000",
-    "TAWALA_JWT_AUDIENCE": "tawala-api",
+    "PRODUCT_TOKEN_EXCHANGE_ENABLED": "false",
+    "PRODUCT_TOKEN_ISSUER": "http://localhost:8000",
     "JWKS_REDIS_TTL_SEC": "60",
 }
 # Force test values so CI env (different KEYCLOAK_ISSUER_URL etc.) cannot drift tokens.
