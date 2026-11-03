@@ -146,10 +146,13 @@ Changes made on `fix/shared-product-token-configuration`:
 
 ### CI execution record
 
-- First branch run #165 (run ID `41607772576`) failed during pytest collection: six test modules still imported the old `app.services.tawala_token` path after the generic service rename. No test assertions ran; the reported 42.17% coverage was therefore a collection-failure artifact, not a meaningful coverage result.
-- Corrected all six remaining imports in `test_signing_key_concurrency.py`, `test_env_private_key.py`, `test_key_rotation.py`, `test_n2_signing_key_acceptance.py`, `test_n3_identity_and_profiles.py` and `test_signing_key_max_age.py`.
-- A fresh backend CI run #168 (run ID `41608000845`) and readiness run #129 (run ID `41608000835`) were started for the corrected branch. Their final results are pending.
+- First branch run #165 (run ID `41607772576`) failed during pytest collection because six test modules still imported the old `app.services.tawala_token` path after the generic service rename. No test assertions ran; the reported 42.17% coverage was not a meaningful coverage result.
+- Second branch run #168 (run ID `41608000845`) collected and ran tests but reported 214 passed / 14 failed. The remaining failures were stale Tawala-named settings/imports in other test modules, two assertions still expecting the removed environment audience override, and one test that needed to explicitly request the Tawala legacy claim profile after the generic default changed to `standard`.
+- Corrected those failures, including all six additional module imports/settings fixtures and the product-registry audience assertions.
+- Final backend CI #175 (run ID `41608428220`) passed: **228 tests passed, 76.85% coverage**, per-file coverage check passed, coverage artifact uploaded, and Alembic upgrade/downgrade validation passed.
+- Backend readiness #136 (run ID `41608427606`) passed: API image built, container started, and `/health` plus `/ready` checks succeeded.
+- Vercel preview status for PR #170 is success. Codecov itself returned `Repository not found` (the upload step is configured non-blocking); the GitHub coverage artifact was uploaded successfully.
 
-**Still not verified:** successful fresh backend test/coverage run, readiness workflow completion, frontend lint/build, production environment compatibility and staging verifier behavior.
+**Still not verified:** production environment compatibility and staging verifier behavior. The frontend generated-client/BFF usage graph remains a separate integration audit; no frontend runtime implementation was changed here.
 
 No database schema/migration, deployment secret, production setting, exchange enablement or merge has been changed.
