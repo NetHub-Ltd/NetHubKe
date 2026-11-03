@@ -34,3 +34,14 @@ Copy `.env.example` → `.env.local` and set OIDC + `NETHUB_API_URL`.
 npm install
 npm run dev
 ```
+
+
+## Auth.js PKCE / InvalidCheck
+
+If login fails with `InvalidCheck: pkceCodeVerifier value could not be parsed`:
+
+1. **AUTH_URL** must be the exact public origin users use (e.g. `https://nethub.co.ke`).
+2. **AUTH_SECRET** must be stable across the authorize → callback round-trip (same value on all instances).
+3. Clear site cookies for the domain and try once (stale PKCE cookie from a previous secret).
+4. IdP redirect URI must be `https://<host>/api/auth/callback/oidc`.
+5. Auth routes use the **Node.js** runtime (not Edge) so cookie encryption matches.
