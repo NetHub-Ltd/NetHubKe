@@ -129,7 +129,8 @@ The new environment names are intentionally not aliases for the old `TAWALA_*` n
 - N5 five-minute stale-access acceptance remains an end-to-end requirement. NetHubKe's 240-second issuer cap and 300-second upstream JWKS cache setting do not prove deployed product verifier refresh/clock behavior.
 - Secure N7 one-time launch-code redemption is not established by this N1 validation.
 - Machine-client authentication and the full browser BFF runtime implementation are not accepted by this N1 report.
-- The existing frontend example still contains `NEXT_PUBLIC_API_URL`; this validation did not remove it because its code usage has not yet been comprehensively verified. It must be reconciled with the BFF-only browser contract before frontend integration is declared conformant.
+- Removed `NEXT_PUBLIC_API_URL` from `apps/frontend/.env.example`; the sample now documents only server-side `BACKEND_URL`, consistent with the BFF-only browser contract.
+- The generated OpenAPI client at `apps/frontend/src/lib/types/api/client.gen.ts` still has a hardcoded `http://localhost:8000` base URL. Its complete import/use graph was not verified in this N1 scope; it is not an approved browser transport and must not be imported into client components. Reconcile it during the separate BFF implementation.
 - The Tawala claim profile remains a product-registry profile for its existing `org_id`/principal compatibility contract. It is not an environment-level integration switch. Product-specific business permissions remain product-owned.
 
 ## 7. Branch changes and verification status
