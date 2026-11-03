@@ -196,8 +196,8 @@
 ## CI verification — 2026-11-03
 
 - PR: #173 — `feat(auth): make website first client provider-neutral and BFF-secure`.
-- Backend CI: run 41622181502 — 237 passed, 77.46% coverage; Alembic upgrade, downgrade and re-upgrade passed.
-- Backend readiness: run 41622181578 — Docker/PostgreSQL/Redis readiness passed.
-- Frontend CI: run 41622181474 — lint, production build and 11 auth/BFF security regression tests passed.
+- Backend CI: run 41622960491 — 237 passed, 77.51% coverage; Alembic upgrade, downgrade and re-upgrade passed.
+- Backend readiness: run 41622960484 — Docker/PostgreSQL/Redis readiness passed.
+- Frontend CI: run 41622960475 — lint, production build and 11 auth/BFF security regression tests passed.
 - PR #170 was closed as superseded by #173; its changes are included in the consolidated branch.
 - PR #173 remains open and mergeable against dev. No production settings, secrets, migrations or feature flags were changed in a deployed environment.
