@@ -46,15 +46,13 @@ class Settings(BaseSettings):
     jwks_cache_ttl: int = 300  # seconds; hard-capped to five minutes during validation
     allowed_origins: str
 
-    # Tawala hard-session exchange (ecosystem auth M2). Default OFF.
-    tawala_exchange_enabled: bool = False
-    # PEM-encoded RSA private key (PKCS8) used to sign aud=tawala-api tokens.
-    tawala_jwt_private_key: str = ""
-    tawala_jwt_issuer: str = "https://api.nethub.local"
-    tawala_jwt_audience: str = "tawala-api"
-    tawala_jwt_ttl_sec: int = 240  # 4 minutes; reserve 60s for verifier clock skew
-    # If true, tenant must have active subscription to service slug "tawala".
-    tawala_exchange_require_subscription: bool = False
+    # Shared product-token issuer configuration. One signing integration serves every product.
+    # The product registry supplies each product's audience; it is never overridden by env.
+    product_token_exchange_enabled: bool = False
+    product_token_private_key: str = ""
+    product_token_issuer: str = "https://api.nethub.local"
+    product_token_ttl_sec: int = 240  # hard-capped at 4 minutes
+    product_token_allow_env_pem: bool = False
 
     # Redis (N2+) — JWKS and signing-key metadata cache
     redis_url: str = "redis://localhost:6379/0"
@@ -64,10 +62,9 @@ class Settings(BaseSettings):
     # Generate with `python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())'`.
     # Keep stable across restarts and back it up separately from PostgreSQL.
     signing_key_encryption_key: str = ""
-    # Env PEM is opt-in only (TAWALA_JWT_ALLOW_ENV_PEM=true) — avoid PEM-in-env in k3s.
+    # Environment PEM fallback is opt-in and shared by all product tokens; prefer DB-managed keys.
     signing_key_max_age_hours: int = 168  # 7 days
     signing_key_retire_overlap_hours: int = 24  # dual JWKS window after rotate
-    tawala_jwt_allow_env_pem: bool = False
 
 
 
