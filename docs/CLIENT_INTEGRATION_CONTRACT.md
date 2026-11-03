@@ -3,7 +3,7 @@
 **Status:** Draft for review  
 **Programme:** #57 — NetHubKe SSO Platform  
 **Architecture baseline:** `docs/SSO_ARCHITECTURE_CONTRACT.md`  
-**Planning context:** #142; N0–N10 sequence remains authoritative  
+**Planning context:** #142; N0–N10 labels are historical traceability, not delivery gates  
 **Scope:** Website/BFF reference integration and reusable contracts for all future clients  
 **Implementation status:** Contract for the first website client. Actual route readiness is tracked by implementation PRs and CI; this document does not enable product exchange or launch.
 
@@ -29,7 +29,7 @@ PostgreSQL (source of truth) / Redis (optional cache)
 The browser:
 - Calls only same-origin website routes (for example, `/api/account/*` and `/api/services/*`).
 - Never calls the NetHubKe hostname, API origin, or `/api/v1/*` endpoints.
-- Never receives a the configured OIDC provider access token, refresh token, ID token, NetHubKe product token, client secret, signing key, or machine credential.
+- Never receives upstream OIDC access, refresh or ID tokens, NetHubKe product token, client secret, signing key, or machine credential.
 - Never receives NetHubKe's internal API base URL through a `NEXT_PUBLIC_*` variable, generated browser SDK, HTML, source map, or runtime configuration.
 - Receives only the minimum application data needed to render the current page.
 
@@ -46,7 +46,7 @@ This rule applies to every browser-based NetHub client, not just the NetHubKe we
 
 | Client class | Authentication entry | NetHubKe transport | Token custody |
 |---|---|---|---|
-| Browser website / web product | the configured OIDC provider OIDC Authorization Code flow, handled by its BFF/Auth.js | Browser → same-origin BFF → NetHubKe | BFF only; browser gets an opaque HttpOnly session cookie |
+| Browser website / web product | OIDC Authorization Code flow with the configured provider, handled by its BFF/Auth.js | Browser → same-origin BFF → NetHubKe | BFF only; browser gets an opaque HttpOnly session cookie |
 | Native mobile / desktop | OIDC Authorization Code + PKCE using system browser | Native client uses a narrowly scoped public-client flow only if explicitly supported; privileged operations go through its trusted backend | OS secure storage for user tokens; no client secret or signing key |
 | Product backend / machine client | Registered machine identity and client authentication | Server-to-server directly to NetHubKe | Backend secret store; scoped, audience-restricted machine token |
 | Product resource API | NetHubKe-issued product JWT | No per-request NetHubKe call; local signature/JWKS validation | Product API process |
@@ -58,7 +58,7 @@ Product APIs must not call NetHubKe for per-request introspection on hot paths. 
 ## 3. Browser authentication and BFF session
 
 1. The browser navigates to the website's sign-in route.
-2. Auth.js initiates OIDC Authorization Code flow with the configured OIDC provider. The browser may be redirected to the configured OIDC provider's authorization endpoint; this is an OIDC navigation, not a browser API call to NetHubKe.
+2. Auth.js initiates OIDC Authorization Code flow with the configured OIDC provider. The browser may be redirected to the provider's authorization endpoint; this is an OIDC navigation, not a browser API call to NetHubKe.
 3. Auth.js handles the callback and code exchange on the server. PKCE/state/nonce validation is required; use a confidential client when the configured deployment has a client secret.
 4. The BFF retains upstream access/refresh/ID tokens in server-only session state. If Auth.js JWT sessions are used, the session cookie must remain encrypted, HttpOnly, Secure in production, and unavailable to client JavaScript. Do not copy token fields into the public session callback.
 5. The browser receives only the opaque session cookie and a safe session/profile DTO.
