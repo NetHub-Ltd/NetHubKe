@@ -389,7 +389,7 @@ These are targeted missing tests for identified security boundaries, not a reque
 - **Product audience uniqueness:** PR #170 branch contains `Product.__table_args__` with `uq_products_audience` and migration `m6g7h8i9j0k1_unique_product_audiences.py`. The migration checks duplicates and fails with the conflicting audiences/slugs rather than silently rewriting rows. Tracked by #172; included in the consolidated branch.
 - **Auth.js public session:** the current session callback intentionally does not copy `accessToken`, `refreshToken` or `idToken` into the public session. The actual failure was that BFF handlers nevertheless read `session.accessToken`, so authenticated BFF requests could not obtain the bearer. Issue #171 fixes this through server-side decoding of the encrypted Auth.js JWT cookie.
 - **Product token exposure:** the existing exchange BFF returned the upstream product-token response to browser code and the launch helper placed the token in a URL fragment. The branch disables the browser exchange endpoint with HTTP 410 and disables the launch helper. Secure product launch is not claimed complete.
-- **Provider-specific OIDC assumptions:** the earlier dev code used vendor-specific endpoint fallbacks and role parsing. Issue #80 and this branch replace these with discovery-advertised JWKS/UserInfo/token/logout endpoints and an explicit configurable role-claim path. This branch has not yet passed CI; do not mark the IdP-agnostic acceptance complete until CI and alternate-provider tests pass.
+- **Provider-specific OIDC assumptions:** the earlier dev code used vendor-specific endpoint fallbacks and role parsing. Issue #80 and this branch replace these with discovery-advertised JWKS/UserInfo/token/logout endpoints and an explicit configurable role-claim path. The branch passed backend CI (237 tests, 77.46% coverage), frontend lint/build and 11 auth/BFF security tests; alternate discovery endpoint layouts are covered by backend tests.
 
 ### Still open / not proven
 
@@ -404,4 +404,4 @@ These are targeted missing tests for identified security boundaries, not a reque
 - Branch: `feat/first-client-idp-agnostic-bff`
 - Parent commit: `73ecbcea14e01af84807f4518c4a0171f006a52c`
 - New issue: #171 (website BFF), existing issue #80 (provider-neutral OIDC), #172 (unique product audiences).
-- Validation status: implementation in progress; no CI results claimed yet.
+- Validation status: CI green (backend 237 passed, 77.46%; Alembic upgrade/downgrade/re-upgrade; Docker/Postgres/Redis readiness; frontend lint/build; 11 auth/BFF tests). OIDC-configured browser smoke remains pending.
