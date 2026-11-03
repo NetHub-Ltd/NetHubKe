@@ -37,7 +37,7 @@ def test_public_jwk(rsa_pem):
 
 def test_get_jwks_env(rsa_pem):
     pem, _ = rsa_pem
-    s = MagicMock(tawala_jwt_private_key=pem, tawala_jwt_allow_env_pem=True)
+    s = MagicMock(product_token_private_key=pem, product_token_allow_env_pem=True)
     with patch.object(tt, "settings", s):
         doc = tt.get_jwks()
     assert len(doc["keys"]) == 1
@@ -45,7 +45,7 @@ def test_get_jwks_env(rsa_pem):
 
 
 def test_get_jwks_empty():
-    with patch.object(tt, "settings", MagicMock(tawala_jwt_private_key="")):
+    with patch.object(tt, "settings", MagicMock(product_token_private_key="")):
         assert tt.get_jwks() == {"keys": []}
 
 
@@ -58,18 +58,18 @@ def test_generate_keypair_sign():
 
 
 def test_exchange_enabled_false():
-    with patch.object(tt, "settings", MagicMock(tawala_exchange_enabled=False)):
+    with patch.object(tt, "settings", MagicMock(product_token_exchange_enabled=False)):
         assert tt.exchange_enabled() is False
 
 
 def test_exchange_enabled_true():
-    with patch.object(tt, "settings", MagicMock(tawala_exchange_enabled=True)):
+    with patch.object(tt, "settings", MagicMock(product_token_exchange_enabled=True)):
         assert tt.exchange_enabled() is True
 
 
 def test_load_env_private_key_empty():
     with patch.object(
-        tt, "settings", MagicMock(tawala_jwt_private_key="", tawala_jwt_allow_env_pem=True)
+        tt, "settings", MagicMock(product_token_private_key="", product_token_allow_env_pem=True)
     ):
         assert tt._load_env_private_key() is None
 
@@ -79,7 +79,7 @@ def test_load_env_private_key_valid(rsa_pem):
     with patch.object(
         tt,
         "settings",
-        MagicMock(tawala_jwt_private_key=pem, tawala_jwt_allow_env_pem=True),
+        MagicMock(product_token_private_key=pem, product_token_allow_env_pem=True),
     ):
         key = tt._load_env_private_key()
     assert key is not None
@@ -90,7 +90,7 @@ def test_load_env_private_key_blocked_without_allow(rsa_pem):
     with patch.object(
         tt,
         "settings",
-        MagicMock(tawala_jwt_private_key=pem, tawala_jwt_allow_env_pem=False),
+        MagicMock(product_token_private_key=pem, product_token_allow_env_pem=False),
     ):
         assert tt._load_env_private_key() is None
 
@@ -161,9 +161,9 @@ async def test_build_jwks_empty_db_env_fallback(rsa_pem):
                     tt,
                     "settings",
                     MagicMock(
-                        tawala_jwt_private_key=pem,
-                        tawala_jwt_allow_env_pem=True,
-                        tawala_exchange_enabled=False,
+                        product_token_private_key=pem,
+                        product_token_allow_env_pem=True,
+                        product_token_exchange_enabled=False,
                         jwks_redis_ttl_sec=60,
                     ),
                 ):
