@@ -287,8 +287,10 @@ async def test_mint_product_success_token_claims_and_signature(rsa_pem):
         issuer="https://api.example.test",
     )
     assert claims["sub"] == "canonical-user-123"
-    assert claims["org_id"] == str(org_id)
-    assert claims["principal"] == "terminal"
+    # The shared standard profile must not leak Tawala-specific organization
+    # or principal claims into other products.
+    assert "org_id" not in claims
+    assert "principal" not in claims
     assert claims["product"] == "netpay"
     assert claims["iat"] >= now
     assert isinstance(claims["jti"], str) and len(claims["jti"]) >= 32
