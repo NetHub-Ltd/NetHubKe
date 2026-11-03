@@ -37,7 +37,7 @@ from app.utils.logging import logger
 
 
 def exchange_enabled() -> bool:
-    return bool(getattr(settings, "tawala_exchange_enabled", False))
+    return bool(getattr(settings, "product_token_exchange_enabled", False))
 
 
 _ENCRYPTED_PEM_PREFIX = "enc:v1:"
@@ -128,9 +128,9 @@ def _load_env_private_key():
     Misconfigured secrets (hex tokens, JWT strings, etc.) must not 500 JWKS.
     """
     # Env PEM disabled by default — keys are generated and stored in Postgres.
-    if not bool(getattr(settings, "tawala_jwt_allow_env_pem", False)):
+    if not bool(getattr(settings, "product_token_allow_env_pem", False)):
         return None
-    pem = (getattr(settings, "tawala_jwt_private_key", None) or "").strip()
+    pem = (getattr(settings, "product_token_private_key", None) or "").strip()
     if not pem:
         return None
     pem = pem.replace("\\n", "\n")
@@ -440,7 +440,7 @@ async def bootstrap_signing_key(db: AsyncSession) -> SigningKey:
     env_key = _load_env_private_key()
     if env_key is not None:
         kid = "nethub-env-bootstrap"
-        pem = (settings.tawala_jwt_private_key or "").strip().replace("\\n", "\n")
+        pem = (settings.product_token_private_key or "").strip().replace("\\n", "\n")
         jwk = public_jwk_from_private(env_key, kid)
     else:
         kid, pem, jwk, _ = _generate_rsa_keypair()
@@ -577,10 +577,11 @@ async def mint_tawala_access_token(
     email: Optional[str] = None,
 ) -> tuple[str, int]:
     """Backward-compatible Tawala mint; delegates to product mint."""
+    product = await get_product_by_slug(db, "tawala")
     return await mint_product_access_token(
         db,
-        product_slug="tawala",
-        audience=getattr(settings, "tawala_jwt_audience", "tawala-api") or "tawala-api",
+        product_slug=product.slug,
+        audience=product.audience,
         sub=sub,
         org_id=org_id,
         principal=principal,
@@ -633,7 +634,7 @@ async def ensure_tawala_product(db: AsyncSession):
     row = Product(
         slug="tawala",
         name="Tawala",
-        audience=getattr(settings, "tawala_jwt_audience", "tawala-api") or "tawala-api",
+        audience="tawala-api",
         is_active=True,
         claim_profile="tawala",
         notes="Hard-session exchange; org_id + principal owner|terminal",
@@ -671,12 +672,12 @@ async def mint_product_access_token(
 
     private_key, kid = await get_active_signing_key(db)
     now = int(time.time())
-    ttl = min(max(1, int(getattr(settings, "tawala_jwt_ttl_sec", 240))), 240)
+    ttl = min(max(1, int(getattr(settings, "product_token_ttl_sec", 240))), 240)
     exp = now + ttl
     claims: dict[str, Any] = {
         "sub": str(sub),
         "product": product_slug,
-        "iss": settings.tawala_jwt_issuer,
+        "iss": settings.product_token_issuer,
         "aud": audience,
         "iat": now,
         "exp": exp,
