@@ -242,6 +242,7 @@ async def test_mint_product_success(rsa_pem):
                     org_id=uuid.uuid4(),
                     principal="owner",
                     email="a@example.com",
+                    claim_profile="tawala",
                 )
     assert isinstance(token, str) and len(token) > 20
     assert exp > int(time.time())
@@ -272,6 +273,7 @@ async def test_mint_product_success_token_claims_and_signature(rsa_pem):
                     org_id=org_id,
                     principal="terminal",
                     email="user@example.com",
+                    claim_profile="standard",
                 )
 
     header = jwt.get_unverified_header(token)
@@ -309,6 +311,7 @@ async def test_mint_rejects_unknown_principal_without_loading_key():
                     sub="sub-1",
                     org_id=uuid.uuid4(),
                     principal="admin",
+                    claim_profile="tawala",
                 )
     assert error.value.status_code == 400
     get_key.assert_not_awaited()
