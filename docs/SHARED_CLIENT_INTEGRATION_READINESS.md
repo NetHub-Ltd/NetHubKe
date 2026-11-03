@@ -84,7 +84,11 @@ The merged backend still contains:
 
 The exchange is globally default-off and PR #173 disables the browser exchange path. This product-token system is not required for a client to call NetHubKe APIs using a Zitadel access token.
 
-A limited repository check found no NetHubKe/JWKS/OIDC integration paths in the current NetPay `dev` branch tree, and no such integration paths in the current `tawala-core` `main` tree. This is not sufficient evidence to delete the issuer: confirm the actual deployed Tawala/NetPay backends and any external consumers first.
+Consumer audit performed against the currently exposed product branches:
+- NetPay `dev` uses its own HS256 M2M credentials for NetPay API access. I found no NetHubKe OIDC/JWKS integration or NetHubKe product-token verifier in the inspected backend paths. This M2M mechanism is separate from user authentication and must not be confused with the NetHubKe client contract.
+- Tawala Core `main` exposes local password registration/login/logout and its own sessions. I found no NetHubKe OIDC/JWKS integration in the inspected paths. This is not yet the agreed shared IdP client integration and needs a separate Tawala backend migration plan; do not change it in this NetHubKe backend task.
+
+This is not sufficient evidence to delete the issuer: confirm the actual deployed Tawala/NetPay backends and any external consumers first.
 
 **Decision:** do not add launch-code redemption, product-token consumers or more signing-key functionality. Keep exchange disabled. Once all actual consumers are accounted for, remove/deprecate the exchange/JWKS/key-management subsystem and its schema/config if no independently approved product-API use remains. Do not use these tokens as credentials for NetHubKe API requests.
 
