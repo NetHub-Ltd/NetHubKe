@@ -217,4 +217,4 @@
 - Removed provider-specific config aliases and the unused empty legacy provider module.
 - Updated architecture, BFF, launch, environment and README documentation.
 
-**CI verified:** Backend CI run 41622181502 passed 237 tests at 77.46% coverage; Alembic upgrade/downgrade/re-upgrade passed. Backend readiness run 41622181578 passed. Frontend CI run 41622181474 passed lint, production build and 11 auth/BFF security tests. **Still pending:** browser smoke test with the configured OIDC client and provider role-claim mapping. Product launch remains disabled.
+**CI verified:** Backend CI run 41622960491 passed 237 tests at 77.51% coverage; Alembic upgrade/downgrade/re-upgrade passed. Backend readiness run 41622960484 passed. Frontend CI run 41622960475 passed lint, production build and 11 auth/BFF security tests. **Still pending:** browser smoke test with the configured OIDC client and provider role-claim mapping. Product launch remains disabled.
