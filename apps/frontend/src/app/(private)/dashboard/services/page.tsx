@@ -125,12 +125,12 @@ export default function DashboardServicesPage() {
     );
   }
 
-  if (authStatus === "stale" || authStatus === "unauthenticated") {
+  if (authStatus === "stale" || authStatus === "unauthenticated" || authStatus === "error") {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-surface p-4">
         <div className="max-w-md rounded-xl border border-error-container bg-surface-container-lowest p-8 text-center shadow-lg">
           <AlertCircle className="mx-auto h-12 w-12 text-error" />
-          <h2 className="mt-4 text-xl font-bold">Session Expired</h2>
+          <h2 className="mt-4 text-xl font-bold">{authStatus === "error" ? "Account unavailable" : "Session expired"}</h2>
           <Button
             type="button"
             variant="primary"
@@ -141,7 +141,7 @@ export default function DashboardServicesPage() {
               if (url) window.location.href = url;
             }}
           >
-            Go to Login
+            Return to Login
           </Button>
         </div>
       </div>
