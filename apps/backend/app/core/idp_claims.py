@@ -15,12 +15,12 @@ def _read_claim_path(payload: dict[str, Any], claim_path: str) -> Any:
     return value
 
 
-def _claim_values(value: Any) -> list[str]:
+def _claim_values(value: Any, *, allow_string: bool = True) -> list[str]:
     if isinstance(value, list):
         return [str(item) for item in value if item is not None and str(item).strip()]
     if isinstance(value, dict):
         return [str(key) for key in value if str(key).strip()]
-    if isinstance(value, str) and value.strip():
+    if allow_string and isinstance(value, str) and value.strip():
         return [value.strip()]
     return []
 
@@ -35,7 +35,7 @@ def extract_roles(payload: dict[str, Any], claim_path: str = "roles") -> list[st
     found: list[str] = []
     if claim_path.strip():
         found.extend(_claim_values(_read_claim_path(payload, claim_path.strip())))
-    found.extend(_claim_values(payload.get("groups")))
+    found.extend(_claim_values(payload.get("groups"), allow_string=False))
 
     seen: set[str] = set()
     normalized: list[str] = []
