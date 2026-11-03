@@ -241,7 +241,7 @@ async def test_exchange_success_uses_server_resolved_identity_and_product_audien
     payload = response.json()
     assert payload["access_token"] == "signed-product-token"
     assert payload["product"] == "tawala"
-    assert payload["audience"] == "tawala-api"
+    assert payload["audience"] == "tawala-api-db-row"
     assert payload["principal"] == "owner"
     assert payload["org_id"] == str(tenant.id)
     minted.assert_awaited_once()
@@ -252,7 +252,7 @@ async def test_exchange_success_uses_server_resolved_identity_and_product_audien
     assert entitlement.await_args.kwargs["product"].id == product.id
     kwargs = minted.await_args.kwargs
     assert kwargs["product_slug"] == "tawala"
-    assert kwargs["audience"] == "tawala-api"
+    assert kwargs["audience"] == "tawala-api-db-row"
     assert kwargs["sub"] == str(user.id)
     assert kwargs["org_id"] == tenant.id
     assert kwargs["principal"] == "owner"
