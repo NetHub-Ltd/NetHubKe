@@ -1,90 +1,84 @@
-# NetHubKe Ecosystem Identity & Access Contract
-**Decision status:** Approved, provider-neutral architecture baseline, 2026-10-29  
-**Planning issue:** #142  
-**Programme umbrella:** #57  
-**Related conflict:** #135  
-**Implementation status:** Approved architecture. Implementation progress and evidence are recorded in the relevant issues, PRs and trackers; this contract does not authorize production deployment.
+# NetHubKe Identity & Access Architecture
+
+**Status:** Approved architecture baseline — 2026-11-03  
+**Programme:** #57  
+**Identity provider:** Zitadel — https://auth.nethub.co.ke  
+**Clients:** NetHubKe website, Tawala and NetPay
 
 ## 1. Responsibility boundaries
 
-- **Upstream OIDC provider:** authentication, MFA, provider session and upstream identity proof through standard OIDC.
-- **NetHubKe:** IdP integration/validation, canonical ecosystem identity mapping, service registry, global access policy, user and organization entitlement/grant evaluation, centralized administration/audit, and product-facing token issuance.
-- **Product APIs (including Tawala and NetPay):** validate NetHubKe-issued tokens locally via JWKS and enforce their own domain/business permissions. They should not need to decode upstream OIDC tokens, store/hash passwords, or call NetHubKe on every API request.
-- **PostgreSQL:** durable source of truth. **Redis:** cache/coordination only, never the only copy of grants, key state, or audit records.
+- **Zitadel:** sole identity provider. Owns authentication, MFA, login/logout, OIDC authorization flows, sessions, signing keys, access/refresh/ID token issuance and token lifecycle.
+- **NetHubKe backend:** protected resource server and centralized authorization/resource API. Validates Zitadel-issued access tokens, resolves canonical identity, evaluates NetHubKe-managed access and returns authorized resources.
+- **NetHubKe website, Tawala and NetPay:** clients of the same backend. Each uses its own registered OIDC client configuration with Zitadel and presents a Zitadel-issued access token to NetHubKe.
+- **Product applications:** retain authorization over their own domain data and actions. NetHubKe does not replace product-owned business roles or resource permissions.
+- **PostgreSQL:** durable source of truth. **Redis:** disposable cache/coordination only.
 
-## 2. Identity mapping and lifecycle
+NetHubKe is not an IdP, OAuth authorization server, password store, token broker or second token issuer.
 
-- Canonical identity maps an upstream identity by the pair (issuer, immutable subject); email is an attribute, not a primary identity key.
-- Account linking must be explicit and controlled. A matching email alone must not silently merge accounts or reactivate a disabled identity.
-- Disabled/blocked canonical identities are denied even if an upstream token is otherwise valid.
-- NetHubKe owns ecosystem identity and access policy; each product owns its own user/staff records and business authorization.
+## 2. Shared client access contract
 
-## 3. Service policy and access decisions
+1. A client authenticates with Zitadel using its registered OIDC client.
+2. Zitadel issues an access token intended for the NetHubKe API.
+3. The client presents that token as a bearer credential when calling NetHubKe.
+4. NetHubKe validates signature, approved algorithm, exact issuer, API audience, expiry/not-before and required identity/scope claims using trusted OIDC discovery/JWKS.
+5. NetHubKe resolves the canonical user using the exact issuer + subject pair.
+6. NetHubKe checks canonical account state, required scopes, tenant context and service entitlement before returning protected resources.
 
-Service registry must represent stable service slug/audience and lifecycle state; public availability independently from whether login is required; support for individual users and/or organizations; subscription/entitlement requirements and individual grants; and a narrowly defined centrally authorized administrative grant path with durable audit.
+All three clients use the same API audience and backend validation path. Client IDs and redirect URIs identify OIDC clients; they are not substitutes for the API audience. Client-specific policy is added only where a concrete authorization requirement exists.
 
-Decision evaluation is explicit, not a single ambiguous entitled boolean:
-1. Validate identity and token provenance.
-2. Deny if identity is disabled/blocked.
-3. Deny if service is globally disabled or unavailable under policy.
-4. Enforce the service authentication requirement.
-5. Evaluate organization/tenant entitlement when required.
-6. Evaluate individual grant when required by service policy.
-7. Apply only explicitly authorized administrative grants, audit the change, and never allow them to bypass global disable or disabled identity.
-8. Return a policy decision and mint a product token only when all required conditions pass.
+ID tokens are not API credentials. The API audience must be configured so a client ID token is rejected by audience validation.
 
-Exact precedence when organization and individual grants disagree must be specified per policy mode and tested before implementation. No implicit owner-means-allow-all rule.
+## 3. Canonical identity and lifecycle
 
-## 4. Product JWT contract
+- Canonical identity is the exact pair (issuer, immutable subject).
+- Email is mutable profile data and never an identity key.
+- First-login sync initializes a local identity only from a validated access token.
+- A matching email without an existing identity mapping requires explicit, separately verified account linking.
+- Disabled or deleted local accounts are denied even if the upstream access token remains cryptographically valid.
+- Profile email changes are accepted only under the existing verified-email rules.
 
-- NetHubKe issues short-lived, audience-specific JWTs only after server-side policy evaluation.
-- Product APIs verify JWT signatures locally against NetHubKe JWKS and validate exact issuer, intended audience, expiry/not-before, allowed algorithm, token type and required claims.
-- Required claims: iss, stable canonical sub, aud, iat, exp, jti; JOSE header contains kid. Organization/user context and grants are server-derived, not caller-selected.
-- A token for one product is not valid for another product. Reject wrong audience, issuer, algorithm, token type, missing required claims, expired token and disabled/retired signing key as appropriate.
-- No private signing keys in product services or frontend bundles. Managed key rotation publishes active and retiring public keys via JWKS with bounded cache staleness.
-- Human tokens and machine tokens are distinct principal types and audiences. Machine identities have an owner, explicit scopes/audience, rotation, and revocation; they do not inherit human/admin authority by default.
+## 4. Central service-access policy
 
-## 5. Revocation and freshness bound
+NetHubKe owns ecosystem-level service registry and entitlement decisions. The existing evaluator supports organization subscriptions, individual membership grants, time-bound overrides and product/service lifecycle checks.
 
-The maximum stale-access window is **five minutes end-to-end** after an access grant is removed, identity is disabled, organization entitlement is revoked, or service access is disabled. This is a bound across the entire system, not five minutes per layer.
+A client must receive an authoritative access decision from NetHubKe. Connection/link status or a frontend plan heuristic is not an entitlement decision.
 
-The implementation design must account for token lifetime, refresh/renewal, entitlement and policy caches, JWKS caches, clock skew, retries and propagation. Do not add individual TTLs together and claim compliance. Normal policy changes must be reflected within the bound. Compromised signing keys and emergency global disable require a documented, tested accelerated response and cache invalidation path.
+Policy evaluation validates the IdP token and canonical identity, denies disabled users and inactive services, evaluates the configured organization/individual entitlement policy, and applies only explicit, authorized, time-bound overrides with durable audit. Reuse the existing evaluator; do not create a second policy engine.
 
-## 6. Central administration and audit
+## 5. Revocation and freshness
 
-- NetHubKe is the central control plane for service registration, lifecycle, global access policy, user/org grants, and machine identity administration.
-- Administrative routes require centrally defined authorization and least privilege; UI visibility is not authorization.
-- Durable audit records capture actor, action, target, before/after or decision details, timestamp and outcome for sensitive changes. Structured logs complement but do not replace durable audit.
-- Products remain responsible for their own domain roles, resource permissions and data-level access checks.
+The approved target remains a maximum five-minute stale-access window for normal account/service/entitlement changes.
 
-## 7. Path A issue #135 reconciliation
+Current backend facts:
+- Canonical user state is checked against PostgreSQL on authenticated requests.
+- Entitlement evaluation reads PostgreSQL and does not use an entitlement cache.
+- OIDC discovery and JWKS caches are each bounded at 300 seconds.
+- JWT validation applies 10 seconds of clock leeway.
 
-Retain reusable parts of #135: authorization-only data in NetHubKe; no operational cashier/staff tables; generic membership rather than per-product membership tables; external_user_id links to product-owned domain primary key; generic product slugs and product-specific organization links where required.
+These settings alone do not prove end-to-end compliance. Actual Zitadel access-token lifetime, IdP-side account-disable behavior, JWKS refresh/rotation and clock tolerance must be measured against the configured tenant.
 
-The original Path A mechanism—product forwards an upstream OIDC bearer once and NetHubKe does not mint a product token—is **not the default ecosystem architecture** because it contradicts the approved NetHubKe-issued JWT trust model. Preserve #135 and its history; revise/split it only through explicit planning. Any temporary direct-IdP-token compatibility path must have a named consumer, threat boundary, feature flag, expiry/removal date and separate acceptance criteria. Product APIs must not adopt that exception as a general pattern.
+## 6. Product-token issuer status
 
-## 8. Programme order and acceptance evidence
+The repository retains a default-off product-token exchange/signing/JWKS subsystem from the previous architecture. It is not part of the shared client-to-NetHubKe API contract.
 
-N0–N10 remain historical programme groupings for traceability; delivery follows real dependencies and the user's prioritized outcome, not a mandatory milestone gate:
-- N0: governance, architecture and tracker baseline.
-- N1: exchange path and CI regression coverage (#42, #43).
-- N2: managed signing keys and JWKS cache/rotation foundation (#44, #45).
-- N3: generic product exchange and claim profiles (#46, #47).
-- N4: product/org links and entitlement evaluation (#48, #49).
-- N5: rotation and invalidation (#50).
-- N6: service catalogue UI/API (#51, #52).
-- N7: launch hop (#53).
-- N8: read-only billing view (#54).
-- N9: settings (#55).
-- N10: operational runbook, staging soak and end-to-end success criteria (#56).
+- Keep PRODUCT_TOKEN_EXCHANGE_ENABLED=false.
+- Do not use product tokens as credentials for NetHubKe API requests.
+- Audit actual Tawala/NetPay and external consumers before removal.
+- If no separately approved product-API use exists, remove exchange, JWKS, signing-key operations, related configuration and schema together.
+- Do not add launch-code redemption or another exchange protocol.
 
-Historical issue closure is not acceptance evidence. Use current code, CI runs, staging results and the trackers to establish actual status. Do not reopen or re-audit completed work without new contradictory evidence. #55 and #56 remain open where their work is still required.
+## 7. Administration and product authorization
 
-## 9. Non-goals and rollout constraints
+NetHubKe remains the control plane for its service registry, service lifecycle, entitlement grants and overrides. Administrative routes enforce least privilege and durable audit. Product-specific roles, staff permissions and domain-level data access remain product-owned.
 
-- No second password store or independent login system.
-- No universal business-permissions engine replacing product-owned authorization.
-- No per-request introspection calls from product APIs on hot paths.
-- No unrestricted self-registration of services or caller-controlled roles, organization IDs, entitlements or principals.
-- Implementation is authorized only within the user's current task scope; no production deployment or feature-flag enablement is implied.
-- New runtime paths remain behind default-off flags until their milestone acceptance is met on staging.
+## 8. Explicit non-goals
+
+- NetHubKe login UI, password storage or IdP functionality.
+- NetHubKe OAuth/OIDC authorization-server endpoints or token minting.
+- NetHubKe product JWTs as credentials for calls to NetHubKe APIs.
+- Launch codes, second exchanges or product-specific authentication variants.
+- Replacing product-owned authorization.
+- Frontend redesign as part of backend implementation.
+- Per-request introspection where the shared access-token contract and bounded policy checks are sufficient.
+
+No production deployment or feature-flag enablement is implied.
