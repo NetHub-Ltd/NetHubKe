@@ -156,3 +156,44 @@ jobs:
         run: pip install -r requirements-dev.txt
       - name: Import app and GET /health
         run: PYTHONPATH=. python scripts/smoke_startup.py
+
+  docker-build:
+    name: Docker build (no push)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/backend
+          file: ./apps/backend/Dockerfile
+          platforms: linux/amd64
+          push: false
+          load: true
+          tags: nethubke:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: false
+      - name: Smoke container health
+        env:
+          APP_NAME: NetHubKe
+          APP_VERSION: 0.1.0
+          IMAGE_TAG: ci
+          ENVIRONMENT: development
+          ALLOWED_ORIGINS: http://localhost:3000
+          FASTAPI_DB_USER: nethub_ci
+          FASTAPI_DB_PASSWORD: nethub_ci
+          FASTAPI_DB_HOST: host.docker.internal
+          FASTAPI_DB_PORT: "5432"
+          FASTAPI_DB_NAME: nethub_ci
+          OIDC_ISSUER: https://idp.test/realms/nethub
+          OIDC_JWKS_URL: https://idp.test/realms/nethub/protocol/openid-connect/certs
+          AUDIENCE: nethub-api
+          RUN_MIGRATIONS: "false"
+        run: |
+          # App import path already validated by startup job; here we only assert image builds.
+          docker image inspect nethubke:ci
+          echo "docker_build_ok"
+
