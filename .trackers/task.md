@@ -217,4 +217,4 @@
 - Removed provider-specific config aliases and the unused empty legacy provider module.
 - Updated architecture, BFF, launch, environment and README documentation.
 
-**Not yet verified:** GitHub Actions for this branch; frontend lint/build; backend pytest and Alembic upgrade/downgrade; end-to-end browser login → sync → profile/services; production provider role-claim mapping. Do not mark this task delivered until CI passes and the remaining manual integration check is reported.
+**CI verified:** Backend CI run 41622181502 passed 237 tests at 77.46% coverage; Alembic upgrade/downgrade/re-upgrade passed. Backend readiness run 41622181578 passed. Frontend CI run 41622181474 passed lint, production build and 11 auth/BFF security tests. **Still pending:** browser smoke test with the configured OIDC client and provider role-claim mapping. Product launch remains disabled.
