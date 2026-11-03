@@ -21,7 +21,7 @@ Inspected sources include:
 - `apps/backend/app/main.py`
 - `apps/backend/app/db/models/models.py`
 - `apps/backend/tests/api/test_auth_exchange.py`
-- `apps/backend/tests/unit/test_tawala_token.py`
+- `apps/backend/tests/unit/test_product_tokens.py`
 - `apps/backend/.env.example`
 - `apps/backend/docs/AUTH_MATRIX.md`
 - `apps/backend/docs/PRODUCT_CLAIM_PROFILES.md`
@@ -58,7 +58,7 @@ Issue: https://github.com/NetHub-Ltd/NetHubKe/issues/43
 
 | Acceptance item | Evidence | Assessment |
 |---|---|---|
-| `test_tawala_token` or successor runs in CI | `apps/backend/tests/unit/test_tawala_token.py` contains signing/JWKS helper tests; `apps/backend/tests/api/test_auth_exchange.py` contains exchange/JWKS route regressions; backend workflow runs `pytest tests/` | Verified historically; fresh branch CI pending |
+| `test_tawala_token` or successor runs in CI | `apps/backend/tests/unit/test_product_tokens.py` contains signing/JWKS helper tests; `apps/backend/tests/api/test_auth_exchange.py` contains exchange/JWKS route regressions; backend workflow runs `pytest tests/` | Verified historically; fresh branch CI pending |
 | Flag-off path does not break existing auth tests | Route tests cover generic and legacy Tawala exchange disabled paths, no DB/key side effects, and CI runs the complete backend test directory | Verified historically; fresh branch CI pending |
 
 The test suite contains explicit flag-off tests and success/denial paths for identity, entitlement, product audience and signing behavior. The shared configuration changes update the fixtures to use global setting names.
