@@ -273,7 +273,7 @@ async def test_mint_product_success_token_claims_and_signature(rsa_pem):
                     org_id=org_id,
                     principal="terminal",
                     email="user@example.com",
-                    claim_profile="standard",
+                    # Omitted claim_profile must resolve to the common standard profile.
                 )
 
     header = jwt.get_unverified_header(token)
