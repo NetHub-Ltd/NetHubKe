@@ -21,7 +21,11 @@ def rsa_key():
 
 
 @pytest.fixture(autouse=True)
-def mock_oidc_discovery(monkeypatch):
+def mock_oidc_discovery(monkeypatch, request):
+    if request.node.name.startswith("test_discovery_"):
+        yield
+        return
+
     metadata = {
         "issuer": settings.idp_issuer,
         "jwks_uri": "https://provider.example/keys/public",
