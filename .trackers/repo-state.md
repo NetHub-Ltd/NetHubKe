@@ -192,3 +192,16 @@
 - Vercel status reports `build-rate-limit`; the GitHub Actions frontend production build is green, but no Vercel preview URL is available. This is a preview-platform limit, not a failed application build.
 - Remaining related open work: #171 browser smoke with configured OIDC credentials; #162 product-side local verifier evidence; #164 measured five-minute stale-access behavior; #165 product integration validation; #149 secure one-time launch-code handoff; #150 billing/settings/operational readiness.
 - #80/#79/#81/#158/#160/#172 are linked to PR #173 and will close on merge. #148/#152/#161 and already-complete/superseded issues have been closed with evidence. #57 and #135 remain open as programme/history records.
+
+
+## 2026-11-03 — Shared IdP resource-server baseline
+
+- Current dev head at audit: `fdb4a3eabbd8a385d9d96ee12344d89fa52fdd29`.
+- PR #173 is merged into dev. Backend provider-neutral OIDC discovery/JWKS validation and website BFF baseline are now part of dev.
+- Audit branch: `audit/shared-idp-resource-contract`; findings: `docs/SHARED_CLIENT_INTEGRATION_READINESS.md`.
+- Architecture corrected on audit branch: Zitadel owns authentication and token issuance; NetHubKe validates IdP access tokens, resolves canonical identity and serves authorized resources to website, Tawala and NetPay.
+- Existing backend foundation: OIDC validator, issuer+subject identity mapping, active-user check, scope dependency, first-login sync, PostgreSQL entitlement evaluator.
+- Required missing backend resource: authoritative service-access decision endpoint. Existing /services/my-status is not an entitlement decision; it uses a free-tier heuristic and product-link state.
+- Product-token exchange/JWKS/signing subsystem remains default-off pending actual consumer audit. It is not a credential path for NetHubKe APIs.
+- No backend runtime code, schema, secrets, production config or feature flags changed in this audit.
+- Remaining acceptance: actual Zitadel issuer/audience/scopes and all three client registrations; client-ID-token rejection; access-token TTL/JWKS/clock behavior; five-minute freshness proof. Frontend redesign and launch-code work are excluded.
