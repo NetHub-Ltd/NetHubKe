@@ -244,3 +244,5 @@
 
 - Additional security finding: the UserInfo enrichment path rejects a mismatching subject but currently accepts a response with no subject. Require UserInfo sub to be present and exactly equal to the validated access-token sub before consuming its claims; added to #165 acceptance.
 - Product client inspection: current NetPay dev backend uses its own scoped HS256 M2M tokens for NetPay APIs; inspected Tawala Core main exposes local password register/login/session. Neither inspected backend path demonstrates the shared Zitadel-to-NetHubKe client integration. Product migration is separate from this NetHubKe backend scope.
+
+- Documentation/audit PR opened: #174 https://github.com/NetHub-Ltd/NetHubKe/pull/174, branch audit/shared-idp-resource-contract -> dev. It contains the readiness audit, corrected architecture/client/auth docs and tracker updates only. No runtime code/schema/config/deployment changes. CI was still running at the last check; no merge authorized.
