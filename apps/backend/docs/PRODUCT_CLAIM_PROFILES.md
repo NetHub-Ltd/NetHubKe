@@ -1,6 +1,6 @@
 # Product claim profiles (N3)
 
-NetHubKe validates the configured upstream IdP access token and issues a short-lived product token only after server-side identity and access-policy checks. Product APIs validate NetHubKe JWTs locally through `GET /api/v1/auth/jwks.json`; they must not accept upstream Zitadel tokens as product API credentials by default.
+NetHubKe validates the configured upstream IdP access token and issues a short-lived product token only after server-side identity and access-policy checks. Product APIs validate NetHubKe JWTs locally through `GET /api/v1/auth/jwks.json`; they must not accept upstream OIDC tokens as product API credentials by default.
 
 ## Common product JWT contract
 
