@@ -23,7 +23,7 @@ export function isOidcConfigured(): boolean {
 
 export function oidcIssuer(): string {
   const value = readIssuer();
-  return value ? value.replace(/\/$/, "") : BUILD_PLACEHOLDER_ISSUER;
+  return value || BUILD_PLACEHOLDER_ISSUER;
 }
 
 export function oidcClientId(): string {
@@ -60,7 +60,7 @@ export async function oidcDiscovery(): Promise<OidcDiscovery> {
   }
 
   const issuer = oidcIssuer();
-  const discoveryUrl = new URL("/.well-known/openid-configuration", issuer);
+  const discoveryUrl = new URL(issuer.replace(/\/$/, "") + "/.well-known/openid-configuration");
   const response = await fetch(discoveryUrl, {
     headers: { Accept: "application/json" },
     cache: "no-store",
@@ -78,7 +78,7 @@ export async function oidcDiscovery(): Promise<OidcDiscovery> {
   const metadata = data as Partial<OidcDiscovery>;
   if (
     typeof metadata.issuer !== "string" ||
-    metadata.issuer.replace(/\/$/, "") !== issuer
+    metadata.issuer !== issuer
   ) {
     throw new Error("OIDC discovery issuer does not match OIDC_ISSUER");
   }
