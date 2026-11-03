@@ -17,7 +17,7 @@
 | **A2** | Identity data model | **PR2** | Tenant, User, UserIdentity + migrations + model tests |
 | **A3** | IdP-agnostic token validation | **PR2** | JWT verify + deps; unit tests with fixed keys/claims |
 | **A4** | User API | **PR3** | `POST /sync`, `GET/PATCH /me` + API tests |
-| **A5** | Container image | Pending | Dockerfile/entrypoint; `build_and_push` can build |
+| **A5** | Container image | **PR4** | Dockerfile/entrypoint; `build_and_push` can build |
 | **A6** | Staging soak | Pending | Real IdP token → sync/me on staging |
 
 **Later (not bare minimum — do not pull forward):** entitlements catalogue, billing, admin identity linking UI, frontend, product token exchange.
