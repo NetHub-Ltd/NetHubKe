@@ -51,19 +51,21 @@ export async function readProvisionedServerAuth(
   request?: Request,
 ): Promise<{ accessToken: string; userId: string } | null> {
   const token = await readServerAuthToken(request);
+  const user = token?.user;
   if (
     !token ||
+    !user ||
     token.error === "RefreshAccessTokenError" ||
     token.backendSynced !== true ||
-    token.user?.isActive !== true ||
-    typeof token.user.id !== "string" ||
+    user.isActive !== true ||
+    typeof user.id !== "string" ||
     typeof token.accessToken !== "string" ||
     !token.accessToken
   ) {
     return null;
   }
 
-  return { accessToken: token.accessToken, userId: token.user.id };
+  return { accessToken: token.accessToken, userId: user.id };
 }
 
 /** Cookie-authenticated mutations must originate from this exact website origin. */
