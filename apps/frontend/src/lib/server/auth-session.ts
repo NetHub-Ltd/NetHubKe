@@ -1,3 +1,4 @@
+import "server-only";
 import { getToken } from "next-auth/jwt";
 import { headers } from "next/headers";
 import type { NextRequest } from "next/server";
