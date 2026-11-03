@@ -10,7 +10,6 @@ from sqlmodel import select
 from sqlalchemy.orm import selectinload
 
 from app.api.deps import SessionDep, get_token_data
-from app.core.config import settings
 from app.db.schemas.schemas import TokenData
 from app.db.models.models import Product, User
 from app.services.tawala_token import (
@@ -120,12 +119,10 @@ async def _run_exchange(
         await ensure_tawala_product(db)
 
     product = await get_product_by_slug(db, product_slug)
+    # Product registry is the sole source of each product's audience.
     audience = product.audience
-    if product.slug == "tawala":
-        audience = getattr(settings, "tawala_jwt_audience", None) or product.audience
 
-    # A legacy Tawala audience override is part of the effective audience too.
-    # Reserve it across every registered product, including inactive products.
+    # Reserve each audience across every registered product, including inactive products.
     conflicting_product = (
         await db.exec(
             select(Product).where(
