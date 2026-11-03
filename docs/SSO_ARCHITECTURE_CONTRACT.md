@@ -3,13 +3,13 @@
 **Planning issue:** #142  
 **Programme umbrella:** #57  
 **Related conflict:** #135  
-**Implementation status:** This document does not authorize implementation; implementation requires separate issue/acceptance approval.
+**Implementation status:** Approved architecture. Implementation progress and evidence are recorded in the relevant issues, PRs and trackers; this contract does not authorize production deployment.
 
 ## 1. Responsibility boundaries
 
-- **the configured OIDC provider:** OIDC identity provider, authentication, MFA, IdP session and upstream identity proof.
+- **Upstream OIDC provider:** authentication, MFA, provider session and upstream identity proof through standard OIDC.
 - **NetHubKe:** IdP integration/validation, canonical ecosystem identity mapping, service registry, global access policy, user and organization entitlement/grant evaluation, centralized administration/audit, and product-facing token issuance.
-- **Product APIs (including Tawala and NetPay):** validate NetHubKe-issued tokens locally via JWKS and enforce their own domain/business permissions. They should not need to decode the configured OIDC provider tokens, store/hash passwords, or call NetHubKe on every API request.
+- **Product APIs (including Tawala and NetPay):** validate NetHubKe-issued tokens locally via JWKS and enforce their own domain/business permissions. They should not need to decode upstream OIDC tokens, store/hash passwords, or call NetHubKe on every API request.
 - **PostgreSQL:** durable source of truth. **Redis:** cache/coordination only, never the only copy of grants, key state, or audit records.
 
 ## 2. Identity mapping and lifecycle
@@ -61,11 +61,11 @@ The implementation design must account for token lifetime, refresh/renewal, enti
 
 Retain reusable parts of #135: authorization-only data in NetHubKe; no operational cashier/staff tables; generic membership rather than per-product membership tables; external_user_id links to product-owned domain primary key; generic product slugs and product-specific organization links where required.
 
-The original Path A mechanism—product forwards an upstream the configured OIDC provider bearer once and NetHubKe does not mint a product token—is **not the default ecosystem architecture** because it contradicts the approved NetHubKe-issued JWT trust model. Preserve #135 and its history; revise/split it only through explicit planning. Any temporary direct-IdP-token compatibility path must have a named consumer, threat boundary, feature flag, expiry/removal date and separate acceptance criteria. Product APIs must not adopt that exception as a general pattern.
+The original Path A mechanism—product forwards an upstream OIDC bearer once and NetHubKe does not mint a product token—is **not the default ecosystem architecture** because it contradicts the approved NetHubKe-issued JWT trust model. Preserve #135 and its history; revise/split it only through explicit planning. Any temporary direct-IdP-token compatibility path must have a named consumer, threat boundary, feature flag, expiry/removal date and separate acceptance criteria. Product APIs must not adopt that exception as a general pattern.
 
 ## 8. Programme order and acceptance evidence
 
-The programme remains N0 → N10; do not jump ahead based only on issue closure:
+N0–N10 remain historical programme groupings for traceability; delivery follows real dependencies and the user's prioritized outcome, not a mandatory milestone gate:
 - N0: governance, architecture and tracker baseline.
 - N1: exchange path and CI regression coverage (#42, #43).
 - N2: managed signing keys and JWKS cache/rotation foundation (#44, #45).
@@ -78,7 +78,7 @@ The programme remains N0 → N10; do not jump ahead based only on issue closure:
 - N9: settings (#55).
 - N10: operational runbook, staging soak and end-to-end success criteria (#56).
 
-Issues #42–#54 are marked closed but retain unchecked acceptance boxes. They are **closed in GitHub, acceptance evidence unverified** until code, CI and staging evidence is recorded. #55 and #56 are open. The earliest not-demonstrably-accepted milestone is N1, pending verification. The #42/#43 milestone assignment was corrected from 11 to 2 based on the observed N0=1, N2=3, …, N10=11 sequence; #55/#56 align with that mapping. The project board remains the programme status source.
+Historical issue closure is not acceptance evidence. Use current code, CI runs, staging results and the trackers to establish actual status. Do not reopen or re-audit completed work without new contradictory evidence. #55 and #56 remain open where their work is still required.
 
 ## 9. Non-goals and rollout constraints
 
