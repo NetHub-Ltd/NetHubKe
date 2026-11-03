@@ -1,0 +1,71 @@
+# Product claim profiles (N3)
+
+NetHubKe validates the configured upstream IdP access token and issues a short-lived product token only after server-side identity and access-policy checks. Product APIs validate NetHubKe JWTs locally through `GET /api/v1/auth/jwks.json`; they must not accept upstream OIDC tokens as product API credentials by default.
+
+## Common product JWT contract
+
+| Claim/header | Required | Meaning |
+|---|---|---|
+| `iss` | yes | NetHubKe token issuer |
+| `sub` | yes | Stable NetHubKe canonical user identifier; currently the local user UUID. NetHubKe resolves the upstream principal by the exact validated `(issuer, immutable sub)` mapping; email is mutable profile data, never an identity key. |
+| `aud` | yes | Exact audience from the registered product configuration |
+| `iat`, `exp` | yes | Issue and expiry times; keep access tokens short-lived and design freshness end-to-end |
+| `jti` | yes | Unique token identifier |
+| JOSE `kid` | yes | Managed signing-key identifier |
+| JOSE `alg` | yes | Fixed allowlisted algorithm (currently RS256) |
+| `product` | yes | Registered product slug |
+| `org_id` | profile-specific | External product organization ID resolved from an explicit product link or approved legacy mapping |
+| `principal` | Tawala profile | `owner` or `terminal`, derived from verified upstream claims; never caller-selected |
+| `email` | optional | Profile/contact attribute, never the canonical identity key |
+
+Tokens for one product must not be accepted by another product. Audience, issuer, algorithm, expiry, required claims and key id must all be verified by resource servers.
+
+## Profile: `standard`
+
+- Contains only the common claims (`iss, sub, aud, iat, exp, jti, product`) plus optional email.
+- Does not inherit Tawala-specific `org_id` or `principal` claims.
+- Organization context must be added only by a future explicitly defined product profile.
+
+## Profile: `tawala`
+
+- Audience: the exact `Product.audience` value in the PostgreSQL product registry. There is no product-specific environment-variable override.
+- `org_id`: active `product_links.external_org_id`, then the explicitly configured legacy `tenant.tawala_organization_id`. There is no implicit fallback to `tenant.id`.
+- `principal`: `owner` or `terminal`, derived by NetHubKe from verified upstream roles. Client-supplied hints can only match the derived value.
+- Exchange endpoints: `POST /api/v1/auth/exchange` with `{"product":"tawala"}`; compatibility alias `POST /api/v1/auth/exchange/tawala`.
+- Requires a verified upstream Bearer token, an active local user, tenant association, active product and entitlement decision.
+
+## Shared issuer configuration
+
+All products share one issuer, one managed signing-key set, one global exchange gate and one token-lifetime policy. The global settings use `PRODUCT_TOKEN_*` names. Product-specific audience and claim profile are read from the Product registry; they are not supplied by environment variables. The global `PRODUCT_TOKEN_EXCHANGE_ENABLED` switch defaults to false and applies to every product.
+
+## Adding another product
+
+1. Register its stable slug, exact audience and active state in the PostgreSQL `products` registry. New products default to the common `standard` claim profile; opt into a legacy profile only when a verified product contract requires it.
+2. Document its required claims here and add positive/negative contract tests.
+3. Resolve any external organization identifier through a product-specific link; never assume the NetHub tenant UUID is valid in another product.
+4. Keep exchange disabled until the rollout and staging acceptance gate is met.
+
+## Entitlement and organization policy
+
+- PostgreSQL is authoritative; Redis is disposable cache.
+- A globally inactive product/service and a disabled identity are hard denials.
+- When subscription enforcement is required, missing service/subscription data fails closed.
+- Product/org links are authorization-sensitive; only centrally authorized owners/admins may manage them.
+- A five-minute stale-access bound is an end-to-end requirement, not a claim implied by the 120-second cache TTL.
+
+
+## Upstream identity lifecycle
+
+- NetHubKe resolves a local user by the exact validated (issuer, sub) mapping. A changed email does not change the canonical identity.
+- A verified email change may update the local profile email after checking for collisions with other live accounts. Unverified email changes do not overwrite the stored profile email.
+- Existing local accounts are never automatically linked by matching email. Account linking requires a separate verified IdP proof and the dedicated identity:link scope plus an admin/ops role.
+- Soft-deleted accounts cannot be resolved by identity or email and cannot authenticate or exchange product tokens.
+
+## Entitlement policy
+
+Claim profiles and entitlement policies are independent. Each Product row
+owns one of four policies: organization_only, individual_only,
+organization_or_individual (default), or organization_and_individual.
+The claim profile controls token shape; entitlement policy controls whether
+a local user may receive that token. A product link is only an external
+organization mapping and never grants access.

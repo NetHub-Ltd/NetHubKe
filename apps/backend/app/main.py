@@ -1,0 +1,127 @@
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI
+from sqlalchemy import text
+from starlette.middleware.cors import CORSMiddleware
+from starlette.responses import JSONResponse
+
+from app.api.v1.api_router import router as api_router
+from app.core.config import settings
+from app.core.redis_client import close_redis
+from app.db.session import AsyncSessionLocal
+from app.utils.logging import logger
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info(
+        f"Starting {settings.app_name} "
+        f"Version: {settings.image_tag} "
+        f"Environment: {settings.environment}"
+    )
+
+    # --------------------------------------------------------------
+    # 1. Database readiness (must answer queries — not only "connect")
+    # --------------------------------------------------------------
+    # Use AsyncSessionLocal (expire_on_commit=False) — not AsyncSession(engine),
+    # which defaults to expire_on_commit=True and triggers MissingGreenlet after
+    # commit when ORM attributes are accessed in lifespan.
+    try:
+        async with AsyncSessionLocal() as session:
+            logger.info("Verifying database readiness...")
+            result = await session.exec(text("SELECT 1"))
+            row = result.one() if hasattr(result, "one") else result.first()
+            # asyncpg/sqlalchemy may return (1,) or 1
+            val = row[0] if row is not None and not isinstance(row, (int, str)) else row
+            if val != 1 and val != (1,):
+                # accept common shapes
+                ok = False
+                try:
+                    ok = int(val[0] if isinstance(val, (tuple, list)) else val) == 1
+                except Exception:  # noqa: BLE001
+                    ok = True  # connected and query returned
+                if not ok and val is None:
+                    raise RuntimeError("Database SELECT 1 returned empty result")
+            # Touch signing_keys so mis-migrated DBs fail fast
+            await session.exec(text("SELECT 1 FROM signing_keys LIMIT 1"))
+        logger.info("Database readiness verified (SELECT 1 + signing_keys reachable).")
+    except Exception as e:
+        logger.critical(f"Database not ready: {e}")
+        raise RuntimeError(
+            "Database unavailable or not ready (migrations missing?). Aborting startup."
+        ) from e
+
+    # Redis is an optional cache; PostgreSQL remains the durable source of truth.
+
+    # --------------------------------------------------------------
+    # 2. Signing keys: bootstrap only when token exchange is enabled
+    # --------------------------------------------------------------
+    from app.services.product_tokens import ensure_signing_keys_ready, exchange_enabled
+
+    if exchange_enabled():
+        try:
+            async with AsyncSessionLocal() as session:
+                key_row = await ensure_signing_keys_ready(session)
+                # Copy scalars while session is open — avoid expired-instance IO after commit
+                kid = str(getattr(key_row, "kid", "") or "")
+                key_status = str(getattr(key_row, "status", "") or "")
+            logger.info(f"Signing keys ready kid={kid} status={key_status}")
+        except Exception as e:
+            logger.critical(f"Signing key bootstrap failed: {e}")
+            raise RuntimeError(
+                "Could not bootstrap signing keys. Aborting startup."
+            ) from e
+    else:
+        logger.info("Token exchange disabled; skipping signing-key bootstrap.")
+
+    yield
+
+    logger.info(f"Shutting down {settings.app_name}")
+    await close_redis()
+
+
+def create_application() -> FastAPI:
+    application = FastAPI(
+        title=settings.app_name,
+        version=settings.image_tag,
+        lifespan=lifespan,
+        redoc_url=None,
+    )
+    logger.info(f"Allowed Origins: {settings.cors_origins}")
+    application.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.cors_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+    return application
+
+
+app: FastAPI = create_application()
+app.include_router(api_router)
+
+
+@app.get("/health", response_class=JSONResponse)
+async def health_check():
+    """Liveness: process is up; PostgreSQL readiness is checked separately."""
+    return JSONResponse(content={"status": "healthy"}, status_code=200)
+
+
+@app.get("/ready", response_class=JSONResponse)
+async def readiness_check():
+    """
+    Readiness: PostgreSQL must answer queries and expose the required schema.
+    Redis is an optional cache and must not gate traffic.
+    """
+    try:
+        async with AsyncSessionLocal() as session:
+            await session.exec(text("SELECT 1"))
+            await session.exec(text("SELECT 1 FROM signing_keys LIMIT 1"))
+    except Exception as e:
+        logger.error(f"Readiness failed: {e}")
+        return JSONResponse(
+            content={"status": "not_ready", "detail": str(e)},
+            status_code=503,
+        )
+    return JSONResponse(content={"status": "ready"}, status_code=200)

@@ -114,3 +114,35 @@ After this PR is approved, follow-up work will reintroduce backend and clients *
 Product owner direction: **Architecture A only.**
 
 Next step after merge approval: plan the minimal resource-server surface (validate token → resolve user → return info) and shared client integration, then implement on a new feature branch from updated `dev`.
+
+
+---
+
+## Retained for Flux / GHCR (borrowed from `dev` as-is)
+
+A full application wipe on `dev` must **not** break cluster image delivery.
+
+Flux (k3s-gitops) consumes:
+
+```text
+ghcr.io/nethub-ltd/nethubke:0.0.<n>   # ImagePolicy-friendly
+```
+
+Published by `.github/workflows/build_and_push.yml` (triggers: `master` / `main` path pushes, `v*` tags, `workflow_dispatch`).
+
+**Kept on this branch exactly as on `dev`:**
+
+| Path | Why |
+|------|-----|
+| `.github/workflows/build_and_push.yml` | Build multi-arch image and push to GHCR |
+| `apps/backend/Dockerfile` | Image build definition |
+| `apps/backend/.dockerignore` | Build context filter |
+| `apps/backend/requirements.txt` | Pip install in image |
+| `apps/backend/entrypoint.sh` | Container entrypoint |
+| `apps/backend/alembic.ini` + `alembic/` | Migrations copied into image |
+| `apps/backend/app/` | Application code the image runs today |
+| `apps/backend/IMAGE.md` | Registry / tag / Flux consumption notes |
+
+This is **continuity of the running image pipeline**, not an endorsement of product-token exchange as the long-term Architecture A design. New Architecture A code will replace `apps/backend/` over time; until then the borrowed tree keeps GHCR builds and Flux-compatible tags working.
+
+**Not retained** (intentionally wiped): frontend, other workflows (backend-ci, frontend-ci, readiness), trackers, SSO docs, AGENTS, root package files, etc.
