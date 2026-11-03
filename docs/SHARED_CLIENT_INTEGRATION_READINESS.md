@@ -53,7 +53,7 @@ The existing `check_entitled` evaluator is currently called by the product-token
 
 ### G2 — Confirm one shared access-token contract against Zitadel
 
-The validation code is present, but the deployed Zitadel API audience, scopes/permissions claims, role mapping and all three client registrations are not evidenced by repository tests.
+The validation code is present, but the deployed Zitadel API audience, scopes/permissions claims, role mapping and all three client registrations are not evidenced by repository tests. The current UserInfo enrichment path also accepts a response with no subject claim; require exact subject equality before using UserInfo data.
 
 **Necessary backend work:** freeze the issuer, API audience, accepted algorithms, required claims and scope names; add focused tests for valid access token, wrong issuer/audience, client ID token, expired/not-yet-valid token, invalid signature, missing subject and missing required scope. Keep client IDs distinct from the shared API audience. Do not introduce client-specific token formats.
 
