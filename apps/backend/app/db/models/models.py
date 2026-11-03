@@ -175,7 +175,7 @@ class Product(BaseMixin, table=True):
     name: str = Field(max_length=128)
     audience: str = Field(max_length=256)
     is_active: bool = Field(default=True, index=True)
-    claim_profile: str = Field(max_length=64, default="tawala")
+    claim_profile: str = Field(max_length=64, default="standard")
     entitlement_policy: str = Field(max_length=40, default="organization_or_individual", index=True)
     # Optional external org claim field name guidance (docs); not enforced in N3
     notes: Optional[str] = Field(default=None, sa_column=Column(sa.Text, nullable=True))
