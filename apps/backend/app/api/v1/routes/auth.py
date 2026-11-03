@@ -12,7 +12,7 @@ from sqlalchemy.orm import selectinload
 from app.api.deps import SessionDep, get_token_data
 from app.db.schemas.schemas import TokenData
 from app.db.models.models import Product, User
-from app.services.tawala_token import (
+from app.services.product_tokens import (
     exchange_enabled,
     build_jwks_document,
     mint_product_access_token,
@@ -233,7 +233,7 @@ async def exchange_product_token(
 
 
 @router.post("/exchange/tawala", response_model=ExchangeResponse)
-async def exchange_tawala_token(
+async def exchange_product_tokens(
     db: SessionDep,
     token_data: TokenData = Depends(get_token_data),
     body: Optional[TawalaExchangeRequest] = None,
