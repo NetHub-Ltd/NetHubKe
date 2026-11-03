@@ -29,8 +29,8 @@ _TEST_ENV = {
     "FASTAPI_DB_NAME": os.environ.get("FASTAPI_DB_NAME", "nethub_ci"),
     "FASTAPI_DB_HOST": os.environ.get("FASTAPI_DB_HOST", "localhost"),
     "FASTAPI_DB_PORT": os.environ.get("FASTAPI_DB_PORT", "5432"),
-    "KEYCLOAK_ISSUER_URL": "https://idp.test/realms/nethub",
-    "KEYCLOAK_JWKS": "https://idp.test/realms/nethub/protocol/openid-connect/certs",
+    "OIDC_ISSUER": "https://idp.test/realms/nethub",
+    "OIDC_ROLE_CLAIM_PATH": "roles",
     "AUDIENCE": "nethub-backend",
     "ALLOWED_ORIGINS": "http://localhost:3000,http://test",
     "REDIS_URL": os.environ.get("REDIS_URL", "redis://localhost:6379/0"),
@@ -38,7 +38,7 @@ _TEST_ENV = {
     "PRODUCT_TOKEN_ISSUER": "http://localhost:8000",
     "JWKS_REDIS_TTL_SEC": "60",
 }
-# Force test values so CI env (different KEYCLOAK_ISSUER_URL etc.) cannot drift tokens.
+# Force generic OIDC test values so CI environment cannot drift token validation.
 for k, v in _TEST_ENV.items():
     os.environ[k] = v
 
@@ -133,7 +133,7 @@ def make_kc_token(rsa_keys):
             "name": "Test User",
             "email_verified": True,
             "scope": scopes,
-            "realm_access": {"roles": roles or ["user"]},
+            "roles": roles or ["user"],
             "iss": iss or settings.idp_issuer,
             "aud": aud,
             "iat": now - 10,
@@ -175,8 +175,11 @@ def patch_kc_decode(rsa_keys, monkeypatch):
         raw_scope = payload.get("scope") or ""
         if isinstance(raw_scope, list):
             raw_scope = " ".join(raw_scope)
-        realm_access = payload.get("realm_access") or {}
-        roles = list(realm_access.get("roles") or [])
+        roles = payload.get(settings.oidc_role_claim_path) or payload.get("groups") or []
+        if isinstance(roles, dict):
+            roles = list(roles.keys())
+        if not isinstance(roles, list):
+            roles = []
         return TokenData.model_validate(
             {
                 "sub": str(payload.get("sub") or ""),
