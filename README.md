@@ -8,7 +8,7 @@
 
 NetHubKe is the central identity, authorization and product-token service for the NetHub product ecosystem.
 
-**the configured OIDC provider is the current OpenID Connect identity provider. NetHubKe is IdP-agnostic:** it validates upstream OIDC access tokens, maintains canonical ecosystem identity and access policy, and issues short-lived product JWTs. Product APIs validate those JWTs locally through NetHubKe's public JWKS endpoint.
+**NetHubKe integrates with a configured standards-compliant OIDC provider.** The issuer is supplied through `OIDC_ISSUER`; authorization, token, JWKS, UserInfo and logout endpoints are discovered from the provider's metadata. NetHubKe core does not depend on a named identity-provider vendor.
 
 NetHubKe is not a replacement login provider and is not intended to sit in the request path of every product API call.
 
@@ -38,7 +38,7 @@ Product-owned business authorization
 ### Non-negotiable trust boundaries
 
 - Browser applications call their own same-origin server-side BFF. Browser JavaScript must not call the NetHubKe API origin directly.
-- the configured OIDC provider access, refresh and ID tokens, NetHubKe product JWTs, machine credentials and signing keys remain server-side.
+- Upstream OIDC access, refresh and ID tokens, NetHubKe product JWTs, machine credentials and signing keys remain server-side.
 - NetHubKe is authoritative for canonical ecosystem identity and product/service entitlement decisions.
 - Product APIs validate NetHubKe JWT signatures locally using JWKS. They do not call NetHubKe for per-request introspection on hot paths.
 - Product-specific business roles and operational permissions remain inside the product.
@@ -59,9 +59,9 @@ The repository contains:
 
 **Important rollout state:** product-token exchange is globally disabled by default. It is controlled by `PRODUCT_TOKEN_EXCHANGE_ENABLED`, a platform-wide switch shared by every registered product—not by a Tawala-specific setting. Keep it false until the applicable milestone acceptance and staging gates are satisfied.
 
-The full browser BFF integration and secure product launch handoff are not yet complete. The client contract defines the required boundary; it must not be read as proof that every proposed BFF route or launch flow already exists. The five-minute stale-access requirement also needs end-to-end evidence from the actual product verifiers. The generated OpenAPI client currently has a localhost base URL and is not an approved browser transport; do not import it into client components. Use the server-only backend helper until typed same-origin BFF routes are implemented.
+The website uses same-origin BFF routes for profile, service status and billing. BFF handlers read the encrypted Auth.js session cookie on the server; the public session does not expose upstream bearer tokens. Product launch remains disabled: the browser-facing exchange endpoint returns 410 until a short-lived, single-use launch code can be redeemed server-to-server by the product backend. The five-minute stale-access requirement still needs end-to-end evidence from actual product verifiers. The generated OpenAPI client has a localhost base URL and is not an approved browser transport; do not import it into client components.
 
-The SSO programme is tracked in [issue #57](https://github.com/NetHub-Ltd/NetHubKe/issues/57) and proceeds through N0–N10. Consult `.trackers/` and the milestone issues before starting programme work.
+The platform objective and delivery history are tracked in [issue #57](https://github.com/NetHub-Ltd/NetHubKe/issues/57). Consult `.trackers/` and the relevant implementation issues for verified state; do not treat historical milestone labels as a reason to repeat completed work.
 
 ## Repository layout
 
@@ -85,7 +85,7 @@ NetHubKe/
 
 | Area | Technology |
 |---|---|
-| Identity provider | the configured OIDC provider (OIDC); validation is IdP-agnostic |
+| Identity provider | Configured OIDC provider; discovery-driven and provider-neutral |
 | Backend API | Python, FastAPI, Pydantic, SQLModel, Loguru |
 | Database and migrations | PostgreSQL, Alembic, asyncpg |
 | Cache | Redis (optional) |
@@ -135,7 +135,7 @@ cp .env.example .env.local
 pnpm dev
 ```
 
-Configure the the configured OIDC provider OIDC application and its callback URL using the values documented in `apps/frontend/.env.example`. The frontend's NetHubKe backend URL is server-only configuration; do not expose it through a `NEXT_PUBLIC_*` variable.
+Register the frontend as a confidential OIDC client with the chosen provider and configure its callback URL using `apps/frontend/.env.example`. The frontend's NetHubKe backend URL is server-only configuration; do not expose it through a `NEXT_PUBLIC_*` variable.
 
 ### Tests and quality checks
 
@@ -166,7 +166,7 @@ The backend example file is `apps/backend/.env.example`. Important settings incl
 
 | Variable | Purpose |
 |---|---|
-| `OIDC_ISSUER`, `OIDC_JWKS_URL` | Upstream identity provider |
+| `OIDC_ISSUER` | Upstream OIDC issuer; all protocol endpoints are discovered |
 | `AUDIENCE` | Audience expected on upstream OIDC access tokens |
 | `PRODUCT_TOKEN_EXCHANGE_ENABLED` | One global product-token exchange gate; defaults to `false` |
 | `PRODUCT_TOKEN_ISSUER` | Shared issuer for product JWTs |
@@ -194,7 +194,7 @@ All products use the same exchange endpoint, issuer, managed signing-key set and
 ## Contribution rules
 
 - Read `AGENTS.md`, the skills and current trackers before repository work.
-- Follow the N0–N10 programme order unless the user explicitly reprioritizes documentation or a production hotfix.
+- Execute the user's current approved objective; use existing programme issues as traceability, not as repeated approval gates.
 - Work on topic branches and open PRs targeting `dev`.
 - Keep changes scoped, typed, tested and evidence-backed.
 - Update `.trackers/` when repository state or accepted scope changes.
