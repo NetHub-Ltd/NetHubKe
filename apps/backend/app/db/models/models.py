@@ -5,7 +5,7 @@ import uuid
 from typing import Optional
 
 import sqlalchemy as sa
-from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import Field
 
 from app.db.models.base import BaseMixin
 
@@ -16,8 +16,6 @@ class Tenant(BaseMixin, table=True):
     name: str = Field(index=True, max_length=255)
     email: Optional[str] = Field(default=None, max_length=320, index=True)
 
-    users: list["User"] = Relationship(back_populates="tenant")
-
 
 class User(BaseMixin, table=True):
     __tablename__ = "users"
@@ -27,9 +25,6 @@ class User(BaseMixin, table=True):
     full_name: str = Field(default="", max_length=255)
     is_active: bool = Field(default=True)
     tenant_id: Optional[uuid.UUID] = Field(default=None, foreign_key="tenants.id", index=True)
-
-    tenant: Optional[Tenant] = Relationship(back_populates="users")
-    identities: list["UserIdentity"] = Relationship(back_populates="user")
 
 
 class UserIdentity(BaseMixin, table=True):
@@ -44,5 +39,3 @@ class UserIdentity(BaseMixin, table=True):
     issuer: str = Field(max_length=512, index=True)
     subject: str = Field(max_length=512, index=True)
     user_id: uuid.UUID = Field(foreign_key="users.id", index=True)
-
-    user: Optional[User] = Relationship(back_populates="identities")
