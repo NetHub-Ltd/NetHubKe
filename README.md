@@ -91,7 +91,7 @@ NetHubKe/
 | Cache | Redis (optional) |
 | Product-token signing | RS256, PostgreSQL-managed signing keys, JWKS |
 | Website | Next.js 16, React 19, TypeScript, Auth.js |
-| Frontend data/forms | TanStack Query, React Hook Form ecosystem, Zod |
+| Frontend data/API | TanStack Query, Zod, Axios, generated OpenAPI client |
 | Tests | pytest, backend CI, frontend lint/build checks |
 
 ## Local development
