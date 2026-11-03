@@ -60,7 +60,7 @@ class Settings(BaseSettings):
         user = quote_plus(self.fastapi_db_user)
         password = quote_plus(self.fastapi_db_password)
         return (
-            f"postgresql://{user}:{password}"
+            f"postgresql+psycopg2://{user}:{password}"
             f"@{self.fastapi_db_host}:{self.fastapi_db_port}/{self.fastapi_db_name}"
         )
 

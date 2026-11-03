@@ -19,23 +19,23 @@ def _utcnow() -> datetime:
 async def get_identity(
     session: AsyncSession, *, issuer: str, subject: str
 ) -> UserIdentity | None:
-    result = await session.execute(
+    result = await session.exec(
         select(UserIdentity).where(
             UserIdentity.issuer == issuer,
             UserIdentity.subject == subject,
         )
     )
-    return result.scalar_one_or_none()
+    return result.first()
 
 
 async def get_user_by_id(session: AsyncSession, user_id) -> User | None:
-    result = await session.execute(select(User).where(User.id == user_id))
-    return result.scalar_one_or_none()
+    result = await session.exec(select(User).where(User.id == user_id))
+    return result.first()
 
 
 async def get_user_by_email(session: AsyncSession, email: str) -> User | None:
-    result = await session.execute(select(User).where(User.email == email))
-    return result.scalar_one_or_none()
+    result = await session.exec(select(User).where(User.email == email))
+    return result.first()
 
 
 async def sync_user_from_token(session: AsyncSession, token: TokenData) -> User:
@@ -61,10 +61,6 @@ async def sync_user_from_token(session: AsyncSession, token: TokenData) -> User:
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="User is inactive",
             )
-        # Refresh profile fields from token when present
-        if token.email and token.email != user.email:
-            # Do not change email on existing identity path without explicit policy
-            pass
         if token.name:
             user.full_name = token.name
         if token.preferred_username:
@@ -84,7 +80,6 @@ async def sync_user_from_token(session: AsyncSession, token: TokenData) -> User:
 
     existing = await get_user_by_email(session, email)
     if existing is not None:
-        # Same email, different subject → conflict (no silent link)
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Email already linked to a different identity",

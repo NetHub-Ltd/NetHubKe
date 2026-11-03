@@ -26,6 +26,7 @@ env:
   OIDC_ISSUER: https://idp.test/realms/nethub
   OIDC_JWKS_URL: https://idp.test/realms/nethub/protocol/openid-connect/certs
   AUDIENCE: nethub-api
+  PYTHONPATH: .
 
 jobs:
   pytest:
@@ -154,4 +155,4 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements-dev.txt
       - name: Import app and GET /health
-        run: python scripts/smoke_startup.py
+        run: PYTHONPATH=. python scripts/smoke_startup.py
