@@ -1,5 +1,5 @@
 # NetHubKe Ecosystem Identity & Access Contract
-**Decision status:** Approved architecture baseline, 2026-10-29  
+**Decision status:** Approved, provider-neutral architecture baseline, 2026-10-29  
 **Planning issue:** #142  
 **Programme umbrella:** #57  
 **Related conflict:** #135  
@@ -7,9 +7,9 @@
 
 ## 1. Responsibility boundaries
 
-- **Zitadel:** OIDC identity provider, authentication, MFA, IdP session and upstream identity proof.
+- **the configured OIDC provider:** OIDC identity provider, authentication, MFA, IdP session and upstream identity proof.
 - **NetHubKe:** IdP integration/validation, canonical ecosystem identity mapping, service registry, global access policy, user and organization entitlement/grant evaluation, centralized administration/audit, and product-facing token issuance.
-- **Product APIs (including Tawala and NetPay):** validate NetHubKe-issued tokens locally via JWKS and enforce their own domain/business permissions. They should not need to decode Zitadel tokens, store/hash passwords, or call NetHubKe on every API request.
+- **Product APIs (including Tawala and NetPay):** validate NetHubKe-issued tokens locally via JWKS and enforce their own domain/business permissions. They should not need to decode the configured OIDC provider tokens, store/hash passwords, or call NetHubKe on every API request.
 - **PostgreSQL:** durable source of truth. **Redis:** cache/coordination only, never the only copy of grants, key state, or audit records.
 
 ## 2. Identity mapping and lifecycle
@@ -61,7 +61,7 @@ The implementation design must account for token lifetime, refresh/renewal, enti
 
 Retain reusable parts of #135: authorization-only data in NetHubKe; no operational cashier/staff tables; generic membership rather than per-product membership tables; external_user_id links to product-owned domain primary key; generic product slugs and product-specific organization links where required.
 
-The original Path A mechanism—product forwards an upstream Zitadel bearer once and NetHubKe does not mint a product token—is **not the default ecosystem architecture** because it contradicts the approved NetHubKe-issued JWT trust model. Preserve #135 and its history; revise/split it only through explicit planning. Any temporary direct-IdP-token compatibility path must have a named consumer, threat boundary, feature flag, expiry/removal date and separate acceptance criteria. Product APIs must not adopt that exception as a general pattern.
+The original Path A mechanism—product forwards an upstream the configured OIDC provider bearer once and NetHubKe does not mint a product token—is **not the default ecosystem architecture** because it contradicts the approved NetHubKe-issued JWT trust model. Preserve #135 and its history; revise/split it only through explicit planning. Any temporary direct-IdP-token compatibility path must have a named consumer, threat boundary, feature flag, expiry/removal date and separate acceptance criteria. Product APIs must not adopt that exception as a general pattern.
 
 ## 8. Programme order and acceptance evidence
 
@@ -86,5 +86,5 @@ Issues #42–#54 are marked closed but retain unchecked acceptance boxes. They a
 - No universal business-permissions engine replacing product-owned authorization.
 - No per-request introspection calls from product APIs on hot paths.
 - No unrestricted self-registration of services or caller-controlled roles, organization IDs, entitlements or principals.
-- No implementation, schema migration, runtime configuration, feature-flag change or deployment change as part of planning issue #142.
+- Implementation is authorized only within the user's current task scope; no production deployment or feature-flag enablement is implied.
 - New runtime paths remain behind default-off flags until their milestone acceptance is met on staging.
