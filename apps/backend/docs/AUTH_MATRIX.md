@@ -2,7 +2,7 @@
 
 ## 1. Trust boundaries
 
-- **Upstream identity provider:** Zitadel is the current OIDC provider. NetHubKe validates upstream access-token signature, issuer, audience, expiry and required claims. The integration remains OIDC/IdP-agnostic.
+- **Upstream identity provider:** any standards-compliant OIDC provider configured through OIDC discovery. NetHubKe validates upstream access-token signature, issuer, audience, expiry and required claims; provider-specific protocol endpoints are not hardcoded in core.
 - **NetHubKe:** canonical ecosystem identity, product/service entitlement decisions and product-token issuer.
 - **Product resource APIs:** validate NetHubKe JWTs locally using `GET /api/v1/auth/jwks.json`; enforce product-owned business roles and permissions.
 - **Browser applications:** call their own same-origin BFF. They must not call the NetHubKe API origin directly or receive bearer tokens.
@@ -14,15 +14,17 @@ Product APIs must not perform per-request introspection against NetHubKe on hot 
 
 | Setting | Purpose |
 |---|---|
-| `OIDC_ISSUER` | Expected upstream token issuer |
-| `OIDC_JWKS_URL` | Upstream JWKS URL; Zitadel default is issuer + `/oauth/v2/keys` |
+| `OIDC_ISSUER` | Expected upstream issuer and discovery-document location |
 | `AUDIENCE` | Expected audience on the upstream OIDC access token |
 | `ALGORITHMS` | Signature algorithm allowlist; RS256 by default |
 | `JWKS_CACHE_TTL` | Upstream JWKS cache TTL; validation hard-caps it at 300 seconds |
+| `OIDC_ROLE_CLAIM_PATH` | Optional dot-separated role claim path; defaults to the standard `roles` claim |
 
-Legacy `KEYCLOAK_*` names remain compatibility aliases for OIDC configuration. They do not mean Keycloak is the current identity provider.
+NetHubKe fetches `{OIDC_ISSUER}/.well-known/openid-configuration`, verifies that the document issuer exactly matches OIDC_ISSUER, and uses the advertised `jwks_uri` and `userinfo_endpoint`. The frontend Auth.js integration uses the same issuer and standard discovery metadata for authorization, token refresh and RP-initiated logout. Provider-specific endpoint paths are not constructed by NetHubKe.
 
-The validator requires `exp`, `iat` and `sub`. Missing/invalid credentials, issuer, audience, signature or required claims fail with 401. A valid upstream identity is not automatically an active or entitled NetHubKe account.
+The validator requires `exp`, `iat` and `sub`. Missing/invalid credentials, issuer, audience, signature or required claims fail with 401. UserInfo subject, when used, must match the validated access-token subject. A valid upstream identity is not automatically an active or entitled NetHubKe account.
+
+Provider-specific role/group claims are mapped through OIDC_ROLE_CLAIM_PATH configuration. Core claim normalization supports configured role claims and the standard groups claim; it does not contain provider-specific claim schemas.
 
 ## 3. Shared product-token configuration
 
@@ -39,11 +41,11 @@ All registered products use one product-token integration:
 | `SIGNING_KEY_MAX_AGE_HOURS` | Shared signing-key rotation age |
 | `SIGNING_KEY_RETIRE_OVERLAP_HOURS` | Shared overlap before retiring old public keys |
 
-There are **no Tawala-specific environment settings**. The product registry is the sole source of each product's audience and registered claim profile. Product audience uniqueness is enforced in PostgreSQL. A product slug selects its registry row; it does not select a separate signing integration.
+There are no product-specific environment settings. The product registry is the sole source of each product's audience and registered claim profile. Product audience uniqueness is enforced in PostgreSQL. A product slug selects its registry row; it does not select a separate signing integration.
 
 The global exchange gate is not a per-product switch. When false, exchange requests fail closed with 503 and signing-key bootstrap/automatic rotation is skipped. The JWKS endpoint remains public and may serve already-persisted active/retiring public keys; a JWKS read must not create signing state while exchange is disabled.
 
-Private PEM environment fallback is opt-in and shared. Production should use PostgreSQL-managed keys encrypted with the stable `SIGNING_KEY_ENCRYPTION_KEY`; keep that key outside the database and back it up independently.
+Private PEM environment fallback is opt-in and shared. Production should use PostgreSQL-managed keys encrypted with the stable SIGNING_KEY_ENCRYPTION_KEY; keep that key outside the database and back it up independently.
 
 ## 4. Route matrix
 
@@ -62,7 +64,7 @@ Private PEM environment fallback is opt-in and shared. Production should use Pos
 | POST | `/api/v1/auth/exchange/tawala` | Valid upstream OIDC bearer | Legacy compatibility alias; same global gate and policy path |
 | GET | `/api/v1/billing/*` | Route-specific bearer/scope | Billing reads; inspect individual route policy before use |
 
-The Tawala exchange alias is retained for compatibility; new clients should use the generic `POST /api/v1/auth/exchange` endpoint.
+The Tawala exchange alias is retained for compatibility; new clients should use the generic POST /api/v1/auth/exchange endpoint.
 
 ## 5. Exchange decision sequence
 
@@ -105,6 +107,5 @@ Optional/profile-specific claims are documented in [PRODUCT_CLAIM_PROFILES.md](P
 
 ## 8. N1 acceptance evidence
 
-- Generic exchange and JWKS route tests live in `apps/backend/tests/api/test_auth_exchange.py`; signing/JWKS helper tests live in `apps/backend/tests/unit/test_product_tokens.py` (legacy test filename).
-- Backend CI executes `pytest tests/`; latest verified baseline on PR #168 was 227 passed at 76.83% coverage. The shared-configuration refactor requires fresh CI before acceptance.
-- N1 issue #42/#43 checklists remain historical, unchecked records; see `docs/validation/N1_ACCEPTANCE_VALIDATION.md` for mapped evidence and the documentation correction.
+- Generic exchange and JWKS route tests live in `apps/backend/tests/api/test_auth_exchange.py`; signing/JWKS helper tests live in `apps/backend/tests/unit/test_product_tokens.py`.
+- Backend CI and readiness workflow are the authoritative execution evidence; see the current PR checks before claiming acceptance.
