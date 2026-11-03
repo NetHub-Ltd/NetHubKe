@@ -18,7 +18,7 @@ def test_settings_assemble_async_and_sync_uris(monkeypatch):
     assert s.async_database_uri.startswith("postgresql+asyncpg://")
     assert "db.example:5433/nethub" in s.async_database_uri
     assert "p%40ss" in s.async_database_uri
-    assert s.sync_database_uri.startswith("postgresql://")
+    assert s.sync_database_uri.startswith("postgresql+psycopg2://")
     assert "db.example:5433/nethub" in s.sync_database_uri
     get_settings.cache_clear()
 
