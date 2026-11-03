@@ -24,11 +24,11 @@ def test_fetch_userinfo_ok():
 
     with patch("app.core.security.httpx.Client", return_value=mock_client) as client_factory:
         data = security._fetch_userinfo("tok", "https://auth.example.com")
-    client_factory.assert_called_once_with(timeout=5.0)
+    client_factory.assert_called_once_with(timeout=5.0, follow_redirects=False)
     assert data["email"] == "a@example.com"
     mock_client.get.assert_called_once()
     args, kwargs = mock_client.get.call_args
-    assert args[0] == "https://auth.example.com/oidc/v1/userinfo"
+    assert args[0] == "https://auth.example.com"
     assert kwargs["headers"]["Authorization"] == "Bearer tok"
 
 
