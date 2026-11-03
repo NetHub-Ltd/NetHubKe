@@ -60,7 +60,11 @@ export async function PATCH(request: Request) {
 
   let body: unknown;
   try {
-    body = await request.json();
+    const rawBody = await request.text();
+    if (new TextEncoder().encode(rawBody).byteLength > 8192) {
+      return NextResponse.json({ detail: "Request body is too large" }, { status: 413, headers: jsonHeaders });
+    }
+    body = JSON.parse(rawBody) as unknown;
   } catch {
     return NextResponse.json({ detail: "Invalid JSON body" }, { status: 400, headers: jsonHeaders });
   }
