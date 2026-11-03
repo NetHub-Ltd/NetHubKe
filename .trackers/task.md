@@ -192,3 +192,4 @@
 - No per-product deployment env variables are introduced. Product-specific audience and claim profile remain registry metadata; product business permissions remain product-owned.
 - Verification pending fresh GitHub Actions for this branch. No deployment/secret changes or merge authorized.
 - Additional Tawala-specific defaults removed: new Product rows and generic token-mint calls now default to the common `standard` claim profile; the Tawala profile is selected explicitly for Tawala. Generic signing/JWKS service and tests renamed to `product_tokens.py` / `test_product_tokens.py`.
+- CI first attempt #165 failed at pytest collection because six test modules still imported the renamed `tawala_token` module. Updated all six imports to `product_tokens`; fresh backend CI #168 and readiness #129 are running. The initial 42.17% coverage is invalid because collection stopped before tests executed.
