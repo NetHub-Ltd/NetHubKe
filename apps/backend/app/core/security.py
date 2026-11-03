@@ -132,6 +132,16 @@ def _fetch_userinfo(access_token: str, userinfo_endpoint: str) -> dict[str, Any]
 def _decode_token(token: str) -> TokenData:
     """Validate signature, issuer, audience and required claims using OIDC metadata."""
     try:
+        # Reject malformed compact JWTs before attempting provider discovery.
+        # This preserves a deterministic 401 for garbage credentials even if
+        # the configured provider is temporarily unavailable.
+        if not isinstance(token, str) or token.count(".") != 2:
+            raise HTTPException(status_code=401, detail="Invalid credentials")
+        try:
+            jwt.get_unverified_header(token)
+        except exceptions.PyJWTError as exc:
+            raise HTTPException(status_code=401, detail="Invalid credentials") from exc
+
         issuer = settings.idp_issuer
         metadata = _get_oidc_discovery(issuer)
         jwks_uri = str(metadata["jwks_uri"])
