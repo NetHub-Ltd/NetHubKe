@@ -1,37 +1,30 @@
 "use server";
 
-import { signOut, auth } from "@/auth";
-import { oidcClientId, oidcDiscovery, oidcIssuer } from "@/lib/server/oidcConfig";
+import { signOut } from "@/auth";
+import { readServerAuthToken } from "@/lib/server/auth-session";
+import { oidcClientId, oidcDiscovery } from "@/lib/server/oidcConfig";
 
-/**
- * Clear Auth.js session then redirect to IdP end_session (RP-initiated logout).
- */
+/** Clear the local session and use the configured provider's OIDC logout endpoint. */
 export async function federatedLogout(): Promise<string | void> {
-  const session = await auth();
-  const idToken = session?.idToken as string | undefined;
+  // Read the encrypted cookie before signOut clears it. Never expose the ID token.
+  const token = await readServerAuthToken();
+  const idToken = token?.idToken;
   const postLogoutRedirectUri =
-    process.env.NEXTAUTH_URL || process.env.AUTH_URL || "https://nethub.co.ke";
+    process.env.AUTH_URL || process.env.NEXTAUTH_URL || "https://nethub.co.ke";
 
   await signOut({ redirect: false });
 
   try {
     const discovery = await oidcDiscovery();
-    const endSession =
-      discovery.end_session_endpoint ||
-      `${oidcIssuer()}/oidc/v1/end_session`;
+    if (!discovery.end_session_endpoint) return postLogoutRedirectUri;
 
-    const url = new URL(endSession);
+    const url = new URL(discovery.end_session_endpoint);
     url.searchParams.set("client_id", oidcClientId());
-    url.searchParams.set(
-      "post_logout_redirect_uri",
-      postLogoutRedirectUri,
-    );
-    if (idToken) {
-      url.searchParams.set("id_token_hint", idToken);
-    }
+    url.searchParams.set("post_logout_redirect_uri", postLogoutRedirectUri);
+    if (idToken) url.searchParams.set("id_token_hint", idToken);
     return url.toString();
-  } catch (e) {
-    console.error("OIDC logout discovery failed:", e);
+  } catch (error) {
+    console.error("OIDC logout discovery failed:", error);
     return postLogoutRedirectUri;
   }
 }
