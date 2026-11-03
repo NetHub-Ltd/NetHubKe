@@ -2,6 +2,7 @@ import { getToken } from "next-auth/jwt";
 import { headers } from "next/headers";
 import type { NextRequest } from "next/server";
 import type { JWT } from "next-auth/jwt";
+export { isSameOriginMutation } from "./auth-session-policy";
 
 type CanonicalUser = {
   id?: string;
@@ -66,19 +67,4 @@ export async function readProvisionedServerAuth(
   }
 
   return { accessToken: token.accessToken, userId: user.id };
-}
-
-/** Cookie-authenticated mutations must originate from this exact website origin. */
-export function isSameOriginMutation(request: Request): boolean {
-  const origin = request.headers.get("origin");
-  if (!origin) return false;
-
-  try {
-    if (new URL(origin).origin !== new URL(request.url).origin) return false;
-  } catch {
-    return false;
-  }
-
-  const fetchSite = request.headers.get("sec-fetch-site");
-  return !fetchSite || fetchSite === "same-origin";
 }
