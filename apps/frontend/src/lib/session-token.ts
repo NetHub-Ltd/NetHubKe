@@ -1,26 +1,91 @@
 import { cookies } from "next/headers";
 import { getToken } from "next-auth/jwt";
+import type { JWT } from "next-auth/jwt";
 
-/** Server-only: IdP access token from Auth.js JWT cookie. */
-export async function getIdpAccessToken(): Promise<string | undefined> {
+function isSecureAuthUrl(): boolean {
+  const url = process.env.AUTH_URL || process.env.NEXTAUTH_URL || "";
+  return url.startsWith("https://");
+}
+
+/** Auth.js v5 cookie name depends on HTTPS. */
+export function sessionCookieName(): string {
+  return isSecureAuthUrl()
+    ? "__Secure-authjs.session-token"
+    : "authjs.session-token";
+}
+
+/**
+ * Server-only: read Auth.js JWT (includes IdP access + id tokens when present).
+ */
+export async function getAuthJwt(): Promise<JWT | null> {
   const cookieStore = await cookies();
-  const cookieHeader = cookieStore
+  const all = cookieStore.getAll();
+  const cookieHeader = all.map((c) => `${c.name}=${c.value}`).join("; ");
+  const name = sessionCookieName();
+  const secure = isSecureAuthUrl();
+
+  // Try explicit cookie name first, then default getToken resolution
+  const attempts: Array<{ cookieName?: string; salt?: string; secureCookie?: boolean }> = [
+    { cookieName: name, salt: name, secureCookie: secure },
+    { secureCookie: secure },
+    { cookieName: "authjs.session-token", salt: "authjs.session-token", secureCookie: false },
+    {
+      cookieName: "__Secure-authjs.session-token",
+      salt: "__Secure-authjs.session-token",
+      secureCookie: true,
+    },
+  ];
+
+  for (const opts of attempts) {
+    try {
+      const token = await getToken({
+        req: {
+          headers: {
+            cookie: cookieHeader,
+            get(headerName: string) {
+              if (headerName.toLowerCase() === "cookie") return cookieHeader;
+              return undefined;
+            },
+          },
+        } as never,
+        secret: process.env.AUTH_SECRET,
+        ...opts,
+      });
+      if (token) return token as JWT;
+    } catch {
+      // try next strategy
+    }
+  }
+  return null;
+}
+
+export async function getIdpAccessToken(): Promise<string | undefined> {
+  const jwt = await getAuthJwt();
+  return typeof jwt?.accessToken === "string" ? jwt.accessToken : undefined;
+}
+
+export async function getIdpIdToken(): Promise<string | undefined> {
+  const jwt = await getAuthJwt();
+  return typeof jwt?.idToken === "string" ? jwt.idToken : undefined;
+}
+
+export function decodeJwtPayload(token: string): Record<string, unknown> | null {
+  try {
+    const part = token.split(".")[1];
+    if (!part) return null;
+    const json = Buffer.from(part.replace(/-/g, "+").replace(/_/g, "/"), "base64").toString(
+      "utf8"
+    );
+    return JSON.parse(json) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+export async function listAuthCookieNames(): Promise<string[]> {
+  const cookieStore = await cookies();
+  return cookieStore
     .getAll()
-    .map((c) => `${c.name}=${c.value}`)
-    .join("; ");
-
-  const token = await getToken({
-    req: {
-      headers: {
-        cookie: cookieHeader,
-        get(name: string) {
-          if (name.toLowerCase() === "cookie") return cookieHeader;
-          return undefined;
-        },
-      },
-    } as never,
-    secret: process.env.AUTH_SECRET,
-  });
-
-  return typeof token?.accessToken === "string" ? token.accessToken : undefined;
+    .map((c) => c.name)
+    .filter((n) => n.includes("auth") || n.includes("session") || n.includes("next-auth"));
 }

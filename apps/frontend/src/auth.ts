@@ -3,7 +3,7 @@ import type { JWT } from "next-auth/jwt";
 
 /**
  * IdP-agnostic OIDC via Auth.js.
- * Configure AUTH_OIDC_* only — no vendor-specific provider module.
+ * Access + ID tokens stored on the JWT for server-side BFF use.
  */
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
@@ -29,17 +29,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: "jwt" },
   callbacks: {
     async jwt({ token, account }) {
-      if (account?.access_token) {
+      if (account) {
         token.accessToken = account.access_token;
-      }
-      if (account?.expires_at) {
-        token.accessTokenExpires = account.expires_at * 1000;
+        token.idToken = account.id_token;
+        token.refreshToken = account.refresh_token;
+        token.expiresAt = account.expires_at;
+        token.tokenType = account.token_type;
       }
       return token as JWT;
     },
     async session({ session, token }) {
-      // access token stays server-side via auth(); not exposed on client session by default
       session.error = token.error as string | undefined;
+      // Diagnostics only: surface presence flags to client session (not full tokens)
+      session.hasAccessToken = Boolean(token.accessToken);
+      session.hasIdToken = Boolean(token.idToken);
+      session.expiresAt = token.expiresAt as number | undefined;
       return session;
     },
   },
@@ -47,18 +51,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     signIn: "/login",
   },
   trustHost: true,
+  debug: process.env.AUTH_DEBUG === "true",
 });
 
 declare module "next-auth" {
   interface Session {
     error?: string;
+    hasAccessToken?: boolean;
+    hasIdToken?: boolean;
+    expiresAt?: number;
   }
 }
 
 declare module "next-auth/jwt" {
   interface JWT {
     accessToken?: string;
-    accessTokenExpires?: number;
+    idToken?: string;
+    refreshToken?: string;
+    expiresAt?: number;
+    tokenType?: string;
     error?: string;
   }
 }
