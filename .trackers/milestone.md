@@ -215,3 +215,15 @@ Other open issues remain only where they represent separate required behavior (f
 - Completed implementation group: provider-neutral OIDC boundary, Auth.js session/BFF security, safe profile/service DTOs, disabled browser product launch, shared product-token configuration and unique audience enforcement.
 - Issues #148, #152 and #161 closed with code/test evidence. #136/#138/#137 superseded Path A work closed as not planned. Other already-implemented issues #75/#116/#117/#144/#146/#159/#163 closed.
 - Remaining separate requirements: #171 browser smoke after OIDC config, #162 product-side local verifier evidence, #164 five-minute end-to-end stale-access measurement, #165 complete product integration validation. Product launch remains disabled until server-to-server one-time redemption exists.
+
+
+## Shared IdP resource-server delivery — 2026-11-03
+
+The target is one Zitadel-issued access-token contract for the NetHubKe website, Tawala and NetPay. NetHubKe is a resource server/authorization API, not an IdP or token issuer.
+
+1. **Shared resource-server contract and access decisions:** freeze actual Zitadel issuer/API audience/scopes; retain one validator and canonical identity dependency; add a read-only service-access decision endpoint reusing the existing entitlement evaluator; correct API/architecture docs; keep legacy product-token exchange disabled pending consumer audit.
+2. **Security and client acceptance:** test valid/invalid access tokens, ID-token rejection, scopes, canonical identity, tenant isolation and entitlement decisions for all three client registrations; measure actual token TTL, JWKS refresh, clock skew and revocation against the five-minute bound.
+
+Current audit findings: PR #173 is merged. Existing OIDC validation, canonical identity and entitlement evaluator exist. The missing resource is an authoritative access-decision endpoint; current /services/my-status is only connection/trial presentation. No live Zitadel conformance or five-minute staging evidence is recorded. See docs/SHARED_CLIENT_INTEGRATION_READINESS.md.
+
+Frontend redesign, launch-code handoff, product JWT issuance, production rollout and feature-flag enablement are not part of these milestones.
