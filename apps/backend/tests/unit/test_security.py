@@ -293,3 +293,50 @@ def test_discovery_rejects_plaintext_endpoints_in_production(monkeypatch):
     with pytest.raises(HTTPException) as error:
         security_mod._get_oidc_discovery("https://trusted.example")
     assert error.value.status_code == 503
+
+
+@pytest.mark.parametrize("userinfo_sub", [None, "different-subject"])
+def test_decode_userinfo_requires_exact_subject_match(rsa_key, monkeypatch, userinfo_sub):
+    """UserInfo claims must be bound to the already validated access-token subject."""
+    token = _token(rsa_key, email=None)
+    userinfo = {
+        "email": "userinfo@example.com",
+        "email_verified": True,
+        "name": "UserInfo User",
+    }
+    if userinfo_sub is not None:
+        userinfo["sub"] = userinfo_sub
+    monkeypatch.setattr(
+        security_mod,
+        "_fetch_userinfo",
+        lambda _token, _endpoint: userinfo,
+    )
+
+    with _patch_jwks(rsa_key.public_key()):
+        with pytest.raises(HTTPException) as error:
+            security_mod._decode_token(token)
+
+    assert error.value.status_code == 401
+    assert error.value.detail == "UserInfo subject does not match access token"
+
+
+def test_decode_userinfo_accepts_matching_subject(rsa_key, monkeypatch):
+    """A matching UserInfo subject may enrich profile claims omitted by the access token."""
+    subject = str(uuid.uuid4())
+    token = _token(rsa_key, sub=subject, email=None)
+    monkeypatch.setattr(
+        security_mod,
+        "_fetch_userinfo",
+        lambda _token, _endpoint: {
+            "sub": subject,
+            "email": "userinfo@example.com",
+            "email_verified": True,
+            "name": "UserInfo User",
+        },
+    )
+
+    with _patch_jwks(rsa_key.public_key()):
+        data = security_mod._decode_token(token)
+
+    assert data.sub == subject
+    assert data.email == "userinfo@example.com"
