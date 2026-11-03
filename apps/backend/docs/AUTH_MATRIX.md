@@ -22,7 +22,7 @@ NetHubKe does not provide login/password management, OAuth authorization-server 
 
 NetHubKe fetches OIDC discovery from the configured issuer, requires exact discovery issuer equality and uses the advertised jwks_uri and userinfo_endpoint. Discovery is cached for 300 seconds. The JWKS client cache is bounded to at most 300 seconds.
 
-The current validator checks signature, configured algorithm, issuer, API audience, exp, iat and sub; present nbf is validated. It applies 10 seconds of clock leeway. Missing/invalid credentials fail closed.
+The current validator checks signature, configured algorithm, issuer, API audience, exp, iat and sub; present nbf is validated. It applies 10 seconds of clock leeway. Missing/invalid credentials fail closed. When UserInfo enrichment is used, its subject must be present and exactly match the validated access-token subject; the current implementation still needs this fail-closed correction.
 
 The API audience must be distinct from client IDs so a client ID token is rejected. Verify this against the actual Zitadel project configuration and include an ID-token rejection test. Do not assume a provider-independent typ/token_use marker.
 
