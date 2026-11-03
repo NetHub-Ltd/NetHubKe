@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
-from app.services import tawala_token as tt
+from app.services import product_tokens as tt
 
 
 def test_load_env_private_key_disabled_by_default():
