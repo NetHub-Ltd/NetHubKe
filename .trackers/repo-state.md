@@ -192,3 +192,12 @@
 - Vercel status reports `build-rate-limit`; the GitHub Actions frontend production build is green, but no Vercel preview URL is available. This is a preview-platform limit, not a failed application build.
 - Remaining related open work: #171 browser smoke with configured OIDC credentials; #162 product-side local verifier evidence; #164 measured five-minute stale-access behavior; #165 product integration validation; #149 secure one-time launch-code handoff; #150 billing/settings/operational readiness.
 - #80/#79/#81/#158/#160/#172 are linked to PR #173 and will close on merge. #148/#152/#161 and already-complete/superseded issues have been closed with evidence. #57 and #135 remain open as programme/history records.
+
+
+## 2026-11-03 — Shared service access implementation
+
+- PR #175: https://github.com/NetHub-Ltd/NetHubKe/pull/175, branch feat/shared-idp-resource-access -> dev.
+- Added GET /api/v1/services/{slug}/access; uses the validated canonical user, caller tenant and existing check_entitled evaluator. /services/my-status remains unchanged and is not an entitlement decision.
+- UserInfo enrichment now rejects missing or mismatched sub values.
+- Focused API and unit tests added. GitGuardian/Vercel checks passed at checkpoint; backend test/readiness still running.
+- No schema, frontend, IdP/token issuer, production config, feature flag or deployment changes. No merge authorized.
