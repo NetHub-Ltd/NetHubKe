@@ -205,3 +205,5 @@
 - Product-token exchange/JWKS/signing subsystem remains default-off pending actual consumer audit. It is not a credential path for NetHubKe APIs.
 - No backend runtime code, schema, secrets, production config or feature flags changed in this audit.
 - Remaining acceptance: actual Zitadel issuer/audience/scopes and all three client registrations; client-ID-token rejection; access-token TTL/JWKS/clock behavior; five-minute freshness proof. Frontend redesign and launch-code work are excluded.
+
+- Follow-up audit detail: UserInfo enrichment currently accepts a missing subject claim; this is recorded as a fail-closed fix in #165. NetPay dev uses independent M2M credentials; Tawala Core main currently exposes local password/session auth. No changes were made to either product repository.
