@@ -137,6 +137,7 @@ async def test_mint_bad_principal():
                 sub="s",
                 org_id=uuid.uuid4(),
                 principal="admin",
+                claim_profile="tawala",
             )
     assert ei.value.status_code == 400
 
