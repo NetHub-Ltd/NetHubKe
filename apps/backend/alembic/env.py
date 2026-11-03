@@ -1,84 +1,54 @@
+"""Alembic env — sync engine from discrete DB settings."""
+from __future__ import annotations
+
+import os
 from logging.config import fileConfig
 
 from alembic import context
-from sqlalchemy import create_engine, pool
+from sqlalchemy import engine_from_config, pool
 from sqlmodel import SQLModel
-# import models to ensure they are registered with SQLModel.metadata
 
-# from app.lib.db.models import User, BlogPost, Service, Order, Authors, MpesaTransaction  # noqa: F401
-from app.db.models.models import *
+from app.core.config import get_settings
+from app.db.models import models  # noqa: F401 — register metadata
 
-# explicitly import metadata
-
-from app.core.config import settings
-
-# ---------------------------------------------------------
-# Alembic Config
-# ---------------------------------------------------------
 config = context.config
-
-# Setup logging
-if config.config_file_name:
+if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# Metadata for autogenerate
 target_metadata = SQLModel.metadata
 
 
-# ---------------------------------------------------------
-# Offline migrations
-# ---------------------------------------------------------
+def get_url() -> str:
+    get_settings.cache_clear()
+    return get_settings().sync_database_uri
+
+
 def run_migrations_offline() -> None:
-    """
-    Run migrations without DB connection.
-    Emits raw SQL.
-    """
+    url = get_url()
     context.configure(
-        url=settings.sync_db_url,
+        url=url,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
-        compare_type=True,
-        compare_server_default=True,
     )
-
     with context.begin_transaction():
         context.run_migrations()
 
 
-# ---------------------------------------------------------
-# Online migrations
-# ---------------------------------------------------------
 def run_migrations_online() -> None:
-    """
-    Run migrations with a live DB connection.
-    Connections are NOT pooled and are closed immediately.
-    """
-
-    engine = create_engine(
-        settings.sync_db_url,
-        poolclass=pool.NullPool,  # 👈 ensures no idle connections
-        future=True,
+    configuration = config.get_section(config.config_ini_section) or {}
+    configuration["sqlalchemy.url"] = get_url()
+    connectable = engine_from_config(
+        configuration,
+        prefix="sqlalchemy.",
+        poolclass=pool.NullPool,
     )
-
-    with engine.connect() as connection:
-        context.configure(
-            connection=connection,
-            target_metadata=target_metadata,
-            compare_type=True,
-            compare_server_default=True,
-        )
-
+    with connectable.connect() as connection:
+        context.configure(connection=connection, target_metadata=target_metadata)
         with context.begin_transaction():
             context.run_migrations()
 
-    # Explicit dispose for extra safety
-    engine.dispose()
 
-
-# ---------------------------------------------------------
-# Entry point
-# ---------------------------------------------------------
 if context.is_offline_mode():
     run_migrations_offline()
 else:

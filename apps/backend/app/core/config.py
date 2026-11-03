@@ -1,116 +1,73 @@
+"""Application settings — all env validated via pydantic_settings."""
 from __future__ import annotations
-from pydantic import Field
-from pydantic_settings import BaseSettings, SettingsConfigDict
+
 from functools import lru_cache
+from typing import Literal
+from urllib.parse import quote_plus
 
-
-from enum import Enum
-
-class EnvironmentEnum(str, Enum):
-    DEVELOPMENT = "development"
-    STAGING = "staging"
-    PRODUCTION = "production"
+from pydantic import Field, field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=("./.env", "./.env.local"),
+        env_file=(".env", ".env.local"),
         env_file_encoding="utf-8",
         extra="ignore",
     )
 
-    # Basic App Settings
-    app_name: str
-    app_version: str
-    image_tag: str
-    startup_test: bool
-
-    # Database Settings
-    FASTAPI_DB_USER: str
-    FASTAPI_DB_PASSWORD: str
-    FASTAPI_DB_NAME: str
-    FASTAPI_DB_HOST: str
-    FASTAPI_DB_PORT: int = 5432
-
-    # OIDC IdP (IdP-agnostic). Prefer OIDC_*; KEYCLOAK_* remain env aliases.
-    # Set via OIDC_ISSUER / OIDC_JWKS_URL or KEYCLOAK_ISSUER_URL / KEYCLOAK_JWKS.
-    oidc_issuer: str | None = None
-    oidc_jwks_url: str | None = None
-    keycloak_jwks: str | None = None
-    keycloak_issuer_url: str | None = None
-
-    # JWT audience expected in access tokens (API resource / client audience).
-    # Override with env AUDIENCE. Default nethub-api for Zitadel API app.
-    audience: str = "nethub-api"
-    algorithms: list[str] = ["RS256"]
-    jwks_cache_ttl: int = 3600  # seconds; PyJWKClient lifespan uses its own cache
-    allowed_origins: str
-
-    # Tawala hard-session exchange (ecosystem auth M2). Default OFF.
-    tawala_exchange_enabled: bool = False
-    # PEM-encoded RSA private key (PKCS8) used to sign aud=tawala-api tokens.
-    tawala_jwt_private_key: str = ""
-    tawala_jwt_issuer: str = "https://api.nethub.local"
-    tawala_jwt_audience: str = "tawala-api"
-    tawala_jwt_ttl_sec: int = 28800  # 8 hours
-    # If true, tenant must have active subscription to service slug "tawala".
-    tawala_exchange_require_subscription: bool = False
-
-    # Redis (N2+) — JWKS and signing-key metadata cache
-    redis_url: str = "redis://localhost:6379/0"
-    jwks_redis_ttl_sec: int = 120
-
-    # Managed signing keys: backend generates RSA; rotate when active key age exceeds max.
-    # Env PEM is opt-in only (TAWALA_JWT_ALLOW_ENV_PEM=true) — avoid PEM-in-env in k3s.
-    signing_key_max_age_hours: int = 168  # 7 days
-    signing_key_retire_overlap_hours: int = 24  # dual JWKS window after rotate
-    tawala_jwt_allow_env_pem: bool = False
-
-
-
-
-
-    @property
-    def idp_issuer(self) -> str:
-        """Resolved OIDC issuer URL (OIDC_ISSUER or KEYCLOAK_ISSUER_URL)."""
-        v = (self.oidc_issuer or self.keycloak_issuer_url or "").strip()
-        if not v:
-            raise ValueError("OIDC_ISSUER or KEYCLOAK_ISSUER_URL must be set")
-        return v.rstrip("/")
-
-    @property
-    def idp_jwks_url(self) -> str:
-        """Resolved JWKS URL (OIDC_JWKS_URL or KEYCLOAK_JWKS or issuer + /oauth/v2/keys)."""
-        v = (self.oidc_jwks_url or self.keycloak_jwks or "").strip()
-        if v:
-            return v
-        # Zitadel default; Keycloak would be /protocol/openid-connect/certs — prefer explicit env
-        return f"{self.idp_issuer}/oauth/v2/keys"
-
-    @property
-    def async_db_url(self) -> str:
-        return f"postgresql+asyncpg://{self.FASTAPI_DB_USER}:{self.FASTAPI_DB_PASSWORD}@{self.FASTAPI_DB_HOST}:{self.FASTAPI_DB_PORT}/{self.FASTAPI_DB_NAME}"
-
-    @property
-    def sync_db_url(self) -> str:
-        return f"postgresql://{self.FASTAPI_DB_USER}:{self.FASTAPI_DB_PASSWORD}@{self.FASTAPI_DB_HOST}:{self.FASTAPI_DB_PORT}/{self.FASTAPI_DB_NAME}"
-
-    # cors_origins: list[str] = ["http://localhost:3000"]
-    @property
-    def cors_origins(self) -> list:
-        if not self.allowed_origins:
-            return []
-        # Split by comma, strip whitespace, and filter out empty strings or "*"
-        return [f.strip() for f in self.allowed_origins.split(",") if f.strip() and f.strip() != "*"]
-
-    # In production, specify allowed origins
-    # Environment
-    environment: EnvironmentEnum = Field(
-        default=EnvironmentEnum.DEVELOPMENT,
+    app_name: str = Field(default="NetHubKe", alias="APP_NAME")
+    app_version: str = Field(default="0.1.0", alias="APP_VERSION")
+    image_tag: str = Field(default="dev", alias="IMAGE_TAG")
+    environment: Literal["development", "staging", "production"] = Field(
+        default="development", alias="ENVIRONMENT"
     )
+    allowed_origins: str = Field(default="http://localhost:3000", alias="ALLOWED_ORIGINS")
 
-@lru_cache()
+    # Discrete DB credentials — URLs assembled below (not a single DATABASE_URL source of truth)
+    fastapi_db_user: str = Field(alias="FASTAPI_DB_USER")
+    fastapi_db_password: str = Field(alias="FASTAPI_DB_PASSWORD")
+    fastapi_db_host: str = Field(alias="FASTAPI_DB_HOST")
+    fastapi_db_port: int = Field(default=5432, alias="FASTAPI_DB_PORT")
+    fastapi_db_name: str = Field(alias="FASTAPI_DB_NAME")
+
+    # OIDC resource-server (IdP-agnostic)
+    oidc_issuer: str = Field(alias="OIDC_ISSUER")
+    oidc_jwks_url: str | None = Field(default=None, alias="OIDC_JWKS_URL")
+    audience: str = Field(default="nethub-api", alias="AUDIENCE")
+
+    @field_validator("fastapi_db_port", mode="before")
+    @classmethod
+    def port_as_int(cls, v):  # noqa: ANN001
+        return int(v)
+
+    @property
+    def cors_origins(self) -> list[str]:
+        return [o.strip() for o in self.allowed_origins.split(",") if o.strip()]
+
+    @property
+    def async_database_uri(self) -> str:
+        user = quote_plus(self.fastapi_db_user)
+        password = quote_plus(self.fastapi_db_password)
+        return (
+            f"postgresql+asyncpg://{user}:{password}"
+            f"@{self.fastapi_db_host}:{self.fastapi_db_port}/{self.fastapi_db_name}"
+        )
+
+    @property
+    def sync_database_uri(self) -> str:
+        """For Alembic (sync) — same credentials, sync driver scheme."""
+        user = quote_plus(self.fastapi_db_user)
+        password = quote_plus(self.fastapi_db_password)
+        return (
+            f"postgresql+psycopg2://{user}:{password}"
+            f"@{self.fastapi_db_host}:{self.fastapi_db_port}/{self.fastapi_db_name}"
+        )
+
+
+@lru_cache
 def get_settings() -> Settings:
-    return Settings()
+    return Settings()  # type: ignore[call-arg]
+
 
 settings = get_settings()

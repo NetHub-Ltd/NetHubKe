@@ -1,144 +1,143 @@
-# NetHubKe Monorepo
+# NetHubKe — Architecture A (Resource Server Only)
 
-[![Backend CI](https://github.com/NetHub-Ltd/NetHubKe/actions/workflows/backend-ci.yml/badge.svg?branch=master)](https://github.com/NetHub-Ltd/NetHubKe/actions/workflows/backend-ci.yml)
-[![Frontend CI](https://github.com/NetHub-Ltd/NetHubKe/actions/workflows/frontend-ci.yml/badge.svg?branch=master)](https://github.com/NetHub-Ltd/NetHubKe/actions/workflows/frontend-ci.yml)
-[![codecov](https://codecov.io/gh/NetHub-Ltd/NetHubKe/branch/master/graph/badge.svg)](https://codecov.io/gh/NetHub-Ltd/NetHubKe)
-[![Issues](https://img.shields.io/github/issues/NetHub-Ltd/NetHubKe)](https://github.com/NetHub-Ltd/NetHubKe/issues)
-[![PRs](https://img.shields.io/github/issues-pr/NetHub-Ltd/NetHubKe)](https://github.com/NetHub-Ltd/NetHubKe/pulls)
-[![License](https://img.shields.io/github/license/NetHub-Ltd/NetHubKe)](https://github.com/NetHub-Ltd/NetHubKe)
-
-This monorepo contains the full scaffold for **NetHubKe**, a centralized Authorization Server and parent platform for your ecosystem of microservices. It integrates **Keycloak** for authentication and **FastAPI** for authorization, with a **Next.js frontend** for administration and user management.
+> **Status:** Direction reset. This branch intentionally contains **only this README**.  
+> It documents the target architecture approved for realignment. Implementation will be rebuilt on top of this contract.
 
 ---
 
-## 📁 Repository Structure
+## Decision
 
-```
-NetHubKe/
-├─ apps/
-│  ├─ backend/               # FastAPI backend (Authorization Server)
-│  ├─ frontend/              # Next.js frontend (Landing/Admin)
-│  └─ services/              # Additional microservices (optional)
-├─ packages/                 # Shared code (TypeScript types, utils)
-├─ docker-compose.yml        # Local dev environment orchestration
-├─ .env                      # Environment variables
-├─ pnpm-workspace.yaml       # Monorepo package management
-└─ README.md
-```
+**Architecture A is the only target.**
 
-### **Backend (`apps/backend`)**
+NetHubKe is an **IdP-agnostic resource server and identity-resolution API**.
 
-- `main.py`: FastAPI app entrypoint. Mounts routers, handles middleware.
-- `api/v1/`: Versioned API endpoints.
-  - `users.py`: User-related endpoints.
-  - `roles.py`: Role management endpoints.
-  - `auth.py`: Authorization endpoints and token validation.
-- `core/`
-  - `config.py`: Environment configuration (DB, Keycloak, secrets).
-  - `security.py`: JWT validation, permission checks, Keycloak utilities.
-- `models/` & `schemas/`: Pydantic & SQLAlchemy models and schemas.
-- `services/keycloak.py`: Abstraction layer for Keycloak API calls.
-- `tests/`: Backend unit and integration tests.
+It is **not** an Authorization Server that mints product tokens.
 
-### **Frontend (`apps/frontend`)**
-
-- `pages/`: Next.js pages
-  - `index.tsx`: Public landing page.
-  - `login.tsx`: Login redirect / callback.
-  - `admin/users.tsx`: Admin dashboard for managing users.
-- `components/`: UI components (e.g., Layout, tables).
-- `lib/auth.ts`: JWT handling and API wrapper.
-- `styles/`: Tailwind CSS and other styles.
-
-### **Shared Packages (`packages`)**
-
-- `types/index.ts`: TypeScript interfaces shared between frontend and backend.
+| Principle | Rule |
+|-----------|------|
+| **IdP-agnostic** | Switch identity providers (Zitadel, Auth0, Cognito, Keycloak, …) by **configuration only**. No platform rewrite. |
+| **Backend role** | Receive a bearer token → validate it → resolve the local user → return **user info** (JSON). |
+| **Not in scope** | Issuing a second (product) JWT. Product token exchange. NetHubKe JWKS for product APIs. |
+| **Client model** | Website, Tawala, NetPay, and every future client use the **same** integration. |
 
 ---
 
-## ⚙️ Technology Stack
+## What clients do (one shared mechanism)
 
-- **Backend**: FastAPI, Pydantic, SQLAlchemy/Postgres
-- **Frontend**: Next.js, TypeScript, Tailwind CSS, Radix UI
-- **Authentication**: Keycloak (OIDC/JWT)
-- **Authorization**: FastAPI middleware (role & permission checks)
-- **Database**: PostgreSQL (dev or production)
-- **Optional**: Redis for caching roles and sessions
+```text
+[ Any OIDC IdP ]
+        │  access token
+        ▼
+┌─────────────────────────────────────┐
+│  NetHubKe Backend                   │
+│  1. Validate JWT against configured │
+│     IdP issuer + JWKS               │
+│  2. Resolve canonical identity      │
+│     (issuer + subject → local user) │
+│  3. Return user / tenant /          │
+│     entitlement data as JSON        │
+│     — not a new token               │
+└─────────────────────────────────────┘
+     ▲            ▲            ▲
+     │            │            │
+  Website      Tawala       NetPay
+  (same Bearer token, same API contracts)
+```
+
+1. User authenticates with the configured IdP.
+2. Client obtains an **IdP access token**.
+3. Client calls NetHubKe with `Authorization: Bearer <idp-access-token>`.
+4. NetHubKe validates the token, resolves the user, returns profile and related data.
+5. Client uses that **data**. NetHubKe does not mint a replacement token for the product.
+
+There is no special path for Tawala, NetPay, or the website. All are API clients of NetHubKe.
 
 ---
 
-## 🚀 Getting Started (Development)
+## What Architecture A includes
 
-1. **Copy environment variables**
+### In scope
 
-```bash
-cp .env.example .env
-```
+- **OIDC token validation** against a configurable issuer and JWKS (vendor-neutral).
+- **Canonical identity mapping** keyed by `(issuer, subject)` — not by mutable email alone.
+- **Local user and tenant** records owned by NetHubKe.
+- **User sync / profile APIs** that return structured user info (e.g. sync on first call, read/update profile).
+- **Shared entitlement / service-status reads** that any client can call with the same credential type.
+- **Config-driven IdP switch**: change issuer, JWKS URL, audience expectations, and claim mapping without rebuilding apps.
+- **Postgres** as durable source of truth for users, tenants, and business data NetHubKe owns.
 
-Update `.env` with your Keycloak, DB, and secret settings.
+### Explicitly out of scope
 
-2. **Install dependencies**
-
-**Backend:**
-
-```bash
-cd apps/backend
-pip install -r requirements.txt
-```
-
-**Frontend:**
-
-```bash
-cd apps/frontend
-pnpm install   # or npm install
-```
-
-3. **Run services with Docker Compose**
-
-```bash
-docker-compose up -d
-```
-
-This will spin up:
-
-- Keycloak
-- PostgreSQL
-- FastAPI backend
-- Next.js frontend
-
-4. **Access services**
-
-- Frontend: `http://localhost:3000`
-- FastAPI docs: `http://localhost:8000/docs`
-- Keycloak admin: `http://localhost:8080`
+- Product token **exchange** (`/auth/exchange` and equivalents).
+- NetHubKe as **issuer** of access tokens for product APIs.
+- **Signing keys / JWKS** published for product resource servers to verify NetHubKe-minted JWTs.
+- Per-product claim profiles used only for minting secondary tokens.
+- Different integration mechanisms per product (every client uses the same pattern).
+- Requiring product backends to trust NetHubKe JWKS instead of resolving identity via NetHubKe’s user-info APIs (or their own IdP validation, if they choose).
 
 ---
 
-## 🔑 Authentication & Authorization Flow
+## Switching the IdP
 
-1. User accesses the frontend and logs in via Keycloak.
-2. Keycloak issues a JWT.
-3. Frontend sends the JWT with API requests to FastAPI backend.
-4. FastAPI validates the JWT and enforces permissions before returning data.
-5. Microservices rely on backend authorization decisions — they **do not** directly validate Keycloak tokens.
+To move from one provider to another:
 
----
+1. Point configuration at the new issuer and JWKS (and audience / client settings as required).
+2. Ensure access tokens still carry a stable `sub` and the claims NetHubKe needs (especially email or an equivalent stable identifier for display/sync policy).
+3. Existing `(issuer, subject)` rows remain valid for the old issuer; new logins under the new issuer create or link identities according to explicit policy (no silent email-only takeover).
 
-## 📝 Notes
-
-- This scaffold is production-ready but requires configuration of:
-  - Keycloak realms, clients, and roles
-  - Backend environment variables
-  - Frontend OIDC redirect URIs
-
-- Microservices should trust backend authorization for secure access control.
-- The monorepo supports additional microservices in `apps/services/` with shared types in `packages/types`.
+No rebuild of Tawala, NetPay, or the website integration model is required for a pure IdP swap under this contract.
 
 ---
 
-## 📖 References
+## What this branch is for
 
-- [FastAPI](https://fastapi.tiangolo.com/)
-- [Next.js](https://nextjs.org/)
-- [Keycloak](https://www.keycloak.org/)
-- [Tailwind CSS](https://tailwindcss.com/)
+This branch **deletes the previous tree on purpose** so the next implementation starts from a clear contract:
+
+- No leftover exchange, signing-key, or product-JWT paths as the default design.
+- README is the single source of truth for Architecture A until code is reintroduced under this model.
+- `dev` and history remain intact; this is a topic branch for review and approval.
+
+After this PR is approved, follow-up work will reintroduce backend and clients **only** in ways that implement Architecture A.
+
+---
+
+## Non-goals for the immediate rebuild
+
+- Preserving product-token minting “just in case.”
+- Hybrid modes where some products use exchange and others use user-info.
+- Browser JavaScript calling NetHubKe with long-lived secrets (clients should use safe patterns appropriate to their stack; the **credential type** presented to NetHubKe remains the IdP access token or an equivalent server-side forward of it).
+
+---
+
+## Approval
+
+Product owner direction: **Architecture A only.**
+
+Next step after merge approval: plan the minimal resource-server surface (validate token → resolve user → return info) and shared client integration, then implement on a new feature branch from updated `dev`.
+
+
+---
+
+---
+
+## Retained for Flux / GHCR (borrowed from prior `dev` as-is)
+
+Flux (k3s-gitops) consumes images already published to:
+
+```text
+ghcr.io/nethub-ltd/nethubke:0.0.<n>
+```
+
+**Kept on this branch:**
+
+| Path | Why |
+|------|-----|
+| `.github/workflows/build_and_push.yml` | CI definition that builds and pushes multi-arch images to GHCR (triggers: `master` / `main`, `v*` tags, `workflow_dispatch`) |
+
+**Not retained (cleared as instructed):**
+
+- `apps/backend/` — full application source and Docker context
+- Frontend, other workflows, trackers, SSO docs, AGENTS, root package files
+
+**Note:** Existing GHCR tags continue to serve the cluster. New image builds require a Docker context again; that will be reintroduced when Architecture A backend is implemented. Until then, `build_and_push.yml` documents the publish contract but will not produce a successful image without a restored `apps/backend/` build context.
+

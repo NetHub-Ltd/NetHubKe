@@ -1,157 +1,119 @@
-"""JWT validation for the NetHubKe resource server (OIDC IdP-agnostic)."""
-
+"""IdP-agnostic resource-server JWT validation."""
 from __future__ import annotations
 
 from typing import Any
 
-import httpx
 import jwt
-from fastapi import HTTPException
-from fastapi.security import HTTPBearer
-from jwt import PyJWKClient, exceptions
+from fastapi import HTTPException, status
+from jwt import PyJWKClient
 
 from app.core.config import settings
-from app.core.idp_claims import extract_roles
-from app.core.scope_claims import merge_scope_claims
 from app.db.schemas.schemas import TokenData
-from app.utils.logging import logger
-
-bearer_scheme = HTTPBearer(auto_error=False)
-
-__all__ = ["bearer_scheme", "_decode_token", "merge_scope_claims", "extract_roles"]
 
 
-def _userinfo_url(issuer: str) -> str:
-    base = issuer.rstrip("/")
-    # Zitadel / many OIDC providers
-    return f"{base}/oidc/v1/userinfo"
+def _roles_from_claims(payload: dict[str, Any]) -> list[str]:
+    roles: list[str] = []
+    realm = payload.get("realm_access") or {}
+    if isinstance(realm, dict):
+        ra = realm.get("roles") or []
+        if isinstance(ra, list):
+            roles.extend(str(r) for r in ra)
+    direct = payload.get("roles")
+    if isinstance(direct, list):
+        roles.extend(str(r) for r in direct)
+    return list(dict.fromkeys(roles))
 
 
-def _fetch_userinfo(access_token: str, issuer: str) -> dict[str, Any]:
-    """
-    OIDC UserInfo — used when the access token is a JWT without profile claims
-    (Zitadel puts email/name on the ID token / userinfo, not on the access token).
-    """
-    url = _userinfo_url(issuer)
+def _scopes_from_claims(payload: dict[str, Any]) -> list[str]:
+    scope = payload.get("scope") or payload.get("scp") or ""
+    if isinstance(scope, list):
+        return [str(s) for s in scope]
+    if isinstance(scope, str) and scope.strip():
+        return scope.split()
+    return []
+
+
+def decode_access_token(token: str) -> TokenData:
+    """Validate Bearer access token against configured IdP JWKS."""
+    issuer = settings.oidc_issuer.rstrip("/")
+    jwks_url = settings.oidc_jwks_url
+    if not jwks_url:
+        jwks_url = f"{issuer}/protocol/openid-connect/certs"
+
     try:
-        with httpx.Client(timeout=5.0) as client:
-            resp = client.get(
-                url,
-                headers={
-                    "Authorization": f"Bearer {access_token}",
-                    "Accept": "application/json",
-                },
-            )
-    except httpx.HTTPError as e:
-        logger.error("UserInfo request failed | {}", str(e))
-        raise HTTPException(
-            status_code=401,
-            detail="Unable to load user profile from identity provider",
-        ) from e
-
-    if resp.status_code != 200:
-        logger.warning(
-            "UserInfo rejected | status={} body={}",
-            resp.status_code,
-            resp.text[:200],
-        )
-        raise HTTPException(
-            status_code=401,
-            detail="Token missing email claim and UserInfo unavailable",
-        )
-
-    data = resp.json()
-    if not isinstance(data, dict):
-        raise HTTPException(status_code=401, detail="Invalid UserInfo response")
-    return data
-
-
-def _decode_token(token: str) -> TokenData:
-    """
-    Validate a bearer access token against the configured IdP JWKS.
-
-    Checks: signature (RS256), exp, issuer, audience (from settings).
-    If the JWT has no email (typical for Zitadel access tokens), fetch
-    profile claims from the OIDC UserInfo endpoint with the same token.
-    """
-    try:
-        issuer = settings.idp_issuer
-        jwks_url = settings.idp_jwks_url
-        logger.debug("OIDC Issuer | {} | JWKS | {}", issuer, jwks_url)
-        jwks_client = PyJWKClient(
-            uri=jwks_url,
-            cache_jwk_set=True,
-            lifespan=min(600, settings.jwks_cache_ttl),
-            cache_keys=True,
-            max_cached_keys=16,
-            headers={
-                "User-Agent": "FastAPI-Resource-Server",
-                "Accept": "application/json",
-            },
-        )
+        jwks_client = PyJWKClient(jwks_url, cache_keys=True, lifespan=300)
         signing_key = jwks_client.get_signing_key_from_jwt(token)
-
         payload = jwt.decode(
             token,
             signing_key.key,
-            algorithms=settings.algorithms,
+            algorithms=["RS256", "ES256"],
             audience=settings.audience,
             issuer=issuer,
-            leeway=10,
+            options={"require": ["exp", "sub"]},
+        )
+    except jwt.PyJWTError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from exc
+    except Exception as exc:  # noqa: BLE001 — JWKS fetch failures etc.
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Unable to validate token",
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from exc
+
+    sub = payload.get("sub")
+    if sub is None or str(sub).strip() == "":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token missing subject",
+            headers={"WWW-Authenticate": "Bearer"},
         )
 
-        raw_scope = merge_scope_claims(payload)
-        roles = extract_roles(payload)
+    return TokenData(
+        sub=str(sub),
+        email=payload.get("email"),
+        name=payload.get("name"),
+        preferred_username=payload.get("preferred_username"),
+        roles=_roles_from_claims(payload),
+        scopes=_scopes_from_claims(payload),
+        issuer=str(payload.get("iss") or issuer),
+    )
 
-        email = payload.get("email")
-        name = payload.get("name")
-        preferred = payload.get("preferred_username")
-        email_verified = payload.get("email_verified", False)
 
-        # Zitadel (and some IdPs): profile claims live on ID token / UserInfo only
-        if not email:
-            logger.info("Access token has no email; fetching OIDC UserInfo")
-            info = _fetch_userinfo(token, issuer)
-            email = info.get("email") or email
-            name = info.get("name") or name
-            preferred = (
-                info.get("preferred_username")
-                or info.get("username")
-                or preferred
-            )
-            if "email_verified" in info:
-                email_verified = bool(info.get("email_verified"))
-            # Merge any roles from userinfo if present
-            roles = extract_roles({**payload, **info}) or roles
-
-        if not email:
-            logger.warning("Auth Fail | Token and UserInfo missing email claim")
-            raise HTTPException(status_code=401, detail="Token missing email claim")
-
-        validate_data = {
-            "sub": str(payload.get("sub") or ""),
-            "email": email,
-            "preferred_username": preferred,
-            "name": name,
-            "email_verified": email_verified,
-            "roles": roles,
-            "scope": raw_scope,
-        }
-        return TokenData(**validate_data)
-
-    except exceptions.ExpiredSignatureError:
-        logger.warning("Auth Fail | Token expired")
-        raise HTTPException(status_code=401, detail="Token has expired")
-    except exceptions.InvalidAudienceError:
-        logger.error(
-            "Auth Fail | Token audience mismatch | expected={}", settings.audience
+def decode_access_token_with_key(token: str, *, public_key: Any, issuer: str, audience: str) -> TokenData:
+    """Test helper: validate with an explicit public key (no JWKS network)."""
+    try:
+        payload = jwt.decode(
+            token,
+            public_key,
+            algorithms=["RS256"],
+            audience=audience,
+            issuer=issuer.rstrip("/"),
+            options={"require": ["exp", "sub"]},
         )
-        raise HTTPException(status_code=401, detail="Invalid token audience")
-    except exceptions.InvalidIssuerError:
-        logger.error("Auth Fail | Token issuer mismatch")
-        raise HTTPException(status_code=401, detail="Invalid token issuer")
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error("Auth Fail | JWT Error: {}", str(e))
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+    except jwt.PyJWTError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from exc
+
+    sub = payload.get("sub")
+    if sub is None or str(sub).strip() == "":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token missing subject",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return TokenData(
+        sub=str(sub),
+        email=payload.get("email"),
+        name=payload.get("name"),
+        preferred_username=payload.get("preferred_username"),
+        roles=_roles_from_claims(payload),
+        scopes=_scopes_from_claims(payload),
+        issuer=str(payload.get("iss") or issuer),
+    )

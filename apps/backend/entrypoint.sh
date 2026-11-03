@@ -1,10 +1,16 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env sh
+set -eu
 
-echo "Running database migrations..."
-alembic upgrade head
+echo "NetHubKe backend starting (Architecture A resource server)"
 
-echo "Starting Gunicorn..."
-# main:app is correct because main.py is in the WORKDIR (/app)
-# app.lib imports will work because the 'app' folder is also in /app
-exec gunicorn -w 2 -k uvicorn.workers.UvicornWorker app.main:app --bind 0.0.0.0:8000 --timeout 120
+if [ "${RUN_MIGRATIONS:-true}" = "true" ]; then
+  echo "Running Alembic migrations (sync)..."
+  alembic upgrade head
+fi
+
+HOST="${HOST:-0.0.0.0}"
+PORT="${PORT:-8000}"
+WORKERS="${WORKERS:-1}"
+
+echo "Starting uvicorn on ${HOST}:${PORT} (workers=${WORKERS})"
+exec uvicorn app.main:app --host "${HOST}" --port "${PORT}" --workers "${WORKERS}"

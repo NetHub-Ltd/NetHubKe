@@ -1,24 +1,29 @@
-# Backend container image
+# NetHubKe backend image
 
-**Registry:** GitHub Container Registry (GHCR)  
-**Image:** `ghcr.io/nethub-ltd/nethubke`
+| Item | Value |
+|------|--------|
+| Registry | `ghcr.io/nethub-ltd/nethubke` |
+| Context | `apps/backend` |
+| Dockerfile | `apps/backend/Dockerfile` |
+| Workflow | `.github/workflows/build_and_push.yml` |
 
-## How images are published
+## Tags
 
-Workflow: `.github/workflows/build_and_push.yml`
+- `0.0.<run_number>` — Flux ImagePolicy-friendly (branch pushes to `master`/`main`)
+- `sha-<short>` — immutable
+- `latest` — branch pushes only
+- `v*` — from git tags
 
-| Trigger | Tags pushed |
-|---------|-------------|
-| Push to `master` / `main` (backend paths) | `0.0.<run_number>`, `sha-<shortsha>`, `latest` |
-| Git tag `v*` | `vX.Y.Z`, `X.Y.Z`, `sha-<shortsha>` |
-| `workflow_dispatch` | same as branch + optional custom tag |
+## Runtime env
 
-Auth uses `GITHUB_TOKEN` (packages:write). No Docker Hub secrets required.
+All settings via **pydantic_settings** (see `.env.example`):
 
-## Consume from k3s-gitops
+- `FASTAPI_DB_*` (assembled to async + sync URLs in-process)
+- `OIDC_ISSUER`, `OIDC_JWKS_URL`, `AUDIENCE`
+- `RUN_MIGRATIONS=true` (default) — Alembic `upgrade head` before uvicorn
+- `HOST`, `PORT`, `WORKERS`
 
-```yaml
-image: ghcr.io/nethub-ltd/nethubke:0.0.12  # {"$imagepolicy": "flux-system:nethubke"}
-```
+## Architecture A
 
-Package visibility: if the package is private, the cluster needs `ghcr-registry-key` / `ghcr-credentials` (already used for tawala-api).
+Image serves the **resource server** only: validate IdP Bearer → resolve user → JSON.  
+No product-token minting.
