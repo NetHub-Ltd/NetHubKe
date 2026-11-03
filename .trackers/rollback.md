@@ -171,3 +171,23 @@
 - Final verification: backend CI #175 (run `41608428220`) passed 228 tests, 76.85% coverage, per-file coverage, and Alembic upgrade/downgrade; readiness #136 (`41608427606`) passed `/health` and `/ready`; Vercel preview is successful. Codecov reports Repository not found but is non-blocking; coverage artifact uploaded.
 - Removed `NEXT_PUBLIC_API_URL` from the frontend env example to align with BFF-only browser transport. The generated OpenAPI client still has a hardcoded localhost base URL; its import/use graph is not verified and it is not an approved browser transport. BFF integration remains a separate follow-up.
 - PR #170 remains open against `dev` and is not merged. Backend CI #175 and readiness #136 passed; the Vercel preview for the latest docs/environment-template commit is still pending. N1 issue #42/#43 checklists remain unchanged and are not marked accepted by this PR.
+
+## 2026-11-03 — First-client branch rollback notes
+
+**Branch:** `feat/first-client-idp-agnostic-bff`  
+**Parent:** PR #170 head `73ecbcea14e01af84807f4518c4a0171f006a52c`
+
+**Changed areas:**
+- Frontend Auth.js/OIDC config, server-only session credential reader, logout, registration, profile/service/billing BFF handlers and disabled exchange/launch helper.
+- Backend OIDC settings, discovery-based JWT/JWKS/UserInfo validation, configurable role claim extraction and associated unit tests.
+- Backend/frontend environment examples and OIDC/BFF/launch/architecture/README documentation.
+- Inherited PR #170 shared product-token config, product token module rename, generic claim-profile defaults, and unique product-audience migration.
+
+**Risk/compatibility:**
+- Runtime config now requires generic `OIDC_ISSUER`; old `KEYCLOAK_*` aliases are removed. No production environment was changed.
+- If the configured provider emits roles outside the `roles` or `groups` claims, set `OIDC_ROLE_CLAIM_PATH` to its configured claim path before relying on privileged role mapping. NetHubKe core does not hardcode a provider namespace.
+- BFF routes require a successful `/users/sync` result and active canonical user. IdP-only sessions remain signed in but cannot access protected dashboard data.
+- Product exchange is deliberately disabled at the browser boundary; Tawala launch must not be re-enabled until a single-use server-to-server launch-code flow exists.
+- Migration `m6g7h8i9j0k1_unique_product_audiences` is inherited from PR #170. It fails with duplicate audience diagnostics rather than silently rewriting data.
+
+**Rollback:** before merge, revert the branch commits or close the PR without merging; no production rollback is needed. If merged later, revert the consolidated PR as a unit. Do not selectively remove the unique-audience migration after products depend on it. Any production environment-variable rollback must be coordinated separately; no runtime secrets were modified here.
