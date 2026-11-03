@@ -85,6 +85,9 @@ export async function oidcDiscovery(): Promise<OidcDiscovery> {
 
   // Production deployments must not follow provider metadata to plaintext HTTP.
   if (process.env.NODE_ENV === "production") {
+    if (new URL(issuer).protocol !== "https:") {
+      throw new Error("OIDC_ISSUER must use HTTPS in production");
+    }
     for (const endpoint of [
       metadata.authorization_endpoint,
       metadata.token_endpoint,
