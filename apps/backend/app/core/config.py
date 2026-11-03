@@ -69,7 +69,7 @@ class Settings(BaseSettings):
         value = (self.oidc_issuer or "").strip()
         if not value:
             raise ValueError("OIDC_ISSUER must be set")
-        return value.rstrip("/")
+        return value
 
     @property
     def async_db_url(self) -> str:
