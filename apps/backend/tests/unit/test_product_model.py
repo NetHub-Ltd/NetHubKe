@@ -13,9 +13,4 @@ def test_product_model_fields():
 def test_product_slug_and_audience_are_unique_constraints():
     constraints = {constraint.name for constraint in Product.__table__.constraints}
     assert "uq_products_audience" in constraints
-    assert any(
-        constraint.name is not None
-        and "slug" in constraint.name
-        and constraint.__class__.__name__ == "UniqueConstraint"
-        for constraint in Product.__table__.constraints
-    )
+    assert Product.__table__.c.slug.unique is True
