@@ -160,3 +160,9 @@
 - The same policy applies to every browser-based product; each uses its own trusted BFF. Backend/machine clients remain server-to-server, and product APIs validate NetHubKe JWTs locally via JWKS.
 - No application code, schema, feature flag, secret, or deployment setting changed. This documentation work is parallel planning only; it does not skip N0–N10. N1 (#42–#43) remains the earliest milestone whose acceptance evidence is not demonstrably complete per the architecture contract.
 - Draft requires review on session storage, NetHubKe audience/scopes, first-login failure semantics, one-time launch-code handoff, and non-browser client transport.
+
+## N1 acceptance validation and shared product-token configuration — 2026-11-03
+- N1 validation baseline: PR #145 is merged; historical backend/readiness CI passed. PR #168 later passed 227 backend tests at 76.83% coverage. N1 issue #42/#43 remain closed with unchecked historical acceptance boxes; evidence is mapped in `docs/validation/N1_ACCEPTANCE_VALIDATION.md`.
+- Investigation found `TAWALA_EXCHANGE_ENABLED` was a global product-token exchange kill switch, despite its Tawala-specific name. Other Tawala-prefixed settings configured shared issuer, TTL, PEM fallback, and a product audience override; `TAWALA_EXCHANGE_REQUIRE_SUBSCRIPTION` was unused.
+- Branch `fix/shared-product-token-configuration` replaces shared settings with `PRODUCT_TOKEN_*`, removes the audience override in favor of `Product.audience`, removes the unused subscription setting, updates docs/env example/root README and adds N1 validation report.
+- Exchange remains globally default-off. No deployment settings, secrets, database schema, production behavior, merge or rollout were changed. Fresh branch CI is pending.
