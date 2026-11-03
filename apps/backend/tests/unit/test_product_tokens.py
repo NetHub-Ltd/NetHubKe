@@ -15,6 +15,13 @@ from fastapi import HTTPException
 from app.services import product_tokens as tt
 
 
+def test_new_product_defaults_to_standard_claim_profile():
+    from app.db.models.models import Product
+
+    product = Product(slug="example", name="Example", audience="example-api")
+    assert product.claim_profile == "standard"
+
+
 @pytest.fixture
 def rsa_pem():
     key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
