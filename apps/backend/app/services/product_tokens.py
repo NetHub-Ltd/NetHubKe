@@ -633,7 +633,7 @@ async def mint_product_access_token(
     org_id: Optional[UUID],
     principal: str,
     email: Optional[str] = None,
-    claim_profile: str = "tawala",
+    claim_profile: str = "standard",
 ) -> tuple[str, int]:
     """Mint RS256 product access token using the registered server-side claim profile."""
     if not exchange_enabled():
