@@ -182,4 +182,4 @@
 - Completed issue closures: #75, #116, #117, #144, #146, #159, #163. #137 closed as superseded by the approved product-token architecture.
 - Current code correction: public Auth.js session intentionally contains no bearer tokens. Previous BFF handlers incorrectly read `session.accessToken`; the new server-only cookie reader resolves this without exposing tokens to browser code.
 - Product launch remains disabled; the browser exchange route returns 410 pending one-time server-to-server launch-code redemption.
-- CI and runtime verification are pending for this branch. Do not report it as merged or production-ready.
+- CI verified: backend 237 passed / 77.46% coverage; Alembic upgrade/downgrade/re-upgrade passed; Docker/Postgres/Redis readiness passed; frontend lint/build and 11 security tests passed. Browser smoke with deployed OIDC configuration remains pending. PR #173 is open, mergeable, targets dev; no merge/deployment performed.
