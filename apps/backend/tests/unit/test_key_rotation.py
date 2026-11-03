@@ -6,9 +6,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from app.services.tawala_token import _generate_rsa_keypair, public_jwk_from_private
+from app.services.product_tokens import _generate_rsa_keypair, public_jwk_from_private
 from app.db.models.models import SecurityAuditEvent
-from app.services import tawala_token as tt
+from app.services import product_tokens as tt
 
 
 def test_generate_keypair_has_kid_and_jwk():
