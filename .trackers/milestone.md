@@ -242,3 +242,12 @@ Reject or request changes if the PR:
 | Validate | A6 | Staging evidence |
 
 All implementation PRs target **`dev`**. No direct pushes to `dev`/`main`.
+
+
+## Frontend bare minimum (follow-on)
+
+| Item | Status |
+|------|--------|
+| Next.js shell + Auth.js OIDC + BFF to `/users/me` | PR `feat/frontend-bare-minimum-bff` |
+
+Same integration as all clients: IdP Bearer → NetHubKe user JSON.
