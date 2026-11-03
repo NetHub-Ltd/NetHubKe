@@ -131,7 +131,8 @@ The new environment names are intentionally not aliases for the old `TAWALA_*` n
 - Machine-client authentication and the full browser BFF runtime implementation are not accepted by this N1 report.
 - Removed `NEXT_PUBLIC_API_URL` from `apps/frontend/.env.example`; the sample now documents only server-side `BACKEND_URL`, consistent with the BFF-only browser contract.
 - The generated OpenAPI client at `apps/frontend/src/lib/types/api/client.gen.ts` still has a hardcoded `http://localhost:8000` base URL. Its complete import/use graph was not verified in this N1 scope; it is not an approved browser transport and must not be imported into client components. Reconcile it during the separate BFF implementation.
-- The Tawala claim profile remains a product-registry profile for its existing `org_id`/principal compatibility contract. It is not an environment-level integration switch. Product-specific business permissions remain product-owned.
+- The Tawala claim profile remains an explicit Product-registry profile for its existing `org_id`/principal compatibility contract. The legacy `tenant.tawala_organization_id` fallback, Tawala product bootstrap helper and `/exchange/tawala` alias also remain for compatibility. These are not per-product environment switches; removing them safely requires migrating existing organization mappings to `product_links` and confirming no Tawala consumer still depends on the legacy alias/profile. New products default to `standard`. Product-specific business permissions remain product-owned.
+- Product-specific `Product.audience` is intentionally retained as registry data: each product needs a distinct audience to prevent one product's JWT from being accepted by another. It is not a deployment environment variable or an independent integration stack.
 
 ## 7. Branch changes and verification status
 
