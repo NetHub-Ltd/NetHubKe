@@ -27,7 +27,7 @@ def _claim_values(value: Any) -> list[str]:
 
 def extract_roles(payload: dict[str, Any], claim_path: str = "roles") -> list[str]:
     """
-    Normalize roles from the configured claim and standard groups claim.
+    Normalize roles from the configured claim and groups claim.
 
     Provider-specific claim names/paths are supplied through OIDC_ROLE_CLAIM_PATH;
     this module intentionally contains no provider names or vendor claim schemas.
