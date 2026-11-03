@@ -197,3 +197,13 @@
 - Final verification: backend CI #175 (run `41608428220`) passed 228 tests, 76.85% coverage, per-file coverage, and Alembic upgrade/downgrade; readiness #136 (`41608427606`) passed `/health` and `/ready`; Vercel preview is successful. Codecov reports Repository not found but is non-blocking; coverage artifact uploaded.
 - Removed `NEXT_PUBLIC_API_URL` from the frontend env example to align with BFF-only browser transport. The generated OpenAPI client still has a hardcoded localhost base URL; its import/use graph is not verified and it is not an approved browser transport. BFF integration remains a separate follow-up.
 - PR #170 remains open against `dev` and is not merged. Backend CI #175 and readiness #136 passed; the Vercel preview for the latest docs/environment-template commit is still pending. N1 issue #42/#43 checklists remain unchanged and are not marked accepted by this PR.
+
+## 2026-11-03 — Delivery grouping (not a milestone gate)
+
+Current prioritized outcome: first working website client.
+
+1. Provider-neutral OIDC boundary (#80): discovery-based backend validation, configurable claim mapping, generic frontend login/refresh/logout.
+2. Website BFF (#171): server-only encrypted-session credential access, canonical-account requirement, safe profile/service DTOs, same-origin mutation checks, safe logout.
+3. Product audience isolation (#172): unique audience migration already exists in the inherited PR #170 branch; retain its CI/migration evidence and close only after the consolidated PR merges.
+
+Other open issues remain only where they represent separate required behavior (for example #152, #162, #164, #165). Historical N0–N10 labels are traceability; they must not block or restart this delivery.
