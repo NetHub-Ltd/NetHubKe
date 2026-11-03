@@ -118,31 +118,26 @@ Next step after merge approval: plan the minimal resource-server surface (valida
 
 ---
 
-## Retained for Flux / GHCR (borrowed from `dev` as-is)
+---
 
-A full application wipe on `dev` must **not** break cluster image delivery.
+## Retained for Flux / GHCR (borrowed from prior `dev` as-is)
 
-Flux (k3s-gitops) consumes:
+Flux (k3s-gitops) consumes images already published to:
 
 ```text
-ghcr.io/nethub-ltd/nethubke:0.0.<n>   # ImagePolicy-friendly
+ghcr.io/nethub-ltd/nethubke:0.0.<n>
 ```
 
-Published by `.github/workflows/build_and_push.yml` (triggers: `master` / `main` path pushes, `v*` tags, `workflow_dispatch`).
-
-**Kept on this branch exactly as on `dev`:**
+**Kept on this branch:**
 
 | Path | Why |
 |------|-----|
-| `.github/workflows/build_and_push.yml` | Build multi-arch image and push to GHCR |
-| `apps/backend/Dockerfile` | Image build definition |
-| `apps/backend/.dockerignore` | Build context filter |
-| `apps/backend/requirements.txt` | Pip install in image |
-| `apps/backend/entrypoint.sh` | Container entrypoint |
-| `apps/backend/alembic.ini` + `alembic/` | Migrations copied into image |
-| `apps/backend/app/` | Application code the image runs today |
-| `apps/backend/IMAGE.md` | Registry / tag / Flux consumption notes |
+| `.github/workflows/build_and_push.yml` | CI definition that builds and pushes multi-arch images to GHCR (triggers: `master` / `main`, `v*` tags, `workflow_dispatch`) |
 
-This is **continuity of the running image pipeline**, not an endorsement of product-token exchange as the long-term Architecture A design. New Architecture A code will replace `apps/backend/` over time; until then the borrowed tree keeps GHCR builds and Flux-compatible tags working.
+**Not retained (cleared as instructed):**
 
-**Not retained** (intentionally wiped): frontend, other workflows (backend-ci, frontend-ci, readiness), trackers, SSO docs, AGENTS, root package files, etc.
+- `apps/backend/` — full application source and Docker context
+- Frontend, other workflows, trackers, SSO docs, AGENTS, root package files
+
+**Note:** Existing GHCR tags continue to serve the cluster. New image builds require a Docker context again; that will be reintroduced when Architecture A backend is implemented. Until then, `build_and_push.yml` documents the publish contract but will not produce a successful image without a restored `apps/backend/` build context.
+
