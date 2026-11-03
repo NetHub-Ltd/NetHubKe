@@ -166,3 +166,4 @@
 - Before any future exchange enablement, inspect deployment environments and replace old `TAWALA_*` names with the shared `PRODUCT_TOKEN_*` equivalents. This PR does not change live environment values.
 - Preserve the stable signing-key encryption secret and existing PostgreSQL signing-key rows; do not rotate, regenerate or replace signing keys as part of this configuration refactor.
 - No merge, deployment, production flag change or secret mutation is authorized by this work.
+- Additional Tawala-specific defaults removed: new Product rows and generic token-mint calls now default to the common `standard` claim profile; the Tawala profile is selected explicitly for Tawala. Generic signing/JWKS service and tests renamed to `product_tokens.py` / `test_product_tokens.py`.
