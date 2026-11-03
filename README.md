@@ -59,7 +59,7 @@ The repository contains:
 
 **Important rollout state:** product-token exchange is globally disabled by default. It is controlled by `PRODUCT_TOKEN_EXCHANGE_ENABLED`, a platform-wide switch shared by every registered product—not by a Tawala-specific setting. Keep it false until the applicable milestone acceptance and staging gates are satisfied.
 
-The full browser BFF integration and secure product launch handoff are not yet complete. The client contract defines the required boundary; it must not be read as proof that every proposed BFF route or launch flow already exists. The five-minute stale-access requirement also needs end-to-end evidence from the actual product verifiers.
+The full browser BFF integration and secure product launch handoff are not yet complete. The client contract defines the required boundary; it must not be read as proof that every proposed BFF route or launch flow already exists. The five-minute stale-access requirement also needs end-to-end evidence from the actual product verifiers. The generated OpenAPI client currently has a localhost base URL and is not an approved browser transport; do not import it into client components. Use the server-only backend helper until typed same-origin BFF routes are implemented.
 
 The SSO programme is tracked in [issue #57](https://github.com/NetHub-Ltd/NetHubKe/issues/57) and proceeds through N0–N10. Consult `.trackers/` and the milestone issues before starting programme work.
 
