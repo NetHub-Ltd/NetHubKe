@@ -49,7 +49,9 @@ def _get_oidc_discovery(issuer: str) -> dict[str, Any]:
         if cached and now - cached[0] < _DISCOVERY_TTL_SECONDS:
             return cached[1]
 
-    discovery_url = f"{normalized_issuer.rstrip(chr(47))}/.well-known/openid-configuration"
+    _validate_endpoint(normalized_issuer, label="issuer")
+    discovery_base = normalized_issuer[:-1] if normalized_issuer.endswith(chr(47)) else normalized_issuer
+    discovery_url = f"{discovery_base}/.well-known/openid-configuration"
     try:
         with httpx.Client(timeout=5.0, follow_redirects=False) as client:
             response = client.get(
