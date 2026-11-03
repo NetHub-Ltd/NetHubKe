@@ -17,7 +17,7 @@ Inspected sources include:
 - `docs/CLIENT_INTEGRATION_CONTRACT.md`
 - `apps/backend/app/core/config.py`
 - `apps/backend/app/api/v1/routes/auth.py`
-- `apps/backend/app/services/tawala_token.py`
+- `apps/backend/app/services/product_tokens.py`
 - `apps/backend/app/main.py`
 - `apps/backend/app/db/models/models.py`
 - `apps/backend/tests/api/test_auth_exchange.py`
