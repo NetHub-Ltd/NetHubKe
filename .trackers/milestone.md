@@ -14,8 +14,8 @@
 |----|------|-------|-------------------------|
 | **A0** | Contract & milestone lock | **PR1** | This file + stack/test bar on `dev` |
 | **A1** | Backend skeleton | **PR1** | Layout, pydantic_settings, health/ready, CI workflow |
-| **A2** | Identity data model | Pending | Tenant, User, UserIdentity + migrations + model tests |
-| **A3** | IdP-agnostic token validation | Pending | JWT verify + deps; unit tests with fixed keys/claims |
+| **A2** | Identity data model | **PR2** | Tenant, User, UserIdentity + migrations + model tests |
+| **A3** | IdP-agnostic token validation | **PR2** | JWT verify + deps; unit tests with fixed keys/claims |
 | **A4** | User API | Pending | `POST /sync`, `GET/PATCH /me` + API tests |
 | **A5** | Container image | Pending | Dockerfile/entrypoint; `build_and_push` can build |
 | **A6** | Staging soak | Pending | Real IdP token → sync/me on staging |
