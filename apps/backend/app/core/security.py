@@ -42,14 +42,14 @@ def _validate_endpoint(url: str, *, label: str) -> str:
 
 def _get_oidc_discovery(issuer: str) -> dict[str, Any]:
     """Fetch standard OIDC metadata with a short bounded process-local cache."""
-    normalized_issuer = issuer.rstrip("/")
+    normalized_issuer = issuer
     now = monotonic()
     with _discovery_lock:
         cached = _discovery_cache.get(normalized_issuer)
         if cached and now - cached[0] < _DISCOVERY_TTL_SECONDS:
             return cached[1]
 
-    discovery_url = f"{normalized_issuer}/.well-known/openid-configuration"
+    discovery_url = f"{normalized_issuer.rstrip(chr(47))}/.well-known/openid-configuration"
     try:
         with httpx.Client(timeout=5.0, follow_redirects=False) as client:
             response = client.get(
@@ -66,7 +66,7 @@ def _get_oidc_discovery(issuer: str) -> dict[str, Any]:
         raise HTTPException(status_code=503, detail="Identity provider discovery document is invalid")
 
     discovered_issuer = metadata.get("issuer")
-    if not isinstance(discovered_issuer, str) or discovered_issuer.rstrip("/") != normalized_issuer:
+    if not isinstance(discovered_issuer, str) or discovered_issuer != normalized_issuer:
         raise HTTPException(status_code=503, detail="Identity provider discovery issuer mismatch")
 
     jwks_uri = metadata.get("jwks_uri")
