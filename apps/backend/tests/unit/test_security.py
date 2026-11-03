@@ -238,3 +238,54 @@ def test_jwks_client_is_reused_and_refresh_lifetime_is_bounded():
     assert constructor.call_args.kwargs["lifespan"] == 300
     assert constructor.call_args.kwargs["cache_keys"] is False
     assert constructor.call_args.kwargs["timeout"] == 5
+
+
+def test_decode_uses_discovered_userinfo_endpoint_when_profile_claims_are_missing(
+    rsa_key, monkeypatch
+):
+    subject = str(uuid.uuid4())
+    token = _token(rsa_key, sub=subject, email=None, name=None)
+    userinfo = {"sub": subject, "email": "resolved@example.com", "name": "Resolved User"}
+    fetch = MagicMock(return_value=userinfo)
+    monkeypatch.setattr(security_mod, "_fetch_userinfo", fetch)
+
+    with _patch_jwks(rsa_key.public_key()):
+        data = security_mod._decode_token(token)
+
+    assert data.email == "resolved@example.com"
+    fetch.assert_called_once_with(token, "https://provider.example/identity/profile")
+
+
+def test_decode_rejects_userinfo_subject_mismatch(rsa_key, monkeypatch):
+    token = _token(rsa_key, email=None)
+    monkeypatch.setattr(
+        security_mod,
+        "_fetch_userinfo",
+        MagicMock(return_value={"sub": "different-subject", "email": "resolved@example.com"}),
+    )
+
+    with _patch_jwks(rsa_key.public_key()):
+        with pytest.raises(HTTPException) as error:
+            security_mod._decode_token(token)
+    assert error.value.status_code == 401
+
+
+def test_discovery_rejects_plaintext_endpoints_in_production(monkeypatch):
+    from app.core.config import EnvironmentEnum
+
+    security_mod._discovery_cache.clear()
+    monkeypatch.setattr(settings, "environment", EnvironmentEnum.PRODUCTION)
+    client = MagicMock()
+    client.__enter__.return_value = client
+    response = MagicMock()
+    response.json.return_value = {
+        "issuer": "https://trusted.example",
+        "jwks_uri": "http://trusted.example/keys",
+    }
+    response.raise_for_status.return_value = None
+    client.get.return_value = response
+    monkeypatch.setattr(security_mod.httpx, "Client", lambda **_kwargs: client)
+
+    with pytest.raises(HTTPException) as error:
+        security_mod._get_oidc_discovery("https://trusted.example")
+    assert error.value.status_code == 503
