@@ -9,7 +9,7 @@ from fastapi import HTTPException
 from app.crud.user import user_crud
 from app.db.models.models import User, UserIdentity
 from app.db.schemas.schemas import TokenData
-from app.services import tawala_token as tt
+from app.services import product_tokens as tt
 
 
 def test_user_identity_schema_has_unique_identity_and_user_issuer_constraints():
