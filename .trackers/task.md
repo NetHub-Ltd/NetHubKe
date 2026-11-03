@@ -241,3 +241,6 @@
 - Corrected the SSO architecture, client integration and backend auth-matrix documents on this branch to remove the second-token-issuer architecture.
 - Minimal work grouping: (1) shared resource-server contract + authoritative service-access endpoint; (2) security/freshness + same-contract acceptance for website, Tawala and NetPay.
 - Frontend redesign, launch-code handoff, deployment, production configuration and feature-flag enablement are excluded. No runtime code/schema changes have been made.
+
+- Additional security finding: the UserInfo enrichment path rejects a mismatching subject but currently accepts a response with no subject. Require UserInfo sub to be present and exactly equal to the validated access-token sub before consuming its claims; added to #165 acceptance.
+- Product client inspection: current NetPay dev backend uses its own scoped HS256 M2M tokens for NetPay APIs; inspected Tawala Core main exposes local password register/login/session. Neither inspected backend path demonstrates the shared Zitadel-to-NetHubKe client integration. Product migration is separate from this NetHubKe backend scope.
