@@ -172,14 +172,11 @@ def patch_kc_decode(rsa_keys, monkeypatch):
 
             raise HTTPException(status_code=401, detail="Invalid token") from exc
 
-        raw_scope = payload.get("scope") or ""
-        if isinstance(raw_scope, list):
-            raw_scope = " ".join(raw_scope)
-        roles = payload.get(settings.oidc_role_claim_path) or payload.get("groups") or []
-        if isinstance(roles, dict):
-            roles = list(roles.keys())
-        if not isinstance(roles, list):
-            roles = []
+        from app.core.idp_claims import extract_roles
+        from app.core.scope_claims import merge_scope_claims
+
+        raw_scope = merge_scope_claims(payload)
+        roles = extract_roles(payload, settings.oidc_role_claim_path)
         return TokenData.model_validate(
             {
                 "sub": str(payload.get("sub") or ""),
