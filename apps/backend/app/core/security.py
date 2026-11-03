@@ -173,7 +173,7 @@ def _decode_token(token: str) -> TokenData:
                 raise HTTPException(status_code=401, detail="Token has no email and provider has no UserInfo endpoint")
             info = _fetch_userinfo(token, userinfo_endpoint)
             userinfo_sub = info.get("sub")
-            if userinfo_sub is not None and userinfo_sub != payload.get("sub"):
+            if not isinstance(userinfo_sub, str) or not userinfo_sub or userinfo_sub != payload.get("sub"):
                 raise HTTPException(status_code=401, detail="UserInfo subject does not match access token")
             email = info.get("email")
             name = info.get("name") or name
