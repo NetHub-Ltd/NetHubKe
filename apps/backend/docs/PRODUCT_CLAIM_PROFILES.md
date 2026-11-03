@@ -28,11 +28,15 @@ Tokens for one product must not be accepted by another product. Audience, issuer
 
 ## Profile: `tawala`
 
-- Audience: registered product audience; the legacy `TAWALA_JWT_AUDIENCE` setting is server-side configuration.
+- Audience: the exact `Product.audience` value in the PostgreSQL product registry. There is no product-specific environment-variable override.
 - `org_id`: active `product_links.external_org_id`, then the explicitly configured legacy `tenant.tawala_organization_id`. There is no implicit fallback to `tenant.id`.
 - `principal`: `owner` or `terminal`, derived by NetHubKe from verified upstream roles. Client-supplied hints can only match the derived value.
 - Exchange endpoints: `POST /api/v1/auth/exchange` with `{"product":"tawala"}`; compatibility alias `POST /api/v1/auth/exchange/tawala`.
 - Requires a verified upstream Bearer token, an active local user, tenant association, active product and entitlement decision.
+
+## Shared issuer configuration
+
+All products share one issuer, one managed signing-key set, one global exchange gate and one token-lifetime policy. The global settings use `PRODUCT_TOKEN_*` names. Product-specific audience and claim profile are read from the Product registry; they are not supplied by environment variables. The global `PRODUCT_TOKEN_EXCHANGE_ENABLED` switch defaults to false and applies to every product.
 
 ## Adding another product
 
