@@ -215,3 +215,11 @@ Other open issues remain only where they represent separate required behavior (f
 - Completed implementation group: provider-neutral OIDC boundary, Auth.js session/BFF security, safe profile/service DTOs, disabled browser product launch, shared product-token configuration and unique audience enforcement.
 - Issues #148, #152 and #161 closed with code/test evidence. #136/#138/#137 superseded Path A work closed as not planned. Other already-implemented issues #75/#116/#117/#144/#146/#159/#163 closed.
 - Remaining separate requirements: #171 browser smoke after OIDC config, #162 product-side local verifier evidence, #164 five-minute end-to-end stale-access measurement, #165 complete product integration validation. Product launch remains disabled until server-to-server one-time redemption exists.
+
+
+## Milestone 1 implementation checkpoint — PR #175
+
+- Added the missing read-only service-access decision resource using the existing entitlement evaluator; connection status remains separate.
+- Hardened UserInfo enrichment to require exact subject equality with the validated access token.
+- Added focused API/unit tests for entitlement allow/deny, tenant isolation, inactive service, scope enforcement and UserInfo subject binding.
+- PR #175 targets dev; backend CI/readiness were pending at the last checkpoint. No merge/deployment or flag changes.
