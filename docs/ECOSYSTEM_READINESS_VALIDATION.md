@@ -405,3 +405,12 @@ These are targeted missing tests for identified security boundaries, not a reque
 - Parent commit: `73ecbcea14e01af84807f4518c4a0171f006a52c`
 - New issue: #171 (website BFF), existing issue #80 (provider-neutral OIDC), #172 (unique product audiences).
 - Validation status: CI green (backend 237 passed, 77.46%; Alembic upgrade/downgrade/re-upgrade; Docker/Postgres/Redis readiness; frontend lint/build; 11 auth/BFF tests). OIDC-configured browser smoke remains pending.
+
+
+## Final review note — 2026-11-03
+
+- PR #173 is open, mergeable and targets `dev`; PR #170 is closed as superseded. Latest branch head: `5b71c6a7820af93ece705e9fc8416c6754b3c064`.
+- Latest GitHub Actions: backend CI 41622960491 (237 passed, 77.51% coverage; Alembic upgrade/downgrade/re-upgrade passed), readiness 41622960484 (Docker/PostgreSQL/Redis passed), frontend CI 41622960475 (lint, production build, 11 security tests passed).
+- Vercel status reports `build-rate-limit`; the GitHub Actions frontend production build is green, but no Vercel preview URL is available. This is a preview-platform limit, not a failed application build.
+- Remaining related open work: #171 browser smoke with configured OIDC credentials; #162 product-side local verifier evidence; #164 measured five-minute stale-access behavior; #165 product integration validation; #149 secure one-time launch-code handoff; #150 billing/settings/operational readiness.
+- #80/#79/#81/#158/#160/#172 are linked to PR #173 and will close on merge. #148/#152/#161 and already-complete/superseded issues have been closed with evidence. #57 and #135 remain open as programme/history records.
