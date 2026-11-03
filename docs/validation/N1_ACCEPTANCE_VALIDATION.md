@@ -143,6 +143,12 @@ Changes made on `fix/shared-product-token-configuration`:
 - Updated the authentication matrix, product claim-profile documentation, client integration contract and root README.
 - Added this validation report and updated repository trackers.
 
-**Not yet verified:** GitHub Actions for this branch, backend test execution, frontend lint/build, production environment compatibility and staging verifier behavior.
+### CI execution record
+
+- First branch run #165 (run ID `41607772576`) failed during pytest collection: six test modules still imported the old `app.services.tawala_token` path after the generic service rename. No test assertions ran; the reported 42.17% coverage was therefore a collection-failure artifact, not a meaningful coverage result.
+- Corrected all six remaining imports in `test_signing_key_concurrency.py`, `test_env_private_key.py`, `test_key_rotation.py`, `test_n2_signing_key_acceptance.py`, `test_n3_identity_and_profiles.py` and `test_signing_key_max_age.py`.
+- A fresh backend CI run #168 (run ID `41608000845`) and readiness run #129 (run ID `41608000835`) were started for the corrected branch. Their final results are pending.
+
+**Still not verified:** successful fresh backend test/coverage run, readiness workflow completion, frontend lint/build, production environment compatibility and staging verifier behavior.
 
 No database schema/migration, deployment secret, production setting, exchange enablement or merge has been changed.
