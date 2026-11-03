@@ -162,7 +162,7 @@ async def test_product_links_requires_auth(client: AsyncClient):
 async def test_jwks_with_malformed_env_pem_still_200(
     client: AsyncClient, monkeypatch
 ):
-    """Regression: non-PEM TAWALA_JWT_PRIVATE_KEY must not 500 JWKS."""
+    """Regression: non-PEM PRODUCT_TOKEN_PRIVATE_KEY must not 500 JWKS."""
     from app.core import config as config_module
     from app.services import tawala_token as tt
 
