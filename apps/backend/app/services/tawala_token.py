@@ -3,7 +3,7 @@
 Priority for private key material:
 1. Active row in signing_keys (Postgres)
 2. Bootstrap: generate RSA and insert if exchange enabled and table empty
-3. Fallback: TAWALA_JWT_PRIVATE_KEY env PEM (dev/emergency only)
+3. Fallback: PRODUCT_TOKEN_PRIVATE_KEY env PEM (shared dev/emergency fallback only)
 """
 from __future__ import annotations
 
@@ -137,14 +137,14 @@ def _load_env_private_key():
     # Quick reject of clearly non-PEM material (common misconfig: hex secret / password)
     if "BEGIN" not in pem.upper():
         logger.warning(
-            "TAWALA_JWT_PRIVATE_KEY is set but is not PEM (missing BEGIN); ignoring env key"
+            "PRODUCT_TOKEN_PRIVATE_KEY is set but is not PEM (missing BEGIN); ignoring env key"
         )
         return None
     try:
         return serialization.load_pem_private_key(pem.encode("utf-8"), password=None)
     except Exception as exp:  # noqa: BLE001
         logger.warning(
-            f"TAWALA_JWT_PRIVATE_KEY is set but failed to parse as PEM; ignoring env key: {exp}"
+            f"PRODUCT_TOKEN_PRIVATE_KEY is set but failed to parse as PEM; ignoring env key: {exp}"
         )
         return None
 
@@ -548,7 +548,7 @@ async def build_jwks_document(db: AsyncSession) -> dict[str, Any]:
             if jwk:
                 keys.extend(jwk)
 
-    # Opt-in env PEM only (TAWALA_JWT_ALLOW_ENV_PEM=true)
+    # Opt-in env PEM only (PRODUCT_TOKEN_ALLOW_ENV_PEM=true)
     if not keys:
         env_key = _load_env_private_key()
         if env_key is not None:
