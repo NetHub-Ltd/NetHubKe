@@ -97,7 +97,7 @@ export const siteServices: SiteService[] = [
           "Where the existing systems provide suitable interfaces, we can assess and plan the integrations as part of the project scope.",
       },
     ],
-    metaTitle: "Mobile App Development for Businesses | NetHub Kenya",
+    metaTitle: "Mobile App Development for Businesses in Kenya",
     metaDescription:
       "Plan and build mobile applications around customer needs and business workflows. NetHub helps Kenyan organisations scope useful mobile products.",
   },
@@ -183,7 +183,7 @@ export const siteServices: SiteService[] = [
           "We can discuss the current setup, responsibilities and gaps, then agree on a scope that complements the people and systems already in place.",
       },
     ],
-    metaTitle: "Business Technology & Systems Integration | NetHub",
+    metaTitle: "Business Technology & Systems Integration",
     metaDescription:
       "Connect business systems, improve workflows and plan practical technology changes with NetHub. Solutions shaped around how Kenyan businesses operate.",
   },
