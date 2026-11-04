@@ -1,23 +1,31 @@
 # Repository State
 
 - Repository: `NetHub-Ltd/NetHubKe`
-- Default branch: `master` (verified from GitHub repository metadata)
-- Integration branch: `dev` (created from `master` for this work because it was absent)
-- Topic branch: `feat/corporate-website-growth-partner`
-- Topic branch base: `dev`
-- Delivery: one PR targeting `dev`; do not merge without user approval.
-- Current task: NetHub corporate website redesign and SEO.
+- Default branch: `master`
+- Integration branch: `dev`
+- Latest `dev` base synchronized into current topic branch: `f52896f655c1d1ce0e2994d7c30dd426e117c2bd`
+- Current topic branch: `feat/site-discovery-conversion-review`
+- Current PR: #213 targeting `dev`; do not merge without user approval.
+- Current issue: #212 — corporate site positioning, service discovery, conversion and SEO.
 
-## Relevant issues
+## Merged corporate-site work
 
-- #201 — corporate visual system and shared shell
-- #202 — homepage, services and about
-- #203 — upcoming Tawala and NetPay showcases
-- #204 — business enquiry journey
-- #205 — technical SEO and public-site quality
+- PR #206 — corporate website foundation and approved Growth Partner positioning.
+- PR #209 — Poppins/DM Sans typography, selected surface elevation and standalone NetHub login.
+- PR #209 is part of the latest `dev` base and must not be overwritten by this topic branch.
 
-## Observed baseline
+## Current topic branch scope
 
-The frontend is Next.js 15 / React 19 / TypeScript / Tailwind CSS 3. Existing Auth.js generic OIDC, PKCE/state cookies, BFF token forwarding and NetHubKe integration are preserved.
+- Homepage business positioning and conversion hierarchy.
+- Shared service content catalogue and four focused service landing pages.
+- Service index discovery and relevant enquiry paths.
+- Page metadata, canonical URLs and sitemap entries.
+- Contact email handoff clarity and direct email fallback.
+- Trackers and corporate website documentation.
 
-The repository currently contained only `.trackers/milestone.md` in the tracker directory. This file concerns backend Architecture A and is left unchanged.
+## Application baseline and boundaries
+
+- Frontend: Next.js 15, React 19, TypeScript, Tailwind CSS 3.
+- Auth.js/OIDC, PKCE/state cookies, BFF token forwarding and NetHubKe integration must remain unchanged.
+- No backend API, database, authentication, token handling, BFF or infrastructure changes are in scope.
+- Keep Tawala and NetPay marked Coming soon.

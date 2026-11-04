@@ -14,6 +14,9 @@ export function SiteHeader() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
+  // Keep the sign-in experience independent from marketing navigation.
+  if (pathname === "/login") return null;
+
   return (
     <header className="sticky top-0 z-40 border-b border-line/80 bg-canvas/90 backdrop-blur-xl">
       <div className="nh-container flex h-[4.5rem] items-center justify-between gap-4">

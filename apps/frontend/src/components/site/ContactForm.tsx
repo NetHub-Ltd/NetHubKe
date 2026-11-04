@@ -20,8 +20,8 @@ type ContactFormProps = {
 
 /**
  * Captures enquiry context and prepares a visitor-controlled email handoff.
- * It deliberately does not claim delivery because no server-side mail service
- * or confirmed inbox is currently configured in this repository.
+ * Delivery remains visitor-controlled because no server-side mail service
+ * is configured; the contact inbox is supplied through a public environment variable.
  */
 export function ContactForm({ initialService }: ContactFormProps) {
   const [status, setStatus] = useState<Status>("idle");
@@ -73,7 +73,7 @@ export function ContactForm({ initialService }: ContactFormProps) {
   }
 
   return (
-    <form className="rounded-2xl border border-line bg-surface p-6 shadow-sm sm:p-8" onSubmit={onSubmit} noValidate>
+    <form className="rounded-2xl border border-line bg-surface p-6 shadow-nh-card sm:p-8" onSubmit={onSubmit} noValidate>
       <div className="mb-6"><h2 className="font-display text-xl font-semibold text-ink">Start a conversation</h2><p className="mt-2 text-sm text-ink-muted">A few details will help us understand what you need.</p></div>
       <div className="grid gap-5 sm:grid-cols-2">
         <div><label className="nh-label" htmlFor="contact-name">Your name</label><input id="contact-name" name="name" className="nh-input" autoComplete="name" required /></div>
@@ -84,8 +84,8 @@ export function ContactForm({ initialService }: ContactFormProps) {
       </div>
       {error && <p className="nh-error mt-4" role="alert">{error}</p>}
       {status === "prepared" && <p className="mt-4 rounded-lg bg-cyan-50 px-4 py-3 text-sm text-cyan-900" role="status">Your email app should open with a prepared message. Review it and press Send to complete your enquiry. NetHub has not received it until you send it.</p>}
-      <button type="submit" className="nh-btn-primary mt-6 w-full sm:w-auto">Prepare enquiry <span aria-hidden>↗</span></button>
-      <p className="mt-4 text-xs leading-relaxed text-ink-subtle">Your details are used to prepare the enquiry message. They are not submitted to or stored by this website.</p>
+      <button type="submit" className="nh-btn-primary mt-6 w-full sm:w-auto">Open email draft <span aria-hidden>↗</span></button>
+      <p className="mt-4 text-xs leading-relaxed text-ink-subtle">Your details are used only to prepare the email draft. This website does not submit or store your enquiry.</p>
     </form>
   );
 }

@@ -11,7 +11,8 @@ The site should communicate business outcomes in customer language. Internal ide
 | Route | Purpose |
 |---|---|
 | `/` | Corporate value proposition and primary conversion path |
-| `/services` | Websites, web applications, mobile applications, SEO/conversion and business technology |
+| `/services` | Service catalogue and entry point to focused service pages |
+| `/services/[slug]` | Search-focused pages for website development, mobile apps, SEO/conversion and business technology |
 | `/products` | Upcoming Tawala and NetPay products |
 | `/about` | NetHub purpose and working principles |
 | `/contact` | Business enquiry context and contact handoff |
@@ -26,8 +27,8 @@ Approved direction: **Growth Partner + Hybrid**.
 - Deep charcoal typography and a confident blue primary action.
 - Dark sections reserved for product storytelling and high-contrast calls to action.
 - Cyan is a restrained supporting accent.
-- Inter and Space Grotesk remain the font families.
-- Shared semantic tokens live in `src/app/globals.css`; Tailwind maps them in `tailwind.config.js`.
+- Poppins is used for headings and DM Sans for body/interface text.
+- Shared semantic tokens live in `src/app/globals.css`; Tailwind maps them in `tailwind.config.js`. Primary text uses a deep navy ink rather than black. Selected content panels use restrained ambient elevation; avoid applying card shadows to every section.
 
 Do not introduce one-off page palettes or add a design dependency without a concrete need.
 
@@ -43,7 +44,7 @@ Do not introduce one-off page palettes or add a design dependency without a conc
 - `/sitemap.xml` lists only the public marketing routes.
 - `/robots.txt` allows public crawling and disallows application/API routes.
 - Organization JSON-LD contains only the company name, URL and approved description. Do not add address, telephone, logo, ratings or social profiles until verified.
-- Public page metadata is defined alongside each route.
+- Public page metadata is defined alongside each route. Each focused service page has its own canonical URL and is included in the sitemap from the shared service catalogue.
 
 ## Contact handoff
 

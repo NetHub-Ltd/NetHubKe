@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Products",
-  description: "Discover Tawala and NetPay, upcoming NetHub products being built to help businesses manage operations and payments.",
+  title: "Business Software & Payment Products",
+  description: "Explore Tawala business management software and NetPay payment infrastructure, upcoming products being developed by NetHub.",
   alternates: { canonical: "/products" },
   openGraph: { url: "/products" },
 };
@@ -20,7 +20,7 @@ export default function ProductsPage() {
       </section>
       <section className="nh-section">
         <div className="nh-container grid gap-5 lg:grid-cols-2">
-          <article className="overflow-hidden rounded-[1.75rem] border border-line bg-surface">
+          <article className="nh-surface-lift overflow-hidden rounded-[1.75rem]">
             <div className="bg-slate-950 p-8 text-white sm:p-10">
               <div className="flex items-center justify-between gap-3">
                 <span className="font-display text-3xl font-bold">Tawala<span className="text-cyan-300">.</span></span>
@@ -32,7 +32,7 @@ export default function ProductsPage() {
             </div>
             <div className="p-8 sm:p-10"><p className="text-sm leading-relaxed text-ink-muted">Tawala is being developed for businesses that want clearer visibility and more control over how their operations run.</p><Link href="/contact?product=Tawala" className="mt-6 inline-flex text-sm font-semibold text-brand hover:underline">Ask us about Tawala <span className="ml-2" aria-hidden>↗</span></Link></div>
           </article>
-          <article className="overflow-hidden rounded-[1.75rem] border border-line bg-surface">
+          <article className="nh-surface-lift overflow-hidden rounded-[1.75rem]">
             <div className="bg-blue-700 p-8 text-white sm:p-10">
               <div className="flex items-center justify-between gap-3">
                 <span className="font-display text-3xl font-bold">NetPay<span className="text-cyan-200">.</span></span>
