@@ -45,13 +45,13 @@ Do not introduce one-off page palettes or add a design dependency without a conc
 - Organization JSON-LD contains only the company name, URL and approved description. Do not add address, telephone, logo, ratings or social profiles until verified.
 - Public page metadata is defined alongside each route.
 
-## Contact handoff — configuration required
+## Contact handoff
 
-The existing contact form previously displayed a false success state without sending or storing anything. The current implementation removes that false claim and prepares an email draft through the visitor's configured email application.
+The public enquiry inbox is **hello@nethub.co.ke**. It is configured through `NEXT_PUBLIC_CONTACT_EMAIL` in `apps/frontend/.env.example` and must also be set in the frontend deployment environment.
 
-Set `NEXT_PUBLIC_CONTACT_EMAIL` to the verified NetHub enquiry inbox in the frontend deployment environment to enable the mailto handoff. Visitors must still press Send in their email client; this website does not receive or store the message.
+The contact form prepares an email draft in the visitor's email application. The visitor must review and send it. This website does not receive or store the enquiry, and the UI must not claim that NetHub received a message merely because the email draft opened.
 
-This is an intentional interim boundary, not a server-side lead-capture integration. A server-side delivery mechanism should only be introduced after the receiving channel and provider are agreed. Do not change the UI to claim an enquiry was delivered unless the receiving system confirms acceptance.
+A server-side delivery mechanism is not currently configured. Introduce one only if the business later approves a receiving provider and server-side lead capture.
 
 ## Authentication boundary
 
