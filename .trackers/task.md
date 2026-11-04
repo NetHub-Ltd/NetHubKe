@@ -2,12 +2,29 @@
 
 ## Status
 
-**Draft PR opened** — [PR #213](https://github.com/NetHub-Ltd/NetHubKe/pull/213) on `feat/site-discovery-conversion-review`, created directly from `dev` at `19a2f6241df073b51d07de502b8f93fe48059be4`.
+- **Corporate website foundation:** completed and merged in PR #206.
+- **Typography, surface and login polish:** merged into `dev` through PR #209.
+- **Current work:** draft PR #213 on `feat/site-discovery-conversion-review`, linked to issue #212.
+- **Current branch base:** latest `dev` at `f52896f655c1d1ce0e2994d7c30dd426e117c2bd`; this branch was synchronized with a normal merge commit, not rebased.
+- Do not merge PR #213 without user approval.
 
-- Related issue: #212 — Improve corporate site positioning, conversion and search discovery.
-- This branch intentionally does not include the separate, unmerged typography/login work in PR #211.
-- Delivery target: one reviewable PR to `dev`; do not merge without user approval.
-- Frontend CI run: `41928768865` — currently in progress at dependency installation.
+## Approved direction
+
+Growth Partner + Hybrid:
+- Light-first warm neutral pages with the approved blue/cyan gradient and typography.
+- Deep navy/dark feature sections selectively.
+- NetHub is positioned as a business growth partner powered by technology.
+- Public messaging focuses on business problems and outcomes, not identity-provider internals.
+
+## Relevant issues
+
+- #201 — visual system and shared shell (delivered in PR #206).
+- #202 — home, services and about (delivered in PR #206; follow-up discovery work in #212).
+- #203 — upcoming Tawala and NetPay showcases (delivered in PR #206).
+- #204 — business enquiry journey (delivered in PR #206; follow-up contact clarity in #212).
+- #205 — technical SEO and public-site quality (delivered in PR #206; service discovery expansion in #212).
+- #208 — typography, surface elevation and login polish (merged through PR #209).
+- #212 — improve corporate site positioning, conversion and search discovery (current task).
 
 ## Review scope
 
@@ -44,23 +61,25 @@ Search-indexed results for `nethub.co.ke` returned a different enterprise/fintec
   - SEO and conversion improvement in Kenya.
   - Business technology and systems.
 - Rebuilt the services index so every service links to its own detailed page and a relevant enquiry path.
-- Improved per-page metadata for the Kenya market and added service detail routes to the sitemap.
+- Improved per-page metadata for the Kenya market and derived sitemap service routes from the shared catalogue.
 - Clarified the contact button as an email-draft handoff and added a direct email fallback when `NEXT_PUBLIC_CONTACT_EMAIL` is configured.
 - Kept Tawala and NetPay marked Coming soon; product enquiries are not represented as general availability.
+- Preserved the typography/login polish and selected surface-elevation tokens already merged into `dev`.
 - No authentication, OIDC, token, BFF, backend, database or infrastructure changes.
 
 ## Verification
 
-- Branch created from the exact `dev` SHA above.
-- Static review only; no browser screenshot audit was performed in this chat.
+- Branch was originally created from `dev` at `19a2f6241df073b51d07de502b8f93fe48059be4`.
+- `dev` advanced with PR #209; latest `dev` has now been merged into this branch without rewriting history.
+- Static source review only; no browser screenshot audit was performed in this chat.
 - Local lint, typecheck and production build have not been run in this environment.
-- GitHub Actions must be checked after the branch changes settle. Do not report gates as passed before observing their results.
+- GitHub Actions frontend CI must be checked after the merge commit. Do not report gates as passed before observing results.
 - Responsive visual review and keyboard interaction checks remain pending.
 
 ## Next steps
 
-1. Inspect the complete branch diff and confirm only intended public-site/content/tracker files changed.
+1. Confirm the merge commit contains both the latest `dev` changes and this branch's service discovery work.
 2. Run CI and fix any observed lint, type or build failures.
 3. Review the generated service routes and metadata in a deployed preview if one is available.
 4. Confirm `NEXT_PUBLIC_CONTACT_EMAIL=hello@nethub.co.ke` and `NEXT_PUBLIC_SITE_URL=https://nethub.co.ke` in the deployment environment.
-5. Update this tracker with observed verification; keep PR #213 in draft until CI and preview review are complete.
+5. Keep PR #213 in draft until CI and preview review are complete.
