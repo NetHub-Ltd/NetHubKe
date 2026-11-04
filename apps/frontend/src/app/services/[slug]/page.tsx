@@ -39,9 +39,17 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
     <main>
       <section className="border-b border-line bg-[radial-gradient(ellipse_at_75%_0%,rgba(37,99,235,0.12),transparent_45%)]">
         <div className="nh-container nh-section">
-          <Link href="/services" className="text-sm font-semibold text-brand hover:underline">
-            ← All services
-          </Link>
+          <nav aria-label="Breadcrumb">
+            <ol className="flex flex-wrap items-center gap-2 text-sm">
+              <li>
+                <Link href="/services" className="font-semibold text-brand hover:underline">
+                  All services
+                </Link>
+              </li>
+              <li aria-hidden="true" className="text-ink-subtle">/</li>
+              <li aria-current="page" className="text-ink-muted">{service.shortTitle}</li>
+            </ol>
+          </nav>
           <p className="nh-eyebrow mt-8">{service.eyebrow} · NetHub Kenya</p>
           <h1 className="nh-title mt-4 max-w-4xl">{service.title}</h1>
           <p className="nh-lead mt-6">{service.summary}</p>
@@ -64,7 +72,7 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
           <div>
             <p className="nh-eyebrow">Start with the business need</p>
             <h2 className="mt-3 font-display text-3xl font-semibold tracking-tight text-ink">
-              {service.summary}
+              Built around the business outcome, not just the deliverable.
             </h2>
           </div>
           <div>
