@@ -32,7 +32,7 @@ export default function ProductsPage() {
             </div>
             <div className="p-8 sm:p-10"><p className="text-sm leading-relaxed text-ink-muted">Tawala is being developed for businesses that want clearer visibility and more control over how their operations run.</p><Link href="/contact?product=Tawala" className="mt-6 inline-flex text-sm font-semibold text-brand hover:underline">Ask us about Tawala <span className="ml-2" aria-hidden>↗</span></Link></div>
           </article>
-          <article className="overflow-hidden rounded-[1.75rem] border border-line bg-surface">
+          <article className="nh-surface-lift overflow-hidden rounded-[1.75rem]">
             <div className="bg-blue-700 p-8 text-white sm:p-10">
               <div className="flex items-center justify-between gap-3">
                 <span className="font-display text-3xl font-bold">NetPay<span className="text-cyan-200">.</span></span>
