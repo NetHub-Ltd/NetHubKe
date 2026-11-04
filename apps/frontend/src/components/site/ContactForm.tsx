@@ -73,7 +73,7 @@ export function ContactForm({ initialService }: ContactFormProps) {
   }
 
   return (
-    <form className="rounded-2xl border border-line bg-surface p-6 shadow-sm sm:p-8" onSubmit={onSubmit} noValidate>
+    <form className="rounded-2xl border border-line bg-surface p-6 shadow-nh-card sm:p-8" onSubmit={onSubmit} noValidate>
       <div className="mb-6"><h2 className="font-display text-xl font-semibold text-ink">Start a conversation</h2><p className="mt-2 text-sm text-ink-muted">A few details will help us understand what you need.</p></div>
       <div className="grid gap-5 sm:grid-cols-2">
         <div><label className="nh-label" htmlFor="contact-name">Your name</label><input id="contact-name" name="name" className="nh-input" autoComplete="name" required /></div>
