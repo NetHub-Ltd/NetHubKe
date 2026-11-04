@@ -16,21 +16,45 @@ const display = Space_Grotesk({
   display: "swap",
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://nethub.co.ke";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: {
-    default: "NetHub — Connectivity & digital infrastructure",
-    template: "%s · NetHub",
+    default: "NetHub | Business growth through technology",
+    template: "%s | NetHub",
   },
   description:
-    "NetHub builds reliable connectivity, identity, and digital services for organizations in Kenya and beyond.",
+    "NetHub helps businesses grow through better digital experiences, software, SEO and practical technology solutions.",
+  applicationName: "NetHub",
+  openGraph: {
+    type: "website",
+    siteName: "NetHub",
+    title: "NetHub | Business growth through technology",
+    description:
+      "Better digital experiences, smarter systems and technology that moves your business forward.",
+    url: siteUrl,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "NetHub | Business growth through technology",
+    description:
+      "Better digital experiences, smarter systems and technology that moves your business forward.",
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`dark ${sans.variable} ${display.variable}`}>
+    <html lang="en" className={`${sans.variable} ${display.variable}`}>
       <body className="flex min-h-screen flex-col">
+        <a
+          href="#main-content"
+          className="sr-only z-50 rounded-md bg-brand px-4 py-2 text-white focus:not-sr-only focus:absolute focus:left-4 focus:top-4"
+        >
+          Skip to content
+        </a>
         <SiteHeader />
-        <div className="flex-1">{children}</div>
+        <div id="main-content" className="flex-1">{children}</div>
         <SiteFooter />
       </body>
     </html>
