@@ -3,29 +3,30 @@
 @tailwind utilities;
 
 /*
-  NetHub design tokens
-  Dark-first marketing + product shell. RGB channels for Tailwind alpha support.
-*/
+ * NetHub corporate design tokens.
+ * Light-first foundation with dark feature surfaces for product storytelling.
+ */
 :root {
-  --nh-canvas: 10 14 20;
-  --nh-canvas-soft: 14 20 30;
-  --nh-surface: 18 26 38;
-  --nh-surface-raised: 24 34 50;
-  --nh-ink: 236 241 247;
-  --nh-ink-muted: 156 170 190;
-  --nh-ink-subtle: 110 126 148;
-  --nh-ink-invert: 10 14 20;
-  --nh-line: 42 54 74;
-  --nh-line-strong: 58 74 98;
+  color-scheme: light;
+  --nh-canvas: 250 250 248;
+  --nh-canvas-soft: 242 244 246;
+  --nh-surface: 255 255 255;
+  --nh-surface-raised: 247 248 250;
+  --nh-ink: 20 29 43;
+  --nh-ink-muted: 83 96 114;
+  --nh-ink-subtle: 112 124 140;
+  --nh-ink-invert: 250 250 248;
+  --nh-line: 224 228 233;
+  --nh-line-strong: 202 210 220;
   --nh-brand: 37 99 235;
-  --nh-brand-hover: 59 130 246;
-  --nh-brand-soft: 30 58 120;
+  --nh-brand-hover: 29 78 216;
+  --nh-brand-soft: 219 234 254;
   --nh-brand-fg: 255 255 255;
-  --nh-accent: 34 211 238;
-  --nh-accent-soft: 14 70 84;
-  --nh-success: 34 197 94;
-  --nh-warning: 245 158 11;
-  --nh-danger: 239 68 68;
+  --nh-accent: 8 145 178;
+  --nh-accent-soft: 207 250 254;
+  --nh-success: 22 101 52;
+  --nh-warning: 180 83 9;
+  --nh-danger: 185 28 28;
 }
 
 @layer base {
@@ -42,13 +43,17 @@
   }
 
   ::selection {
-    @apply bg-brand/30 text-ink;
+    @apply bg-brand/20 text-ink;
+  }
+
+  a, button, input, textarea, select {
+    -webkit-tap-highlight-color: transparent;
   }
 }
 
 @layer components {
   .nh-container {
-    @apply mx-auto w-full max-w-content px-4 sm:px-6 lg:px-8;
+    @apply mx-auto w-full max-w-content px-5 sm:px-7 lg:px-8;
   }
 
   .nh-section {
@@ -56,11 +61,11 @@
   }
 
   .nh-eyebrow {
-    @apply text-xs font-semibold uppercase tracking-[0.14em] text-accent;
+    @apply text-xs font-semibold uppercase tracking-[0.16em] text-brand;
   }
 
   .nh-title {
-    @apply font-display text-3xl font-semibold tracking-tight text-ink sm:text-4xl lg:text-5xl;
+    @apply font-display text-4xl font-semibold leading-[1.08] tracking-[-0.04em] text-ink sm:text-5xl lg:text-6xl;
   }
 
   .nh-lead {
@@ -68,11 +73,11 @@
   }
 
   .nh-card {
-    @apply rounded-nh-lg border border-line bg-surface p-6 shadow-nh;
+    @apply rounded-nh-lg border border-line bg-surface p-6 shadow-sm;
   }
 
   .nh-btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-nh px-4 py-2.5 text-sm font-semibold transition
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-nh px-5 py-3 text-sm font-semibold transition-colors
       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-canvas
       disabled:pointer-events-none disabled:opacity-50;
   }
@@ -82,16 +87,16 @@
   }
 
   .nh-btn-secondary {
-    @apply nh-btn border border-line-strong bg-surface-raised text-ink hover:border-brand/50 hover:bg-surface;
+    @apply nh-btn border border-line-strong bg-surface text-ink hover:border-brand/50 hover:bg-canvas-soft;
   }
 
   .nh-btn-ghost {
-    @apply nh-btn text-ink-muted hover:bg-surface hover:text-ink;
+    @apply nh-btn text-ink-muted hover:bg-canvas-soft hover:text-ink;
   }
 
   .nh-input {
-    @apply w-full rounded-nh border border-line bg-canvas-soft px-3 py-2.5 text-sm text-ink placeholder:text-ink-subtle
-      focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30;
+    @apply w-full rounded-nh border border-line-strong bg-surface px-3.5 py-3 text-sm text-ink placeholder:text-ink-subtle
+      focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20;
   }
 
   .nh-label {
@@ -103,6 +108,19 @@
   }
 
   .nh-link {
-    @apply font-medium text-brand-hover underline-offset-4 hover:underline;
+    @apply font-semibold text-brand underline-offset-4 hover:underline;
+  }
+
+  .nh-dark-section {
+    @apply bg-slate-950 text-white;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
