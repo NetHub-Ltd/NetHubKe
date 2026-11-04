@@ -1,56 +1,53 @@
 import Link from "next/link";
 
+const exploreLinks = [
+  { href: "/services", label: "What we do" },
+  { href: "/products", label: "Our products" },
+  { href: "/about", label: "About NetHub" },
+  { href: "/contact", label: "Contact" },
+];
+
 export function SiteFooter() {
   return (
-    <footer className="border-t border-line bg-canvas-soft">
-      <div className="nh-container grid gap-10 py-12 sm:grid-cols-2 lg:grid-cols-4">
+    <footer className="border-t border-slate-800 bg-slate-950 text-white">
+      <div className="nh-container grid gap-10 py-14 sm:grid-cols-2 lg:grid-cols-4">
         <div className="lg:col-span-2">
-          <p className="font-display text-lg font-semibold text-ink">NetHub</p>
-          <p className="mt-2 max-w-md text-sm leading-relaxed text-ink-muted">
-            Connectivity and digital infrastructure for teams that need reliable networks,
-            clear identity, and products that work together.
+          <Link href="/" className="font-display text-2xl font-bold tracking-tight text-white">
+            NetHub<span className="text-cyan-400">.</span>
+          </Link>
+          <p className="mt-4 max-w-md text-sm leading-relaxed text-slate-300">
+            We help businesses move forward with better digital experiences, smarter systems and
+            technology built around real business needs.
+          </p>
+          <Link href="/contact" className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-cyan-300 hover:text-white">
+            Tell us what you’re working on <span aria-hidden>↗</span>
+          </Link>
+        </div>
+        <div>
+          <h2 className="text-sm font-semibold text-white">Explore</h2>
+          <ul className="mt-4 space-y-3 text-sm text-slate-300">
+            {exploreLinks.map((item) => (
+              <li key={item.href}>
+                <Link href={item.href} className="transition-colors hover:text-white">{item.label}</Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <h2 className="text-sm font-semibold text-white">Your account</h2>
+          <ul className="mt-4 space-y-3 text-sm text-slate-300">
+            <li><Link href="/login" className="hover:text-white">Sign in</Link></li>
+            <li><Link href="/me" className="hover:text-white">Profile</Link></li>
+          </ul>
+          <p className="mt-6 text-xs leading-relaxed text-slate-400">
+            Tawala and NetPay are upcoming NetHub products.
           </p>
         </div>
-        <div>
-          <p className="text-sm font-semibold text-ink">Explore</p>
-          <ul className="mt-3 space-y-2 text-sm text-ink-muted">
-            <li>
-              <Link href="/services" className="hover:text-ink">
-                Services
-              </Link>
-            </li>
-            <li>
-              <Link href="/about" className="hover:text-ink">
-                About
-              </Link>
-            </li>
-            <li>
-              <Link href="/contact" className="hover:text-ink">
-                Contact
-              </Link>
-            </li>
-          </ul>
-        </div>
-        <div>
-          <p className="text-sm font-semibold text-ink">Account</p>
-          <ul className="mt-3 space-y-2 text-sm text-ink-muted">
-            <li>
-              <Link href="/login" className="hover:text-ink">
-                Sign in
-              </Link>
-            </li>
-            <li>
-              <Link href="/me" className="hover:text-ink">
-                Profile
-              </Link>
-            </li>
-          </ul>
-        </div>
       </div>
-      <div className="border-t border-line">
-        <div className="nh-container flex flex-col gap-2 py-6 text-xs text-ink-subtle sm:flex-row sm:items-center sm:justify-between">
+      <div className="border-t border-slate-800">
+        <div className="nh-container flex flex-col gap-2 py-6 text-xs text-slate-400 sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} NetHub. All rights reserved.</p>
-          <p>Kenya · Secure by design</p>
+          <p>Built around business needs. Based in Kenya.</p>
         </div>
       </div>
     </footer>
