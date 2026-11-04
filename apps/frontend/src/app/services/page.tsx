@@ -65,7 +65,7 @@ export default function ServicesPage() {
             {siteServices.map((service, index) => (
               <article
                 key={service.slug}
-                className="flex h-full flex-col rounded-2xl border border-line bg-surface p-7 transition-colors hover:border-brand/40 sm:p-8"
+                className="nh-surface-lift flex h-full flex-col rounded-2xl p-7 sm:p-8"
               >
                 <p className="text-xs font-semibold uppercase tracking-wider text-brand">
                   {service.eyebrow}
