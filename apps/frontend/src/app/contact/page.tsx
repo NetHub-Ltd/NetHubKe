@@ -3,10 +3,18 @@ import { ContactForm } from "@/components/site/ContactForm";
 
 export const metadata: Metadata = {
   title: "Contact NetHub",
-  description: "Tell NetHub what you're trying to achieve. Start a conversation about websites, applications, SEO or business technology.",
+  description:
+    "Tell NetHub what you're trying to achieve. Start a conversation about websites, applications, SEO or business technology.",
 };
 
-export default function ContactPage() {
+type ContactPageProps = {
+  searchParams: Promise<{ service?: string; product?: string }>;
+};
+
+export default async function ContactPage({ searchParams }: ContactPageProps) {
+  const params = await searchParams;
+  const initialService = params.service ?? params.product;
+
   return (
     <main>
       <section className="border-b border-line bg-[radial-gradient(ellipse_at_75%_0%,rgba(37,99,235,0.12),transparent_45%)]">
@@ -26,7 +34,7 @@ export default function ContactPage() {
               </div>
             </div>
           </div>
-          <ContactForm />
+          <ContactForm initialService={initialService} />
         </div>
       </section>
     </main>
