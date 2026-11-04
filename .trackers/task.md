@@ -6,7 +6,8 @@
 
 - Related issue: #212 — Improve corporate site positioning, conversion and search discovery.
 - This branch intentionally does not include the separate, unmerged typography/login work in PR #211.
-- Delivery target: one reviewable PR to `dev`; do not merge without user approval.\n- Frontend CI run: `41928768865` — currently in progress at dependency installation.
+- Delivery target: one reviewable PR to `dev`; do not merge without user approval.
+- Frontend CI run: `41928768865` — currently in progress at dependency installation.
 
 ## Review scope
 
