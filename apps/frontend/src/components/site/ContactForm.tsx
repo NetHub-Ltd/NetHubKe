@@ -20,8 +20,8 @@ type ContactFormProps = {
 
 /**
  * Captures enquiry context and prepares a visitor-controlled email handoff.
- * It deliberately does not claim delivery because no server-side mail service
- * or confirmed inbox is currently configured in this repository.
+ * Delivery remains visitor-controlled because no server-side mail service
+ * is configured; the contact inbox is supplied through a public environment variable.
  */
 export function ContactForm({ initialService }: ContactFormProps) {
   const [status, setStatus] = useState<Status>("idle");
