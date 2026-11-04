@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { signIn } from "@/auth";
 
 export default function LoginPage() {
@@ -12,14 +13,14 @@ export default function LoginPage() {
           className="rounded-[2rem] border border-white/80 bg-white/90 p-8 shadow-[0_24px_80px_rgba(35,51,70,0.14)] backdrop-blur-xl sm:p-10"
         >
           <div className="mb-9 flex flex-col items-center text-center">
-            <a href="/" aria-label="NetHub home" className="mb-7 inline-flex items-center gap-3">
+            <Link href="/" aria-label="NetHub home" className="mb-7 inline-flex items-center gap-3">
               <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand font-display text-xl font-semibold text-white shadow-lg shadow-blue-900/15">
                 N
               </span>
               <span className="font-display text-2xl font-semibold tracking-tight text-ink">
                 NetHub<span className="text-brand">.</span>
               </span>
-            </a>
+            </Link>
             <p className="nh-eyebrow">Your account</p>
             <h1 id="login-title" className="mt-3 font-display text-3xl font-semibold tracking-tight text-ink">
               Log in with NetHub
