@@ -19,6 +19,10 @@ No database schema, backend API, Auth.js callback, OIDC token flow, BFF contract
 - The contact form does not transmit or persist enquiry data. It only opens a visitor-controlled email draft when configured.
 - No secrets are added to the repository.
 
+## Follow-up polish rollback
+
+The typography, surface elevation and login presentation are frontend-only. Revert the follow-up PR through a reviewed PR to `dev`. Do not alter `src/auth.ts`, `/api/auth/*`, token helpers or BFF routes during rollback.
+
 ## Risks
 
 - A wrong `NEXT_PUBLIC_SITE_URL` would generate incorrect canonical and sitemap URLs; set it to the confirmed production origin.
