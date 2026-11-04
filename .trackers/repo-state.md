@@ -1,23 +1,26 @@
 # Repository State
 
 - Repository: `NetHub-Ltd/NetHubKe`
-- Default branch: `master` (verified from GitHub repository metadata)
-- Integration branch: `dev` (created from `master` for this work because it was absent)
-- Topic branch: `feat/corporate-website-growth-partner`
-- Topic branch base: `dev`
+- Default branch: `master`
+- Integration branch: `dev`
+- Current topic branch: `feat/site-discovery-conversion-review`
+- Topic branch base: `dev` at `19a2f6241df073b51d07de502b8f93fe48059be4`
+- Current task: corporate site positioning, service discovery, conversion and SEO improvements.
+- Related issue: #212.
 - Delivery: one PR targeting `dev`; do not merge without user approval.
-- Current task: NetHub corporate website redesign and SEO.
 
-## Relevant issues
+## Concurrent work
 
-- #201 — corporate visual system and shared shell
-- #202 — homepage, services and about
-- #203 — upcoming Tawala and NetPay showcases
-- #204 — business enquiry journey
-- #205 — technical SEO and public-site quality
+- PR #211 (`feat/site-visual-login-polish`) is separate and was not used as this branch's base.
+- This branch avoids changes to root layout/global typography/login/auth so it can be reviewed independently and reduce overlap with PR #211.
 
-## Observed baseline
+## Relevant application baseline
 
-The frontend is Next.js 15 / React 19 / TypeScript / Tailwind CSS 3. Existing Auth.js generic OIDC, PKCE/state cookies, BFF token forwarding and NetHubKe integration are preserved.
+- Frontend: Next.js 15, React 19, TypeScript, Tailwind CSS 3.
+- Public routes: home, services, products, about, contact, plus static service detail routes.
+- Auth.js/OIDC, PKCE/state cookies, BFF token forwarding and NetHubKe integration must remain unchanged.
 
-The repository currently contained only `.trackers/milestone.md` in the tracker directory. This file concerns backend Architecture A and is left unchanged.
+## Scope boundary
+
+- Public marketing content, service route content, metadata, sitemap and trackers only.
+- No database, backend API, authentication, token handling, BFF or infrastructure changes.
