@@ -71,7 +71,7 @@ export default function HomePage() {
             <p className="mt-4 text-base leading-relaxed text-ink-muted">Every business has friction. We work with you to understand what’s getting in the way and identify where technology can make a meaningful difference.</p>
           </div>
           <div className="mt-12 grid gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-2">
-            {challenges.map((item) => <article key={item.number} className="bg-surface p-7 sm:p-9"><p className="font-display text-sm font-semibold text-brand">{item.number}</p><h3 className="mt-5 max-w-sm font-display text-xl font-semibold tracking-tight text-ink">{item.title}</h3><p className="mt-3 max-w-md text-sm leading-relaxed text-ink-muted">{item.body}</p></article>)}
+            {challenges.map((item) => <article key={item.number} className="nh-surface-lift rounded-2xl p-7 sm:p-9"><p className="font-display text-sm font-semibold text-brand">{item.number}</p><h3 className="mt-5 max-w-sm font-display text-xl font-semibold tracking-tight text-ink">{item.title}</h3><p className="mt-3 max-w-md text-sm leading-relaxed text-ink-muted">{item.body}</p></article>)}
           </div>
         </div>
       </section>
@@ -83,7 +83,7 @@ export default function HomePage() {
             <Link href="/services" className="nh-link text-sm">Explore our services <span aria-hidden>↗</span></Link>
           </div>
           <div className="mt-10 grid gap-4 sm:grid-cols-2">
-            {services.map((service, index) => <article key={service.title} className="rounded-2xl border border-line bg-surface p-7 transition-colors hover:border-brand/40"><p className="text-xs font-semibold uppercase tracking-wider text-brand">{service.tag}</p><h3 className="mt-5 font-display text-xl font-semibold text-ink">{service.title}</h3><p className="mt-3 max-w-lg text-sm leading-relaxed text-ink-muted">{service.body}</p><span className="mt-7 inline-flex text-sm font-semibold text-ink" aria-hidden>{String(index + 1).padStart(2, "0")} <span className="ml-2 text-brand">↗</span></span></article>)}
+            {services.map((service, index) => <article key={service.title} className="nh-surface-lift rounded-2xl p-7"><p className="text-xs font-semibold uppercase tracking-wider text-brand">{service.tag}</p><h3 className="mt-5 font-display text-xl font-semibold text-ink">{service.title}</h3><p className="mt-3 max-w-lg text-sm leading-relaxed text-ink-muted">{service.body}</p><span className="mt-7 inline-flex text-sm font-semibold text-ink" aria-hidden>{String(index + 1).padStart(2, "0")} <span className="ml-2 text-brand">↗</span></span></article>)}
           </div>
         </div>
       </section>

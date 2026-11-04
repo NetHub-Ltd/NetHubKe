@@ -26,8 +26,8 @@ Approved direction: **Growth Partner + Hybrid**.
 - Deep charcoal typography and a confident blue primary action.
 - Dark sections reserved for product storytelling and high-contrast calls to action.
 - Cyan is a restrained supporting accent.
-- Inter and Space Grotesk remain the font families.
-- Shared semantic tokens live in `src/app/globals.css`; Tailwind maps them in `tailwind.config.js`.
+- Poppins is used for headings and DM Sans for body/interface text.
+- Shared semantic tokens live in `src/app/globals.css`; Tailwind maps them in `tailwind.config.js`. Primary text uses a deep navy ink rather than black. Selected content panels use restrained ambient elevation; avoid applying card shadows to every section.
 
 Do not introduce one-off page palettes or add a design dependency without a concrete need.
 
