@@ -36,7 +36,7 @@ All feature sets are intended for one PR to `dev`.
 
 ## Open decisions / blockers
 
-- **Contact inbox:** `NEXT_PUBLIC_CONTACT_EMAIL` must be set to a verified NetHub enquiry inbox. The current form does not submit to a server or store enquiries; it opens a draft in the visitor's email client. A server-side delivery integration is not authorized or configured.
+- **Contact inbox:** confirmed as `hello@nethub.co.ke` and configured in `apps/frontend/.env.example`. The deployment environment must use the same value. The current form opens a visitor-controlled email draft; it does not submit to a server or store enquiries.
 - Confirm the production canonical origin if it differs from `https://nethub.co.ke`.
 
 ## Verification
@@ -47,7 +47,7 @@ All feature sets are intended for one PR to `dev`.
 
 ## Next steps
 
-1. Resolve the contact inbox decision.
+1. Set `NEXT_PUBLIC_CONTACT_EMAIL=hello@nethub.co.ke` in the frontend deployment environment.
 2. Review changed files and the branch diff.
 3. Run or obtain CI: lint, TypeScript and Next build.
 4. Update trackers with actual final verification.
