@@ -20,7 +20,7 @@ export function SiteFooter() {
             technology built around real business needs.
           </p>
           <Link href="/contact" className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-cyan-300 hover:text-white">
-            Tell us what you're working on <span aria-hidden>↗</span>
+            Tell us what you’re working on <span aria-hidden>↗</span>
           </Link>
         </div>
         <div>
