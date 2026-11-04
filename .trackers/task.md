@@ -2,11 +2,11 @@
 
 ## Status
 
-**In progress** — implementation is isolated on `feat/site-discovery-conversion-review`, created directly from `dev` at `19a2f6241df073b51d07de502b8f93fe48059be4`.
+**Draft PR opened** — [PR #213](https://github.com/NetHub-Ltd/NetHubKe/pull/213) on `feat/site-discovery-conversion-review`, created directly from `dev` at `19a2f6241df073b51d07de502b8f93fe48059be4`.
 
 - Related issue: #212 — Improve corporate site positioning, conversion and search discovery.
 - This branch intentionally does not include the separate, unmerged typography/login work in PR #211.
-- Delivery target: one reviewable PR to `dev`; do not merge without user approval.
+- Delivery target: one reviewable PR to `dev`; do not merge without user approval.\n- Frontend CI run: `41928768865` — currently in progress at dependency installation.
 
 ## Review scope
 
@@ -62,4 +62,4 @@ Search-indexed results for `nethub.co.ke` returned a different enterprise/fintec
 2. Run CI and fix any observed lint, type or build failures.
 3. Review the generated service routes and metadata in a deployed preview if one is available.
 4. Confirm `NEXT_PUBLIC_CONTACT_EMAIL=hello@nethub.co.ke` and `NEXT_PUBLIC_SITE_URL=https://nethub.co.ke` in the deployment environment.
-5. Update this tracker with observed verification and open one PR to `dev`.
+5. Update this tracker with observed verification; keep PR #213 in draft until CI and preview review are complete.
