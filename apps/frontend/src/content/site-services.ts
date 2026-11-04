@@ -2,6 +2,7 @@ export type SiteService = {
   slug: string;
   title: string;
   shortTitle: string;
+  contactValue: string;
   eyebrow: string;
   summary: string;
   introduction: string;
@@ -18,6 +19,7 @@ export const siteServices: SiteService[] = [
     slug: "website-development-kenya",
     title: "Website design & web development",
     shortTitle: "Websites & web applications",
+    contactValue: "Websites & web applications",
     eyebrow: "Digital presence",
     summary: "Turn your website into a clearer, more useful path from discovery to enquiry.",
     introduction:
@@ -60,6 +62,7 @@ export const siteServices: SiteService[] = [
     slug: "mobile-app-development",
     title: "Mobile application development",
     shortTitle: "Mobile applications",
+    contactValue: "Mobile applications",
     eyebrow: "Customer and team experiences",
     summary: "Bring useful services and everyday workflows closer to the people who use them.",
     introduction:
@@ -102,6 +105,7 @@ export const siteServices: SiteService[] = [
     slug: "seo-conversion-kenya",
     title: "SEO & conversion improvement",
     shortTitle: "SEO & conversion",
+    contactValue: "SEO & conversion improvement",
     eyebrow: "Search visibility and enquiries",
     summary: "Help the right people find your business, understand your offer and take action.",
     introduction:
@@ -144,6 +148,7 @@ export const siteServices: SiteService[] = [
     slug: "business-technology-solutions",
     title: "Business technology & systems",
     shortTitle: "Business technology",
+    contactValue: "Business technology & infrastructure",
     eyebrow: "Connected operations",
     summary: "Make your systems and processes work together around the way your business operates.",
     introduction:
