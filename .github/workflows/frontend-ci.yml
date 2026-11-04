@@ -17,7 +17,8 @@ defaults:
     working-directory: apps/frontend
 
 jobs:
-  build:
+  lint-and-build:
+    name: Lint + Next.js build
     runs-on: ubuntu-latest
     env:
       AUTH_SECRET: ci-build-secret-not-for-production-use-32chars
@@ -35,5 +36,9 @@ jobs:
           cache-dependency-path: apps/frontend/package-lock.json
       - name: Install
         run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Typecheck
+        run: npx tsc --noEmit
       - name: Build
         run: npm run build
