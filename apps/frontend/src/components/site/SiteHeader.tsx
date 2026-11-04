@@ -48,7 +48,7 @@ export function SiteHeader() {
 
         <div className="hidden items-center gap-2 md:flex">
           <Link href="/login" className="nh-btn-ghost">Sign in</Link>
-          <Link href="/contact" className="nh-btn-primary">Let's talk <span aria-hidden>↗</span></Link>
+          <Link href="/contact" className="nh-btn-primary">Let’s talk <span aria-hidden>↗</span></Link>
         </div>
 
         <button
@@ -77,7 +77,7 @@ export function SiteHeader() {
               </Link>
             ))}
             <Link href="/contact" className="nh-btn-primary mt-2" onClick={() => setOpen(false)}>
-              Let's talk
+              Let’s talk
             </Link>
             <Link href="/login" className="nh-btn-ghost" onClick={() => setOpen(false)}>
               Sign in
