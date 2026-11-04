@@ -3,24 +3,29 @@
 - Repository: `NetHub-Ltd/NetHubKe`
 - Default branch: `master`
 - Integration branch: `dev`
+- Latest `dev` base synchronized into current topic branch: `f52896f655c1d1ce0e2994d7c30dd426e117c2bd`
 - Current topic branch: `feat/site-discovery-conversion-review`
-- Topic branch base: `dev` at `19a2f6241df073b51d07de502b8f93fe48059be4`
-- Current task: corporate site positioning, service discovery, conversion and SEO improvements.
-- Related issue: #212.
-- Delivery: one PR targeting `dev`; do not merge without user approval.
+- Current PR: #213 targeting `dev`; do not merge without user approval.
+- Current issue: #212 — corporate site positioning, service discovery, conversion and SEO.
 
-## Concurrent work
+## Merged corporate-site work
 
-- PR #211 (`feat/site-visual-login-polish`) is separate and was not used as this branch's base.
-- This branch avoids changes to root layout/global typography/login/auth so it can be reviewed independently and reduce overlap with PR #211.
+- PR #206 — corporate website foundation and approved Growth Partner positioning.
+- PR #209 — Poppins/DM Sans typography, selected surface elevation and standalone NetHub login.
+- PR #209 is part of the latest `dev` base and must not be overwritten by this topic branch.
 
-## Relevant application baseline
+## Current topic branch scope
+
+- Homepage business positioning and conversion hierarchy.
+- Shared service content catalogue and four focused service landing pages.
+- Service index discovery and relevant enquiry paths.
+- Page metadata, canonical URLs and sitemap entries.
+- Contact email handoff clarity and direct email fallback.
+- Trackers and corporate website documentation.
+
+## Application baseline and boundaries
 
 - Frontend: Next.js 15, React 19, TypeScript, Tailwind CSS 3.
-- Public routes: home, services, products, about, contact, plus static service detail routes.
 - Auth.js/OIDC, PKCE/state cookies, BFF token forwarding and NetHubKe integration must remain unchanged.
-
-## Scope boundary
-
-- Public marketing content, service route content, metadata, sitemap and trackers only.
-- No database, backend API, authentication, token handling, BFF or infrastructure changes.
+- No backend API, database, authentication, token handling, BFF or infrastructure changes are in scope.
+- Keep Tawala and NetPay marked Coming soon.
