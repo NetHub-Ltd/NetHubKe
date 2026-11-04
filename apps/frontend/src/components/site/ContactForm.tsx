@@ -14,15 +14,20 @@ const serviceOptions = [
   "Something else",
 ];
 
-export function ContactForm() {
+type ContactFormProps = {
+  initialService?: string;
+};
+
+/**
+ * Captures enquiry context and prepares a visitor-controlled email handoff.
+ * It deliberately does not claim delivery because no server-side mail service
+ * or confirmed inbox is currently configured in this repository.
+ */
+export function ContactForm({ initialService }: ContactFormProps) {
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState<string | null>(null);
+  const selectedService = serviceOptions.includes(initialService ?? "") ? initialService : "";
 
-  /**
-   * Prepare a message in the visitor's email client without pretending that
-   * NetHub has received it. A server-side delivery integration can replace
-   * this handoff once a verified receiving channel is configured.
-   */
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
@@ -35,8 +40,7 @@ export function ContactForm() {
       return;
     }
 
-    const form = event.currentTarget;
-    const data = new FormData(form);
+    const data = new FormData(event.currentTarget);
     const name = String(data.get("name") || "").trim();
     const email = String(data.get("email") || "").trim();
     const company = String(data.get("company") || "").trim();
@@ -46,6 +50,11 @@ export function ContactForm() {
     if (!name || !email || !message) {
       setStatus("error");
       setError("Please complete your name, email and message.");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setStatus("error");
+      setError("Enter a valid email address.");
       return;
     }
 
@@ -87,7 +96,7 @@ export function ContactForm() {
         </div>
         <div className="sm:col-span-2">
           <label className="nh-label" htmlFor="contact-service">What would you like help with?</label>
-          <select id="contact-service" name="service" className="nh-input" defaultValue="">
+          <select id="contact-service" name="service" className="nh-input" defaultValue={selectedService}>
             <option value="">Choose an area (optional)</option>
             {serviceOptions.map((option) => <option key={option} value={option}>{option}</option>)}
           </select>
