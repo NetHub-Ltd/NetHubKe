@@ -1,7 +1,4 @@
-"use client";
-
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 
 const exploreLinks = [
   { href: "/services", label: "What we do" },
@@ -11,11 +8,6 @@ const exploreLinks = [
 ];
 
 export function SiteFooter() {
-  const pathname = usePathname();
-
-  // Keep the sign-in screen focused and vertically centered.
-  if (pathname === "/login") return null;
-
   return (
     <footer className="border-t border-slate-800 bg-slate-950 text-white">
       <div className="nh-container grid gap-10 py-14 sm:grid-cols-2 lg:grid-cols-4">
