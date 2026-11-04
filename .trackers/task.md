@@ -73,7 +73,7 @@ Search-indexed results for `nethub.co.ke` returned a different enterprise/fintec
 - `dev` advanced with PR #209; latest `dev` has now been merged into this branch without rewriting history.
 - Static source review only; no browser screenshot audit was performed in this chat.
 - Local lint, typecheck and production build have not been run in this environment.
-- GitHub Actions frontend CI must be checked after the merge commit. Do not report gates as passed before observing results.
+- Frontend CI run `41929276911` is currently in progress at dependency installation; lint, typecheck and build have not started. Do not report gates as passed before observing results.
 - Responsive visual review and keyboard interaction checks remain pending.
 
 ## Next steps
