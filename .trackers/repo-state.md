@@ -3,10 +3,12 @@
 - Repository: `NetHub-Ltd/NetHubKe`
 - Default branch: `master` (verified from GitHub repository metadata)
 - Integration branch: `dev` (created from `master` for this work because it was absent)
-- Topic branch: `feat/corporate-website-growth-partner`
+- Previous topic branch: `feat/corporate-website-growth-partner` (PR #206 merged)
+- Integration branch: `dev` (restored from current `master` after it was absent)
+- Current topic branch: `polish/corporate-typography-login`
 - Topic branch base: `dev`
 - Delivery: one PR targeting `dev`; do not merge without user approval.
-- Current task: NetHub corporate website redesign and SEO.
+- Current task: corporate typography, subtle elevation and standalone login polish (issue #208).
 
 ## Relevant issues
 
