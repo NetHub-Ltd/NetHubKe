@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
 import { DM_Sans, Poppins } from "next/font/google";
-import { SiteFooter } from "@/components/site/SiteFooter";
-import { SiteFooterVisibility } from "@/components/site/SiteFooterVisibility";
-import { SiteHeader } from "@/components/site/SiteHeader";
+import { SiteChrome } from "@/components/site/SiteChrome";
 import "./globals.css";
 
 const sans = DM_Sans({
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
   variable: "--font-sans",
   display: "swap",
 });
@@ -68,9 +67,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         >
           Skip to content
         </a>
-        <SiteHeader />
-        <div id="main-content" className="flex-1">{children}</div>
-        <SiteFooterVisibility><SiteFooter /></SiteFooterVisibility>
+        <SiteChrome>
+          <div id="main-content" className="flex-1">{children}</div>
+        </SiteChrome>
       </body>
     </html>
   );

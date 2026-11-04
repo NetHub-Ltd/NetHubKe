@@ -1,67 +1,48 @@
-# Task — NetHub Corporate Website
+# Task — NetHub Website Visual and Login Polish
 
 ## Status
 
-**Completed and merged** — corporate website redesign delivered in PR #206.
+**In progress** — implementation is on `feat/site-visual-login-polish`, based on the latest `dev`.
 
-**In progress** — follow-up polish is tracked in issue #208 on `polish/corporate-typography-login`, based on `dev`.
+## Parent delivery
+
+The corporate website experience was merged in PR #206. This follow-up is limited to the requested visual polish and dedicated login presentation.
 
 ## Approved direction
 
-Growth Partner + Hybrid:
-- Light-first warm neutral pages.
-- Deep navy/dark feature sections selectively.
-- Confident blue primary accent and restrained cyan.
-- NetHub is positioned as a business growth partner powered by technology.
-- Public messaging focuses on business problems and outcomes, not identity-provider internals.
+- Keep the existing blue/cyan gradient as the global site canvas, including the login screen.
+- Poppins for headings; DM Sans for body and interface text.
+- Deep navy/warm ink rather than pure black.
+- Subtle elevation on selected light content surfaces; avoid a card-heavy redesign.
+- Centered login panel with the heading “Log in with NetHub”.
+- Hide the public site header/footer on the login route so the form is the visual focus.
 
-## Feature issues
+## Feature issue
 
-- [ ] #201 — visual system and shared shell.
-- [ ] #202 — home, services and about.
-- [ ] #203 — products.
-- [ ] #204 — contact enquiry journey.
-- [ ] #205 — SEO and quality.
+- #210 — typography, global gradient canvas, subtle surface elevation and NetHub login page.
 
-All feature sets are intended for one PR to `dev`.
+## Implementation recorded
 
-## Work recorded
-
-- Replaced the dark-first theme tokens with light-first semantic tokens and retained dark feature surfaces.
-- Updated shared navigation and footer.
-- Repositioned home, services and about content.
-- Added a products page with Tawala and NetPay marked Coming soon.
-- Reworked contact form to remove its simulated success state; current approach is a visitor-controlled mailto handoff.
-- Added metadata, canonical paths, Organization JSON-LD, sitemap and robots routes.
-- Added public site/contact environment variables and documentation.
-- Auth.js/OIDC, token handling, BFF and NetHubKe integration have not been intentionally changed.
-
-## Open decisions / blockers
-
-- **Contact inbox:** confirmed as `hello@nethub.co.ke` and configured in `apps/frontend/.env.example`. The deployment environment must use the same value. The current form opens a visitor-controlled email draft; it does not submit to a server or store enquiries.
-- Confirm the production canonical origin if it differs from `https://nethub.co.ke`.
+- Switched the Next.js font pair to Poppins + DM Sans.
+- Promoted the blue/cyan radial gradient into the global page canvas.
+- Adjusted semantic ink tokens to a deep navy tone.
+- Added a restrained reusable shadow token and applied it to light content cards.
+- Added `SiteChrome` to keep navigation/footer on other routes while allowing the login route to use the full canvas.
+- Replaced the generic OIDC login copy with a centered “Log in with NetHub” experience.
+- Preserved the existing server action call: `signIn("oidc", { redirectTo: "/me" })`.
+- No changes to `auth.ts`, provider configuration, PKCE/state cookies, token handling, BFF routes or backend auth.
 
 ## Verification
 
-- Repository file writes are recorded on the topic branch.
-- Local build, lint and typecheck have **not** been run in this environment because the container cannot resolve `github.com` for cloning.
-- GitHub Actions frontend CI must be checked after PR creation. Do not report any gate as passed before its result is observed.
+- GitHub source files were inspected on `dev` before changes.
+- Changed files were fetched again from the topic branch after writes.
+- Lint, TypeScript, production build and rendered visual checks are still pending.
+- Do not merge without explicit user approval.
 
 ## Next steps
 
-1. Set `NEXT_PUBLIC_CONTACT_EMAIL=hello@nethub.co.ke` in the frontend deployment environment.
-2. Review changed files and the branch diff.
-3. Run or obtain CI: lint, TypeScript and Next build.
-4. Update trackers with actual final verification.
-5. Open one PR to `dev`, referencing issues #201–#205.
-
-
-## Follow-up polish — issue #208
-
-- Replace heading font with Poppins and body/UI font with DM Sans.
-- Use deep navy semantic text instead of near-black.
-- Add restrained elevation to selected content panels only.
-- Make /login a standalone centered NetHub sign-in screen with a blue/cyan gradient backdrop.
-- Hide marketing header/footer only on /login.
-- Preserve the existing Auth.js OIDC server action, PKCE/state behavior and redirect to /me.
-- Verify lint, TypeScript and production build before PR review.
+1. Review branch diff and verify no authentication implementation was changed.
+2. Run frontend lint, typecheck and production build through CI.
+3. Review the public site and login at mobile, tablet and desktop widths.
+4. Update this tracker with observed verification results.
+5. Open one PR targeting `dev` and leave it unmerged for user review.

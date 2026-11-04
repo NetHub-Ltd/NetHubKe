@@ -1,30 +1,28 @@
-# Rollback — NetHub Corporate Website
+# Rollback — NetHub Website Visual and Login Polish
 
 ## Change boundary
 
-This work changes the public frontend presentation, marketing routes, SEO metadata/routes, frontend documentation and tracker files.
+This follow-up changes frontend typography, global canvas styling, light content surface elevation, root site chrome rendering and the presentation of `/login`.
 
-No database schema, backend API, Auth.js callback, OIDC token flow, BFF contract or deployment infrastructure change is intended.
+It does not change database schema, backend APIs, Auth.js provider configuration, OIDC callbacks, PKCE/state cookie handling, token flow, BFF contracts or identity-provider behavior.
 
 ## Rollback procedure
 
 - Before merge: close/revert the topic PR; no production rollback is needed.
-- After merge: revert the corporate website PR commit(s) through a new reviewed PR to `dev`.
-- Remove `NEXT_PUBLIC_SITE_URL` and `NEXT_PUBLIC_CONTACT_EMAIL` only if no longer used after rollback.
-- Restore the previous frontend pages/components/tokens from the revert; do not manually reconstruct auth files.
+- After merge: revert the website polish PR through a new reviewed PR to `dev`.
+- Reverting the PR restores the previous font imports, global theme tokens, root layout composition and login presentation.
+- Do not manually reconstruct or alter authentication configuration during rollback.
 
 ## Data and external effects
 
 - No database writes or migrations are introduced.
-- The contact form does not transmit or persist enquiry data. It only opens a visitor-controlled email draft when configured.
-- No secrets are added to the repository.
+- No new secrets or deployment variables are required.
+- No external service behavior is changed.
 
-## Follow-up polish rollback
+## Risks and verification
 
-The typography, surface elevation and login presentation are frontend-only. Revert the follow-up PR through a reviewed PR to `dev`. Do not alter `src/auth.ts`, `/api/auth/*`, token helpers or BFF routes during rollback.
-
-## Risks
-
-- A wrong `NEXT_PUBLIC_SITE_URL` would generate incorrect canonical and sitemap URLs; set it to the confirmed production origin.
-- Without `NEXT_PUBLIC_CONTACT_EMAIL`, the enquiry form reports that email contact is not configured and does not claim success.
-- Visual regressions in the existing authenticated `/login` and `/me` surfaces must be checked because they share the root layout and global tokens.
+- Confirm the new Next.js font imports resolve in CI and the production build.
+- Review the gradient and elevated surfaces across public pages at mobile/tablet/desktop sizes.
+- Confirm `/login` still initiates the existing OIDC sign-in and returns to `/me`.
+- Confirm authenticated `/me` and other routes still render the normal site chrome.
+- No merge until CI and visual/authentication regression checks are reviewed.
