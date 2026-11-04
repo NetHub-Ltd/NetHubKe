@@ -2,7 +2,9 @@
 
 ## Status
 
-**In progress** — implementation is on `feat/corporate-website-growth-partner`, based on `dev`.
+**Completed and merged** — corporate website redesign delivered in PR #206.
+
+**In progress** — follow-up polish is tracked in issue #208 on `polish/corporate-typography-login`, based on `dev`.
 
 ## Approved direction
 
@@ -52,3 +54,14 @@ All feature sets are intended for one PR to `dev`.
 3. Run or obtain CI: lint, TypeScript and Next build.
 4. Update trackers with actual final verification.
 5. Open one PR to `dev`, referencing issues #201–#205.
+
+
+## Follow-up polish — issue #208
+
+- Replace heading font with Poppins and body/UI font with DM Sans.
+- Use deep navy semantic text instead of near-black.
+- Add restrained elevation to selected content panels only.
+- Make /login a standalone centered NetHub sign-in screen with a blue/cyan gradient backdrop.
+- Hide marketing header/footer only on /login.
+- Preserve the existing Auth.js OIDC server action, PKCE/state behavior and redirect to /me.
+- Verify lint, TypeScript and production build before PR review.

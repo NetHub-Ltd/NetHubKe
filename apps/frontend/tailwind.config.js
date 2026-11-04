@@ -48,6 +48,8 @@ module.exports = {
       },
       boxShadow: {
         nh: "0 1px 2px rgb(0 0 0 / 0.24), 0 8px 24px rgb(0 0 0 / 0.28)",
+        "nh-card": "0 1px 2px rgb(35 51 70 / 0.04), 0 12px 32px rgb(35 51 70 / 0.07)",
+        "nh-float": "0 18px 44px rgb(35 51 70 / 0.12)",
         "nh-glow": "0 0 0 1px rgb(var(--nh-brand) / 0.25), 0 12px 40px rgb(var(--nh-brand) / 0.15)",
       },
       maxWidth: {

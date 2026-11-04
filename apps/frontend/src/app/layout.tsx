@@ -1,17 +1,19 @@
 import type { Metadata } from "next";
-import { Inter, Space_Grotesk } from "next/font/google";
+import { DM_Sans, Poppins } from "next/font/google";
 import { SiteFooter } from "@/components/site/SiteFooter";
+import { SiteFooterVisibility } from "@/components/site/SiteFooterVisibility";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import "./globals.css";
 
-const sans = Inter({
+const sans = DM_Sans({
   subsets: ["latin"],
   variable: "--font-sans",
   display: "swap",
 });
 
-const display = Space_Grotesk({
+const display = Poppins({
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
   variable: "--font-display",
   display: "swap",
 });
@@ -68,7 +70,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         </a>
         <SiteHeader />
         <div id="main-content" className="flex-1">{children}</div>
-        <SiteFooter />
+        <SiteFooterVisibility><SiteFooter /></SiteFooterVisibility>
       </body>
     </html>
   );
