@@ -47,11 +47,11 @@ There is no product-token exchange. The website remains a client of NetHubKe.
 Copy `.env.example` to `.env.local` and configure the OIDC and NetHubKe values.
 
 - `NEXT_PUBLIC_SITE_URL`: public canonical website origin.
-- `NEXT_PUBLIC_CONTACT_EMAIL`: verified enquiry inbox used by the contact email-draft handoff.
+- `NEXT_PUBLIC_CONTACT_EMAIL`: enquiry inbox; configured as `hello@nethub.co.ke` in the example environment.
 - `AUTH_URL`, `AUTH_SECRET`, `AUTH_OIDC_*`: existing Auth.js configuration.
 - `NETHUB_API_URL`: NetHubKe resource server URL.
 
-The contact form does not submit data to a server. It opens an email draft and clearly tells the visitor to send it. Do not describe this as server-side lead capture.
+The contact form opens a pre-addressed email draft to the configured inbox. The visitor must send it from their email client; the website does not submit or store the enquiry.
 
 ```bash
 npm ci
