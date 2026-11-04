@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { ContactForm } from "@/components/site/ContactForm";
 
 export const metadata: Metadata = {
-  title: "Contact NetHub in Kenya",
+  title: "Contact",
   description:
     "Talk to NetHub about websites, applications, SEO or business technology. Share the business challenge you want to solve.",
   alternates: { canonical: "/contact" },
