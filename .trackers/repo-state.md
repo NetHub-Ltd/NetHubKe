@@ -1,31 +1,31 @@
 # Repository State
 
 - Repository: `NetHub-Ltd/NetHubKe`
-- Default branch: `master` (verified from GitHub repository metadata)
+- Default branch: `master`
 - Integration branch: `dev`
-- Current topic branch: `feat/site-visual-login-polish`
-- Topic branch base: latest `dev` at task start
-- Delivery: one PR targeting `dev`; do not merge without user approval.
-- Current task: typography, global gradient canvas, subtle content elevation and login-page polish.
-- Tracking issue: #210.
+- Latest `dev` base synchronized into current topic branch: `f52896f655c1d1ce0e2994d7c30dd426e117c2bd`
+- Current topic branch: `feat/site-discovery-conversion-review`
+- Current PR: #213 targeting `dev`; do not merge without user approval.
+- Current issue: #212 — corporate site positioning, service discovery, conversion and SEO.
 
-## Relevant previous delivery
+## Merged corporate-site work
 
-- PR #206 — corporate website experience; merged to `dev`.
+- PR #206 — corporate website foundation and approved Growth Partner positioning.
+- PR #209 — Poppins/DM Sans typography, selected surface elevation and standalone NetHub login.
+- PR #209 is part of the latest `dev` base and must not be overwritten by this topic branch.
 
-## Current scope
+## Current topic branch scope
 
-- Poppins headings and DM Sans body/interface typography.
-- Existing blue/cyan gradient as the global canvas.
-- Deep navy/warm ink instead of pure black.
-- Restrained shadow/elevation for selected light content cards.
-- Centered NetHub login experience with site chrome hidden on `/login`.
-- Preserve Auth.js OIDC, PKCE/state, token and BFF behavior.
+- Homepage business positioning and conversion hierarchy.
+- Shared service content catalogue and four focused service landing pages.
+- Service index discovery and relevant enquiry paths.
+- Page metadata, canonical URLs and sitemap entries.
+- Contact email handoff clarity and direct email fallback.
+- Trackers and corporate website documentation.
 
-## Observed frontend baseline
+## Application baseline and boundaries
 
-Next.js 15 / React 19 / TypeScript / Tailwind CSS 3. The existing generic OIDC login server action invokes `signIn("oidc", { redirectTo: "/me" })`.
-
-## Authentication boundary
-
-No intended changes to `apps/frontend/src/auth.ts`, Auth.js provider configuration, PKCE/state cookies, token handling, BFF routes or backend identity/authorization contracts.
+- Frontend: Next.js 15, React 19, TypeScript, Tailwind CSS 3.
+- Auth.js/OIDC, PKCE/state cookies, BFF token forwarding and NetHubKe integration must remain unchanged.
+- No backend API, database, authentication, token handling, BFF or infrastructure changes are in scope.
+- Keep Tawala and NetPay marked Coming soon.

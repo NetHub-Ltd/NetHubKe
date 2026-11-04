@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Products",
-  description: "Discover Tawala and NetPay, upcoming NetHub products being built to help businesses manage operations and payments.",
+  title: "Business Software & Payment Products",
+  description: "Explore Tawala business management software and NetPay payment infrastructure, upcoming products being developed by NetHub.",
   alternates: { canonical: "/products" },
   openGraph: { url: "/products" },
 };

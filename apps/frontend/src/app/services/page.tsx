@@ -1,32 +1,137 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { siteServices } from "@/content/site-services";
 
 export const metadata: Metadata = {
-  title: "What we do",
-  description: "Explore NetHub’s website and web application development, mobile apps, SEO, conversion improvement and business technology services.",
+  title: "Web Development, Mobile Apps & SEO for Kenyan Businesses",
+  description:
+    "Explore NetHub's website development, mobile applications, SEO and business technology services for organisations in Kenya.",
   alternates: { canonical: "/services" },
   openGraph: { url: "/services" },
 };
 
-const services = [
-  { number: "01", title: "Websites & web applications", description: "Your website should do more than exist. We design and build digital experiences that communicate your value, earn customer trust and make it easier for people to take action.", outcomes: ["Business and service websites", "Custom web applications", "Customer-facing digital experiences"] },
-  { number: "02", title: "Mobile applications", description: "Bring useful digital experiences closer to your customers and teams with mobile applications designed around real tasks and everyday use.", outcomes: ["Customer mobile experiences", "Business and operational apps", "Connected digital services"] },
-  { number: "03", title: "SEO & conversion improvement", description: "Being online is not the same as being found. We help improve your search visibility, make your offer easier to understand and remove friction from the path to enquiry.", outcomes: ["Technical and on-page SEO", "Search-friendly website structure", "Conversion and journey improvements"] },
-  { number: "04", title: "Business technology & infrastructure", description: "We help businesses make better use of technology through practical systems, integrations and infrastructure that support how their operations actually work.", outcomes: ["Business systems and integrations", "Workflow and process automation", "Technology and infrastructure planning"] },
+const approach = [
+  {
+    number: "01",
+    title: "Understand the challenge",
+    body: "We start with your business, customers and current process. The aim is to understand what needs to change before choosing a tool.",
+  },
+  {
+    number: "02",
+    title: "Agree on a practical scope",
+    body: "We clarify priorities, constraints and what a useful first outcome should look like, then agree on the work to be done.",
+  },
+  {
+    number: "03",
+    title: "Build, launch and improve",
+    body: "We deliver against the agreed scope and identify what should be measured, maintained or improved after launch.",
+  },
 ];
 
 export default function ServicesPage() {
   return (
     <main>
       <section className="border-b border-line bg-[radial-gradient(ellipse_at_75%_0%,rgba(37,99,235,0.12),transparent_45%)]">
-        <div className="nh-container nh-section"><p className="nh-eyebrow">What we do</p><h1 className="nh-title mt-4 max-w-4xl">We turn business challenges into practical technology solutions.</h1><p className="nh-lead mt-6">From the first impression a customer gets online to the systems behind your operations, we focus on making technology useful to your business.</p></div>
-      </section>
-      <section className="nh-section">
-        <div className="nh-container grid gap-5">
-          {services.map((service) => <article key={service.number} className="nh-surface-lift grid gap-6 rounded-2xl p-7 sm:p-9 lg:grid-cols-[0.8fr_1.2fr]"><div><p className="font-display text-sm font-semibold text-brand">{service.number}</p><h2 className="mt-4 max-w-sm font-display text-2xl font-semibold tracking-tight text-ink">{service.title}</h2></div><div><p className="max-w-2xl text-base leading-relaxed text-ink-muted">{service.description}</p><ul className="mt-6 grid gap-3 sm:grid-cols-2">{service.outcomes.map((outcome) => <li key={outcome} className="flex items-start gap-3 text-sm text-ink"><span className="mt-0.5 text-brand" aria-hidden>↗</span>{outcome}</li>)}</ul><Link href={`/contact?service=${encodeURIComponent(service.title)}`} className="mt-7 inline-flex text-sm font-semibold text-brand hover:underline">Discuss this with us <span className="ml-2" aria-hidden>↗</span></Link></div></article>)}
+        <div className="nh-container nh-section">
+          <p className="nh-eyebrow">Services · Kenya</p>
+          <h1 className="nh-title mt-4 max-w-4xl">
+            Practical technology for the things your business needs to move forward.
+          </h1>
+          <p className="nh-lead mt-6">
+            NetHub works with businesses and organisations to attract customers, improve digital
+            experiences and make everyday operations work better. Start with the challenge;
+            we will help you identify the right solution.
+          </p>
+          <Link href="/contact" className="nh-btn-primary mt-8">
+            Talk through a business challenge <span aria-hidden>↗</span>
+          </Link>
         </div>
       </section>
-      <section className="border-y border-line bg-canvas-soft"><div className="nh-container nh-section flex flex-col justify-between gap-7 md:flex-row md:items-center"><div className="max-w-xl"><p className="nh-eyebrow">No one-size-fits-all</p><h2 className="mt-3 font-display text-3xl font-semibold tracking-tight text-ink">Let’s start with what your business needs.</h2><p className="mt-3 text-sm leading-relaxed text-ink-muted">Tell us what you’re trying to improve. We’ll have an honest conversation about the right next step.</p></div><Link href="/contact" className="nh-btn-primary shrink-0">Talk to NetHub <span aria-hidden>↗</span></Link></div></section>
+
+      <section className="nh-section">
+        <div className="nh-container">
+          <div className="max-w-2xl">
+            <p className="nh-eyebrow">Explore our services</p>
+            <h2 className="mt-3 font-display text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
+              Find the area that matches what you need to improve.
+            </h2>
+            <p className="mt-4 text-base leading-relaxed text-ink-muted">
+              Each engagement is scoped around the business need. You do not have to choose a
+              technology or arrive with a finished specification.
+            </p>
+          </div>
+
+          <div className="mt-10 grid gap-4 sm:grid-cols-2">
+            {siteServices.map((service, index) => (
+              <article
+                key={service.slug}
+                className="nh-surface-lift flex h-full flex-col rounded-2xl p-7 sm:p-8"
+              >
+                <p className="text-xs font-semibold uppercase tracking-wider text-brand">
+                  {service.eyebrow}
+                </p>
+                <h3 className="mt-4 font-display text-xl font-semibold text-ink">
+                  {service.shortTitle}
+                </h3>
+                <p className="mt-3 flex-1 text-sm leading-relaxed text-ink-muted">
+                  {service.summary}
+                </p>
+                <Link
+                  href={`/services/${service.slug}`}
+                  className="mt-7 inline-flex items-center gap-2 text-sm font-semibold text-brand hover:underline"
+                >
+                  Explore this service <span aria-hidden>↗</span>
+                </Link>
+                <span className="mt-5 border-t border-line pt-4 text-xs font-semibold text-ink-subtle">
+                  0{index + 1} / 0{siteServices.length}
+                </span>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="border-y border-line bg-canvas-soft">
+        <div className="nh-container nh-section">
+          <div className="max-w-2xl">
+            <p className="nh-eyebrow">How we work</p>
+            <h2 className="mt-3 font-display text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
+              Understand first. Build with purpose.
+            </h2>
+            <p className="mt-4 text-base leading-relaxed text-ink-muted">
+              Good work starts before development. We want the scope to solve the right problem
+              and make sense for the people who will use the result.
+            </p>
+          </div>
+          <ol className="mt-10 grid gap-4 md:grid-cols-3">
+            {approach.map((step) => (
+              <li key={step.number} className="rounded-2xl border border-line bg-surface p-7">
+                <p className="font-display text-sm font-semibold text-brand">{step.number}</p>
+                <h3 className="mt-5 font-display text-xl font-semibold text-ink">{step.title}</h3>
+                <p className="mt-3 text-sm leading-relaxed text-ink-muted">{step.body}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      <section className="nh-section">
+        <div className="nh-container flex flex-col justify-between gap-7 md:flex-row md:items-center">
+          <div className="max-w-xl">
+            <p className="nh-eyebrow">Not sure where to begin?</p>
+            <h2 className="mt-3 font-display text-3xl font-semibold tracking-tight text-ink">
+              Tell us what is getting in the way.
+            </h2>
+            <p className="mt-3 text-sm leading-relaxed text-ink-muted">
+              We can help you think through the problem and decide whether a website, application,
+              search improvement or connected system is the right next step.
+            </p>
+          </div>
+          <Link href="/contact" className="nh-btn-primary shrink-0">
+            Start a conversation <span aria-hidden>↗</span>
+          </Link>
+        </div>
+      </section>
     </main>
   );
 }

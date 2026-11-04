@@ -1,28 +1,29 @@
-# Rollback — NetHub Website Visual and Login Polish
+# Rollback — NetHub Corporate Site Discovery & Conversion
 
 ## Change boundary
 
-This follow-up changes frontend typography, global canvas styling, light content surface elevation, root site chrome rendering and the presentation of `/login`.
+This branch changes public frontend page content, service landing routes, service content data, page metadata, sitemap entries, contact handoff copy, corporate website documentation and tracker files.
 
-It does not change database schema, backend APIs, Auth.js provider configuration, OIDC callbacks, PKCE/state cookie handling, token flow, BFF contracts or identity-provider behavior.
+The typography, surface tokens and login presentation were merged into `dev` through PR #209 and are not introduced by this branch.
+
+No database schema, backend API, Auth.js/OIDC callback, token flow, BFF contract, or deployment infrastructure change is intended.
 
 ## Rollback procedure
 
-- Before merge: close/revert the topic PR; no production rollback is needed.
-- After merge: revert the website polish PR through a new reviewed PR to `dev`.
-- Reverting the PR restores the previous font imports, global theme tokens, root layout composition and login presentation.
-- Do not manually reconstruct or alter authentication configuration during rollback.
+- Before merge: close PR #213; no production rollback is needed.
+- After merge: revert PR #213 through a new reviewed PR targeting `dev`.
+- Restore prior public page content and sitemap entries through the revert; do not manually reconstruct authentication or shared design-token files.
 
 ## Data and external effects
 
 - No database writes or migrations are introduced.
-- No new secrets or deployment variables are required.
-- No external service behavior is changed.
+- The contact form continues to open a visitor-controlled email draft. The website does not transmit or persist enquiry data.
+- No secrets or new paid services are added.
 
-## Risks and verification
+## Risks
 
-- Confirm the new Next.js font imports resolve in CI and the production build.
-- Review the gradient and elevated surfaces across public pages at mobile/tablet/desktop sizes.
-- Confirm `/login` still initiates the existing OIDC sign-in and returns to `/me`.
-- Confirm authenticated `/me` and other routes still render the normal site chrome.
-- No merge until CI and visual/authentication regression checks are reviewed.
+- Service landing page copy and metadata must stay aligned with services NetHub actually offers.
+- Service enquiry query values must continue matching the contact form's available options.
+- The direct-email fallback appears only when `NEXT_PUBLIC_CONTACT_EMAIL` is configured.
+- Search results may continue to show stale or unrelated content until the production deployment and search index reflect the approved site.
+- Visual review remains required on mobile and desktop; screenshot-based visual audit was not available during this chat.

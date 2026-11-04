@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "About NetHub",
-  description: "NetHub is a business growth partner using software, digital experiences and infrastructure to help businesses move forward.",
+  title: "Business Growth Partner in Kenya",
+  description: "Learn how NetHub helps Kenyan businesses solve practical challenges through digital experiences, software, SEO and business technology.",
   alternates: { canonical: "/about" },
   openGraph: { url: "/about" },
 };
