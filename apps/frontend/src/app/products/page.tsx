@@ -20,7 +20,7 @@ export default function ProductsPage() {
       </section>
       <section className="nh-section">
         <div className="nh-container grid gap-5 lg:grid-cols-2">
-          <article className="overflow-hidden rounded-[1.75rem] border border-line bg-surface">
+          <article className="nh-surface-lift overflow-hidden rounded-[1.75rem]">
             <div className="bg-slate-950 p-8 text-white sm:p-10">
               <div className="flex items-center justify-between gap-3">
                 <span className="font-display text-3xl font-bold">Tawala<span className="text-cyan-300">.</span></span>
