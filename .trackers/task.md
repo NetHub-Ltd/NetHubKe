@@ -73,7 +73,8 @@ Search-indexed results for `nethub.co.ke` returned a different enterprise/fintec
 - `dev` advanced with PR #209; latest `dev` has now been merged into this branch without rewriting history.
 - Static source review only; no browser screenshot audit was performed in this chat.
 - Local lint, typecheck and production build have not been run in this environment.
-- Frontend CI run `41929276911`: dependency installation, lint and TypeScript typecheck passed; production build is still in progress. Do not report the build as passed before observing its result.
+- Frontend CI run `41929276911` completed successfully: dependency installation, lint, TypeScript typecheck and production build all passed.
+- Final accessibility/hierarchy refinement triggered a fresh CI run `41929501892`, currently in progress; wait for that run before marking the branch fully verified.
 - Responsive visual review and keyboard interaction checks remain pending.
 
 ## Next steps
