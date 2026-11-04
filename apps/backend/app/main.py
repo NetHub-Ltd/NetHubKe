@@ -4,7 +4,7 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-from loguru import logger
+from app.core.logging import get_logger
 from sqlalchemy import text
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import JSONResponse
@@ -15,11 +15,13 @@ from app.core.logging import setup_logging
 from app.core.middleware import RequestLoggingMiddleware
 from app.db.session import AsyncSessionLocal
 
+log = get_logger("boot")
+
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     setup_logging(level="INFO")
-    logger.info(
+    log.info(
         "startup app={} version={} env={} oidc_issuer={}",
         settings.app_name,
         settings.image_tag,
@@ -27,7 +29,7 @@ async def lifespan(_app: FastAPI):
         settings.oidc_issuer,
     )
     yield
-    logger.info("shutdown")
+    log.info("shutdown")
 
 
 def create_application() -> FastAPI:
@@ -63,7 +65,7 @@ def create_application() -> FastAPI:
                     )
             return JSONResponse(content={"status": "ready"}, status_code=200)
         except Exception as exc:  # noqa: BLE001
-            logger.warning("ready_failed error={}", str(exc))
+            log.warning("ready_failed error={}", str(exc))
             return JSONResponse(
                 content={"status": "not_ready", "detail": str(exc)},
                 status_code=503,

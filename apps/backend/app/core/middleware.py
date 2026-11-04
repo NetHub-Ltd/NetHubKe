@@ -1,47 +1,46 @@
-"""HTTP request logging middleware."""
+"""HTTP request logging — one line per request, quieter on health/docs."""
 from __future__ import annotations
 
 import time
 import uuid
 
-from loguru import logger
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
+from app.core.logging import get_logger, is_quiet_path
+
+log = get_logger("http")
+
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next) -> Response:  # noqa: ANN001
-        request_id = request.headers.get("x-request-id") or str(uuid.uuid4())
+        request_id = request.headers.get("x-request-id") or str(uuid.uuid4())[:8]
         start = time.perf_counter()
-        client = request.client.host if request.client else "-"
-        logger.info(
-            "request_start id={} method={} path={} client={}",
-            request_id,
-            request.method,
-            request.url.path,
-            client,
-        )
+        path = request.url.path
+        method = request.method
+        quiet = is_quiet_path(path)
+
         try:
             response = await call_next(request)
         except Exception:
-            elapsed_ms = (time.perf_counter() - start) * 1000
-            logger.exception(
-                "request_error id={} method={} path={} duration_ms={:.1f}",
-                request_id,
-                request.method,
-                request.url.path,
-                elapsed_ms,
-            )
+            ms = (time.perf_counter() - start) * 1000
+            log.exception("{} {}  ERROR  {:.0f}ms  id={}", method, path, ms, request_id)
             raise
-        elapsed_ms = (time.perf_counter() - start) * 1000
+
+        ms = (time.perf_counter() - start) * 1000
+        status = response.status_code
         response.headers["X-Request-Id"] = request_id
-        logger.info(
-            "request_end id={} method={} path={} status={} duration_ms={:.1f}",
-            request_id,
-            request.method,
-            request.url.path,
-            response.status_code,
-            elapsed_ms,
-        )
+
+        # 5xx → error, 4xx → warning, else info (skip noisy paths at info)
+        line = f"{method} {path}  → {status}  {ms:.0f}ms  id={request_id}"
+        if status >= 500:
+            log.error(line)
+        elif status >= 400:
+            log.warning(line)
+        elif quiet:
+            log.debug(line)
+        else:
+            log.info(line)
+
         return response

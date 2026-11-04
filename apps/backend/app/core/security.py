@@ -8,7 +8,10 @@ from fastapi import HTTPException, status
 from jwt import PyJWKClient
 
 from app.core.config import settings
+from app.core.logging import get_logger
 from app.db.schemas.schemas import TokenData
+
+log = get_logger("auth")
 
 
 def _roles_from_claims(payload: dict[str, Any]) -> list[str]:
@@ -52,12 +55,20 @@ def decode_access_token(token: str) -> TokenData:
             options={"require": ["exp", "sub"]},
         )
     except jwt.PyJWTError as exc:
+        # Log reason for operators (no token body). Common: bad audience, issuer, exp, sig.
+        log.warning(
+            "JWT rejected: {} | expected iss={!r} aud={!r}",
+            type(exc).__name__ + (f": {exc}" if str(exc) else ""),
+            issuer,
+            settings.audience,
+        )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token",
             headers={"WWW-Authenticate": "Bearer"},
         ) from exc
     except Exception as exc:  # noqa: BLE001 — JWKS fetch failures etc.
+        log.error("JWT validation infrastructure error: {}: {}", type(exc).__name__, exc)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Unable to validate token",
