@@ -5,10 +5,10 @@ import { FormEvent, useState } from "react";
 type Status = "idle" | "prepared" | "error";
 
 const serviceOptions = [
-  "Website or web application",
-  "Mobile application",
-  "SEO or conversion improvement",
-  "Business technology or infrastructure",
+  "Websites & web applications",
+  "Mobile applications",
+  "SEO & conversion improvement",
+  "Business technology & infrastructure",
   "Tawala",
   "NetPay",
   "Something else",
@@ -59,16 +59,14 @@ export function ContactForm({ initialService }: ContactFormProps) {
     }
 
     const subject = encodeURIComponent(`Business enquiry from ${name}`);
-    const body = encodeURIComponent(
-      [
-        `Name: ${name}`,
-        `Email: ${email}`,
-        `Business: ${company || "Not provided"}`,
-        `Interested in: ${service || "Not specified"}`,
-        "",
-        message,
-      ].join("\n")
-    );
+    const body = encodeURIComponent([
+      `Name: ${name}`,
+      `Email: ${email}`,
+      `Business: ${company || "Not provided"}`,
+      `Interested in: ${service || "Not specified"}`,
+      "",
+      message,
+    ].join("\n"));
 
     window.location.href = `mailto:${contactEmail}?subject=${subject}&body=${body}`;
     setStatus("prepared");
@@ -76,44 +74,16 @@ export function ContactForm({ initialService }: ContactFormProps) {
 
   return (
     <form className="rounded-2xl border border-line bg-surface p-6 shadow-sm sm:p-8" onSubmit={onSubmit} noValidate>
-      <div className="mb-6">
-        <h2 className="font-display text-xl font-semibold text-ink">Start a conversation</h2>
-        <p className="mt-2 text-sm text-ink-muted">A few details will help us understand what you need.</p>
-      </div>
-
+      <div className="mb-6"><h2 className="font-display text-xl font-semibold text-ink">Start a conversation</h2><p className="mt-2 text-sm text-ink-muted">A few details will help us understand what you need.</p></div>
       <div className="grid gap-5 sm:grid-cols-2">
-        <div>
-          <label className="nh-label" htmlFor="contact-name">Your name</label>
-          <input id="contact-name" name="name" className="nh-input" autoComplete="name" required />
-        </div>
-        <div>
-          <label className="nh-label" htmlFor="contact-email">Email address</label>
-          <input id="contact-email" name="email" type="email" className="nh-input" autoComplete="email" required />
-        </div>
-        <div className="sm:col-span-2">
-          <label className="nh-label" htmlFor="contact-company">Business or organisation <span className="font-normal text-ink-subtle">(optional)</span></label>
-          <input id="contact-company" name="company" className="nh-input" autoComplete="organization" />
-        </div>
-        <div className="sm:col-span-2">
-          <label className="nh-label" htmlFor="contact-service">What would you like help with?</label>
-          <select id="contact-service" name="service" className="nh-input" defaultValue={selectedService}>
-            <option value="">Choose an area (optional)</option>
-            {serviceOptions.map((option) => <option key={option} value={option}>{option}</option>)}
-          </select>
-        </div>
-        <div className="sm:col-span-2">
-          <label className="nh-label" htmlFor="contact-message">Tell us a little about it</label>
-          <textarea id="contact-message" name="message" rows={5} className="nh-input resize-y" placeholder="What are you trying to achieve? What's getting in the way?" required />
-        </div>
+        <div><label className="nh-label" htmlFor="contact-name">Your name</label><input id="contact-name" name="name" className="nh-input" autoComplete="name" required /></div>
+        <div><label className="nh-label" htmlFor="contact-email">Email address</label><input id="contact-email" name="email" type="email" className="nh-input" autoComplete="email" required /></div>
+        <div className="sm:col-span-2"><label className="nh-label" htmlFor="contact-company">Business or organisation <span className="font-normal text-ink-subtle">(optional)</span></label><input id="contact-company" name="company" className="nh-input" autoComplete="organization" /></div>
+        <div className="sm:col-span-2"><label className="nh-label" htmlFor="contact-service">What would you like help with?</label><select id="contact-service" name="service" className="nh-input" defaultValue={selectedService}><option value="">Choose an area (optional)</option>{serviceOptions.map((option) => <option key={option} value={option}>{option}</option>)}</select></div>
+        <div className="sm:col-span-2"><label className="nh-label" htmlFor="contact-message">Tell us a little about it</label><textarea id="contact-message" name="message" rows={5} className="nh-input resize-y" placeholder="What are you trying to achieve? What's getting in the way?" required /></div>
       </div>
-
       {error && <p className="nh-error mt-4" role="alert">{error}</p>}
-      {status === "prepared" && (
-        <p className="mt-4 rounded-lg bg-cyan-50 px-4 py-3 text-sm text-cyan-900" role="status">
-          Your email app should open with a prepared message. Review it and press Send to complete your enquiry. NetHub has not received it until you send it.
-        </p>
-      )}
-
+      {status === "prepared" && <p className="mt-4 rounded-lg bg-cyan-50 px-4 py-3 text-sm text-cyan-900" role="status">Your email app should open with a prepared message. Review it and press Send to complete your enquiry. NetHub has not received it until you send it.</p>}
       <button type="submit" className="nh-btn-primary mt-6 w-full sm:w-auto">Prepare enquiry <span aria-hidden>↗</span></button>
       <p className="mt-4 text-xs leading-relaxed text-ink-subtle">Your details are used to prepare the enquiry message. They are not submitted to or stored by this website.</p>
     </form>
