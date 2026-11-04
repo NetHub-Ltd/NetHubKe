@@ -35,9 +35,6 @@ export const metadata: Metadata = {
   description:
     "NetHub helps businesses grow through better digital experiences, software, SEO and practical technology solutions.",
   applicationName: "NetHub",
-  alternates: {
-    canonical: "/",
-  },
   openGraph: {
     type: "website",
     siteName: "NetHub",
