@@ -1,98 +1,108 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  NetHub design tokens
+  Dark-first marketing + product shell. RGB channels for Tailwind alpha support.
+*/
 :root {
-  --color-bg: #0f1419;
-  --color-surface: #1a2332;
-  --color-text: #e7ecf3;
-  --color-muted: #9aa8bc;
-  --color-accent: #3b82f6;
-  --color-border: #2a3548;
-  --font-sans: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-  --space-1: 0.25rem;
-  --space-2: 0.5rem;
-  --space-3: 1rem;
-  --space-4: 1.5rem;
-  --space-5: 2rem;
-  --radius: 0.5rem;
+  --nh-canvas: 10 14 20;
+  --nh-canvas-soft: 14 20 30;
+  --nh-surface: 18 26 38;
+  --nh-surface-raised: 24 34 50;
+  --nh-ink: 236 241 247;
+  --nh-ink-muted: 156 170 190;
+  --nh-ink-subtle: 110 126 148;
+  --nh-ink-invert: 10 14 20;
+  --nh-line: 42 54 74;
+  --nh-line-strong: 58 74 98;
+  --nh-brand: 37 99 235;
+  --nh-brand-hover: 59 130 246;
+  --nh-brand-soft: 30 58 120;
+  --nh-brand-fg: 255 255 255;
+  --nh-accent: 34 211 238;
+  --nh-accent-soft: 14 70 84;
+  --nh-success: 34 197 94;
+  --nh-warning: 245 158 11;
+  --nh-danger: 239 68 68;
 }
 
-* {
-  box-sizing: border-box;
+@layer base {
+  html {
+    @apply scroll-smooth antialiased;
+  }
+
+  body {
+    @apply min-h-screen bg-canvas text-ink font-sans;
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-brand ring-offset-2 ring-offset-canvas;
+  }
+
+  ::selection {
+    @apply bg-brand/30 text-ink;
+  }
 }
 
-html,
-body {
-  margin: 0;
-  padding: 0;
-  min-height: 100%;
-  background: var(--color-bg);
-  color: var(--color-text);
-  font-family: var(--font-sans);
-  line-height: 1.5;
-}
+@layer components {
+  .nh-container {
+    @apply mx-auto w-full max-w-content px-4 sm:px-6 lg:px-8;
+  }
 
-a {
-  color: var(--color-accent);
-  text-decoration: none;
-}
+  .nh-section {
+    @apply py-16 sm:py-20 lg:py-24;
+  }
 
-a:hover {
-  text-decoration: underline;
-}
+  .nh-eyebrow {
+    @apply text-xs font-semibold uppercase tracking-[0.14em] text-accent;
+  }
 
-main {
-  max-width: 40rem;
-  margin: 0 auto;
-  padding: var(--space-5) var(--space-3);
-}
+  .nh-title {
+    @apply font-display text-3xl font-semibold tracking-tight text-ink sm:text-4xl lg:text-5xl;
+  }
 
-.card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  padding: var(--space-4);
-}
+  .nh-lead {
+    @apply max-w-2xl text-base leading-relaxed text-ink-muted sm:text-lg;
+  }
 
-.btn {
-  display: inline-block;
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius);
-  border: 1px solid var(--color-border);
-  background: var(--color-accent);
-  color: #fff;
-  font: inherit;
-  cursor: pointer;
-}
+  .nh-card {
+    @apply rounded-nh-lg border border-line bg-surface p-6 shadow-nh;
+  }
 
-.btn:hover {
-  filter: brightness(1.05);
-}
+  .nh-btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-nh px-4 py-2.5 text-sm font-semibold transition
+      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-canvas
+      disabled:pointer-events-none disabled:opacity-50;
+  }
 
-.btn-ghost {
-  background: transparent;
-  color: var(--color-text);
-}
+  .nh-btn-primary {
+    @apply nh-btn bg-brand text-brand-fg hover:bg-brand-hover;
+  }
 
-.muted {
-  color: var(--color-muted);
-}
+  .nh-btn-secondary {
+    @apply nh-btn border border-line-strong bg-surface-raised text-ink hover:border-brand/50 hover:bg-surface;
+  }
 
-pre {
-  overflow: auto;
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  padding: var(--space-3);
-  font-size: 0.85rem;
-}
+  .nh-btn-ghost {
+    @apply nh-btn text-ink-muted hover:bg-surface hover:text-ink;
+  }
 
-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  margin-bottom: var(--space-4);
-}
+  .nh-input {
+    @apply w-full rounded-nh border border-line bg-canvas-soft px-3 py-2.5 text-sm text-ink placeholder:text-ink-subtle
+      focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30;
+  }
 
-h1 {
-  font-size: 1.5rem;
-  margin: 0 0 var(--space-2);
+  .nh-label {
+    @apply mb-1.5 block text-sm font-medium text-ink;
+  }
+
+  .nh-error {
+    @apply mt-1.5 text-sm text-danger;
+  }
+
+  .nh-link {
+    @apply font-medium text-brand-hover underline-offset-4 hover:underline;
+  }
 }
