@@ -50,7 +50,7 @@ The dashboard layout verifies the Auth.js session before rendering. The Next.js 
 
 - Next.js 16.x
 - React 19
-- Node.js 20.9 or later
+- Node.js 20.19 or later
 - ESLint CLI (`npm run lint`)
 
 ## Configure
