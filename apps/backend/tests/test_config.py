@@ -13,6 +13,7 @@ def test_settings_assemble_async_and_sync_uris(monkeypatch):
     monkeypatch.setenv("FASTAPI_DB_NAME", "nethub")
     monkeypatch.setenv("OIDC_ISSUER", "https://issuer.example")
     monkeypatch.setenv("AUDIENCE", "nethub-api")
+    monkeypatch.delenv("OIDC_JWKS_URL", raising=False)
 
     s = Settings()  # type: ignore[call-arg]
     assert s.async_database_uri.startswith("postgresql+asyncpg://")
