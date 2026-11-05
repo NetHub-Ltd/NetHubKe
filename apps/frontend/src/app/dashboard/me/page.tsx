@@ -49,19 +49,20 @@ function ProfileRow({
 }
 
 export default async function MyProfilePage() {
-  const accessToken = await getIdpAccessToken();
   let user: NetHubUser | null = null;
   let profileUnavailable = false;
 
-  if (accessToken) {
-    try {
+  try {
+    const accessToken = await getIdpAccessToken();
+
+    if (accessToken) {
       // getMe also performs the existing first-login sync when the profile is not found.
       user = await getMe(accessToken);
-    } catch {
-      // Never expose backend diagnostics or token-related details on a user-facing page.
+    } else {
       profileUnavailable = true;
     }
-  } else {
+  } catch {
+    // Never expose token retrieval or backend diagnostics on a user-facing page.
     profileUnavailable = true;
   }
 
