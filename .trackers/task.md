@@ -8,8 +8,8 @@
 - **Typography, surface and login polish:** completed and merged through PR #211/#214.
 - **Latest production redeploy trigger:** PR #215 merged to `master`.
 - **Current follow-up:** authenticated `/me` account dashboard on `feat/me-account-dashboard`, targeting `master`.
-- **Current branch base:** latest `dev` at `f52896f655c1d1ce0e2994d7c30dd426e117c2bd`; this branch was synchronized with a normal merge commit, not rebased.
-- Do not merge PR #213 without user approval.
+- **Current branch base:** `master` at `9d061024f7a2809934c9619301c81afad45c4608`.
+- Do not merge PR #216 without user approval.
 
 ## Approved direction
 
@@ -69,6 +69,7 @@ Search-indexed results for `nethub.co.ke` returned a different enterprise/fintec
 - Kept Tawala and NetPay marked Coming soon; product enquiries are not represented as general availability.
 - Preserved the typography/login polish and selected surface-elevation tokens already merged into `dev`.
 - No authentication, OIDC, token, BFF, backend, database or infrastructure changes.
+- Extended the frontend CI pull-request target branches to include `master`, so the required lint, TypeScript and production-build checks run for this PR and future master-targeted frontend PRs.
 
 ## Verification
 
