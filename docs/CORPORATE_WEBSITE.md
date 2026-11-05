@@ -17,7 +17,7 @@ The site should communicate business outcomes in customer language. Internal ide
 | `/about` | NetHub purpose and working principles |
 | `/contact` | Business enquiry context and contact handoff |
 
-The `/login`, `/me` and `/api/*` routes remain application/authentication surfaces. Their authentication behavior is intentionally unchanged.
+The `/login` route is the OIDC entry point. The authenticated `/me` route is a focused account dashboard that displays the profile returned by NetHubKe. The `/api/*` routes remain application/authentication surfaces. The dashboard does not expose tokens or backend diagnostics.
 
 ## Visual direction
 
