@@ -29,3 +29,10 @@
 - Auth.js/OIDC, PKCE/state cookies, BFF token forwarding and NetHubKe integration must remain unchanged.
 - No backend API, database, authentication, token handling, BFF or infrastructure changes are in scope.
 - Keep Tawala and NetPay marked Coming soon.
+
+
+## Current account dashboard follow-up
+
+- `/me` is protected by the existing Auth.js session and uses the existing NetHubKe `getMe` server-side call.
+- Dashboard presents profile/account information only; it must never display raw access tokens, ID tokens, cookie names, decoded claims or backend diagnostics.
+- Existing OIDC sign-in, PKCE/state, BFF and backend contracts remain unchanged.
