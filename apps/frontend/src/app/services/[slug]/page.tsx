@@ -35,10 +35,20 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
 
   if (!service) notFound();
 
+  const applyHref = `/dashboard/requests/new?service=${service.slug}`;
+
   return (
     <main>
       <section className="border-b border-line bg-[radial-gradient(ellipse_at_75%_0%,rgba(37,99,235,0.12),transparent_45%)]">
         <div className="nh-container nh-section">
+          <div className="mb-6 flex flex-wrap gap-3">
+            <Link href={applyHref} className="nh-btn-primary">
+              Get a quote
+            </Link>
+            <Link href="/contact" className="nh-btn-secondary">
+              Talk to us
+            </Link>
+          </div>
           <nav aria-label="Breadcrumb">
             <ol className="flex flex-wrap items-center gap-2 text-sm">
               <li>
