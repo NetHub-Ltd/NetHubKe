@@ -54,7 +54,7 @@
 - PR: https://github.com/NetHub-Ltd/NetHubKe/pull/218
 - Issue: #217
 - Topic branch: `feat/dashboard-shell-next16`
-- Latest verified head before tracker refresh: `d21a4b6d127587c2b5241e9b30ec36cc5708ed59`
+- Latest application commit verified by frontend CI: `d21a4b6d127587c2b5241e9b30ec36cc5708ed59`; current tracker-only commit before this update: `9e545ac4e7480e8809a4afe66eaf2b7788999e33`.
 - Target: `master`; PR is not merged.
 
 ### Delivered
@@ -72,5 +72,5 @@
 - Frontend CI run #228 on the latest application commit passed `npm ci`, `npm run lint`, `npx tsc --noEmit` and `npm run build`.
 - Build output confirmed Next.js 16.4.5 (Turbopack), both dashboard routes and Proxy recognition.
 - Next build no longer rewrites `tsconfig.json`; the Next.js 16 `react-jsx` and `.next/dev/types` settings are committed.
-- CodeQL Python analysis passed; JavaScript/TypeScript analysis is still running at the time of this tracker update.
+- CodeQL run #99 completed successfully for both Python and JavaScript/TypeScript on the tracker head before this update.
 - No browser visual audit or production deployment has been verified. Do not describe the dashboard as visually reviewed or deployed.

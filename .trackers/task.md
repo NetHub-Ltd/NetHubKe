@@ -139,5 +139,5 @@ Replace the original `/me` authentication diagnostics page with a user-facing ac
 ### Final review notes
 
 - Final frontend CI run: #228 — all four gates passed on application head `d21a4b6d127587c2b5241e9b30ec36cc5708ed59`.
-- CodeQL JavaScript/TypeScript analysis for the latest tracker commit was still in progress when this tracker was written; confirm before marking all repository checks complete.
+- CodeQL run #99 completed successfully for both Python and JavaScript/TypeScript on the latest tracker head before this update.
 - Browser visual review and a live deployment check were not performed. The PR is ready for source/CI review, not a claim of production readiness.
