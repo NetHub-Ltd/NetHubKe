@@ -21,6 +21,8 @@ _DEFAULTS = {
     "OIDC_ISSUER": "https://idp.test/realms/nethub",
     "OIDC_JWKS_URL": "https://idp.test/realms/nethub/protocol/openid-connect/certs",
     "AUDIENCE": "nethub-api",
+    "RATE_LIMIT_ENABLED": "false",
+    "DIAGNOSTICS_ENABLED": "true",
 }
 for key, value in _DEFAULTS.items():
     os.environ.setdefault(key, value)
