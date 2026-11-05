@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.core.config import settings
+from app.core.config import get_settings, settings
 from app.core.redis_client import cache_delete, cache_get, cache_set
 from app.db.models.models import TrustedClient
 
@@ -31,8 +31,8 @@ async def list_active_client_ids(session: AsyncSession) -> set[str]:
     ids = {c.client_id for c in rows}
 
     # Bootstrap from env when table empty
-    if not ids and settings.bootstrap_audiences:
-        for cid in settings.bootstrap_audiences:
+    if not ids and get_settings().bootstrap_audiences:
+        for cid in get_settings().bootstrap_audiences:
             session.add(
                 TrustedClient(
                     client_id=cid,
@@ -42,9 +42,9 @@ async def list_active_client_ids(session: AsyncSession) -> set[str]:
                 )
             )
         await session.commit()
-        ids = set(settings.bootstrap_audiences)
+        ids = set(get_settings().bootstrap_audiences)
 
-    cache_set(CACHE_KEY, json.dumps(sorted(ids)), settings.trusted_clients_cache_ttl)
+    cache_set(CACHE_KEY, json.dumps(sorted(ids)), get_settings().trusted_clients_cache_ttl)
     return ids
 
 

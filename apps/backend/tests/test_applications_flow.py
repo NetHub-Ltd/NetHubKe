@@ -38,6 +38,9 @@ async def api_client(monkeypatch):
     from app.core import config as config_module
 
     config_module.get_settings.cache_clear()
+    # force reload
+    _ = config_module.get_settings()
+    assert "admin@nethub.co.ke" in config_module.get_settings().admin_bootstrap_emails
 
     engine = create_async_engine(settings.async_database_uri, echo=False)
     async with engine.begin() as conn:

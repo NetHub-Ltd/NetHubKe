@@ -8,7 +8,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.core.config import settings
+from app.core.config import get_settings
 from app.db.models.models import User, UserIdentity
 from app.db.schemas.schemas import TokenData, UserUpdate
 
@@ -18,7 +18,7 @@ def _utcnow() -> datetime:
 
 
 def _maybe_bootstrap_admin(user: User) -> None:
-    emails = settings.admin_bootstrap_emails
+    emails = get_settings().admin_bootstrap_emails
     if emails and user.email.lower() in emails:
         user.is_admin = True
 

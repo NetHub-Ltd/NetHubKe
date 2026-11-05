@@ -64,8 +64,13 @@ class Settings(BaseSettings):
         return [o.strip() for o in self.allowed_origins.split(",") if o.strip()]
 
     @property
-    def bootstrap_audiences(self) -> list[str]:
+    def audiences(self) -> list[str]:
+        """Comma-separated AUDIENCE values (bootstrap when DB empty)."""
         return [a.strip() for a in self.audience.split(",") if a.strip()]
+
+    @property
+    def bootstrap_audiences(self) -> list[str]:
+        return self.audiences
 
     @property
     def admin_bootstrap_emails(self) -> set[str]:
