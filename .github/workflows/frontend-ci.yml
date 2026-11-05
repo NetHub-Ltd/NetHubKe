@@ -35,7 +35,7 @@ jobs:
           cache: npm
           cache-dependency-path: apps/frontend/package-lock.json
       - name: Install dependencies and regenerate lockfile
-        run: npm install
+        run: npm install --no-audit --no-fund --fetch-retries=1 --fetch-timeout=60000
       - name: Upload regenerated lockfile
         uses: actions/upload-artifact@v4
         with:
