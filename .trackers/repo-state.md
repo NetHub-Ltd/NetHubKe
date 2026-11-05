@@ -2,11 +2,11 @@
 
 - Repository: `NetHub-Ltd/NetHubKe`
 - Default branch: `master`
-- Integration branch: `dev`
-- Latest `dev` base synchronized into current topic branch: `f52896f655c1d1ce0e2994d7c30dd426e117c2bd`
-- Current topic branch: `feat/site-discovery-conversion-review`
-- Current PR: #213 targeting `dev`; do not merge without user approval.
-- Current issue: #212 — corporate site positioning, service discovery, conversion and SEO.
+- Historical integration branch: `dev` (deleted after the integration into `master`)
+- Current `master` base for this follow-up: `9d061024f7a2809934c9619301c81afad45c4608`
+- Current topic branch: `feat/me-account-dashboard`
+- Merged PRs: #213 (site discovery), #214 (`dev` → `master`), #215 (Vercel redeploy trigger).\n- Current PR: #216 targeting `master`; do not merge without user approval.
+- Previous issue #212 — corporate site positioning, service discovery, conversion and SEO (completed).
 
 ## Merged corporate-site work
 
