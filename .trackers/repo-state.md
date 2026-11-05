@@ -10,9 +10,9 @@
 
 ## Application baseline
 
-- Frontend: Next.js 15.5.28, React 19.3.1, TypeScript, Tailwind CSS 3.
-- Next.js package scripts still use the deprecated `next lint` command.
-- Frontend CI uses Node.js 22 and runs install, lint, TypeScript typecheck and production build.
+- Frontend: Next.js 16.4.5, React 19.3.1, TypeScript, Tailwind CSS 3.
+- Linting: ESLint 10.14.0 with `eslint-config-next` 16.4.5 native flat config; `npm run lint` executes `eslint .`.
+- Minimum Node.js version is 20.19.0 (ESLint 10 requirement); frontend CI runs Node.js 22 with `npm ci`, lint, TypeScript typecheck and production build.
 - Auth.js generic OIDC, PKCE/state cookies, server-side token handling, BFF routes and NetHubKe integration are established contracts.
 - Root `AGENTS.md` is not present on `master`; repository engineering guidance is in the tracked docs and trackers.
 
@@ -30,8 +30,8 @@
 - Add an authenticated dashboard layout with a responsive light sidebar/header/content shell.
 - Keep navigation lean: only the implemented **My profile** destination.
 - Redirect `/dashboard` to `/dashboard/me` and retain `/me` as a compatibility redirect.
-- Upgrade Next.js and its matching ESLint config to the current stable 16.x release; migrate linting to ESLint CLI and regenerate the npm lockfile.
-- Add `src/proxy.ts` for a lightweight optimistic dashboard cookie-presence redirect. The dashboard layout remains the authoritative Auth.js session boundary.
+- Upgrade completed on PR #218: Next.js 16.4.5, `eslint-config-next` 16.4.5, ESLint 10.14.0, native flat config, ESLint CLI and regenerated lockfile.
+- Added `src/proxy.ts` for a lightweight optimistic dashboard cookie-presence redirect. The dashboard layout remains the authoritative Auth.js session boundary.
 - Update marketing chrome exclusions, crawler directives, docs and trackers.
 
 ## Security and architecture boundaries
@@ -47,3 +47,30 @@
 - Node.js 22; `npm ci`, `npm run lint`, `npx tsc --noEmit`, `npm run build`.
 - Confirm redirect behavior, protected layout, public chrome separation, noindex/robots behavior and responsive navigation.
 - Do not claim a live production deployment or browser visual audit unless actually verified.
+
+
+## Current implementation — PR #218
+
+- PR: https://github.com/NetHub-Ltd/NetHubKe/pull/218
+- Issue: #217
+- Topic branch: `feat/dashboard-shell-next16`
+- Latest verified head before tracker refresh: `d21a4b6d127587c2b5241e9b30ec36cc5708ed59`
+- Target: `master`; PR is not merged.
+
+### Delivered
+
+- Authenticated responsive light dashboard shell: desktop sidebar, mobile navigation, shared header, sign-out and main content.
+- Profile moved to `/dashboard/me`; `/dashboard` redirects there and `/me` remains a compatibility redirect.
+- Navigation exposes only the implemented **My profile** destination.
+- Existing Auth.js OIDC, server-side token retrieval, NetHubKe profile fetch/first-login sync and sign-out are preserved.
+- Next.js 16.4.5, `eslint-config-next` 16.4.5, ESLint 10.14.0, Node.js minimum 20.19.0, native flat ESLint config and lockfile migration.
+- Next.js 16 `src/proxy.ts` checks presence of either Auth.js session-cookie name, including chunked variants; dashboard layout calls `auth()` as the real session check.
+- Updated robots, metadata, public chrome route exclusions, docs, README and Next.js 16 TypeScript configuration.
+
+### Verification
+
+- Frontend CI run #228 on the latest application commit passed `npm ci`, `npm run lint`, `npx tsc --noEmit` and `npm run build`.
+- Build output confirmed Next.js 16.4.5 (Turbopack), both dashboard routes and Proxy recognition.
+- Next build no longer rewrites `tsconfig.json`; the Next.js 16 `react-jsx` and `.next/dev/types` settings are committed.
+- CodeQL Python analysis passed; JavaScript/TypeScript analysis is still running at the time of this tracker update.
+- No browser visual audit or production deployment has been verified. Do not describe the dashboard as visually reviewed or deployed.
