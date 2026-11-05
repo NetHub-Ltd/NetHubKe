@@ -21,6 +21,8 @@ export type NetHubUser = {
   full_name: string;
   is_active: boolean;
   tenant_id?: string | null;
+  created_at?: string;
+  updated_at?: string;
 };
 
 async function backendFetch(
