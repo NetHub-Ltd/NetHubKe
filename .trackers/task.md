@@ -131,8 +131,8 @@ Replace the original `/me` authentication diagnostics page with a user-facing ac
 - [x] Issue #217 created.
 - [x] Topic branch created from master commit `ee768708b65c114413fc1f65aed1c99048af8bc6`.
 - [x] Stale tracker baseline corrected before implementation.
-- [ ] Dashboard shell and route migration.
-- [ ] Next.js 16 and lockfile migration.
-- [ ] Proxy setup and authentication boundary verification.
+- [x] Dashboard shell and route migration (source implemented; awaiting CI verification).
+- [x] Next.js 16.4.5 and matching ESLint config selected; npm lockfile regeneration is in progress.
+- [x] Proxy setup implemented; authoritative Auth.js session check remains in the dashboard layout.
 - [ ] Lint, typecheck and production build.
-- [ ] PR opened against master; do not merge without explicit user approval.
+- [x] Draft PR #218 opened against master; do not merge without explicit user approval.
