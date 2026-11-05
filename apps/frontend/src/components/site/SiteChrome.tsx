@@ -6,18 +6,18 @@ import { SiteFooter } from "@/components/site/SiteFooter";
 import { SiteHeader } from "@/components/site/SiteHeader";
 
 /**
- * Keep the public navigation/footer on marketing and account pages,
- * while giving the dedicated sign-in screen the full gradient canvas.
+ * Keep marketing chrome on public pages. Login and the authenticated account
+ * area use focused layouts of their own instead of the public navigation.
  */
 export function SiteChrome({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const isLoginPage = pathname === "/login";
+  const isFocusedPage = pathname === "/login" || pathname === "/me" || pathname.startsWith("/me/");
 
   return (
     <>
-      {!isLoginPage && <SiteHeader />}
+      {!isFocusedPage && <SiteHeader />}
       {children}
-      {!isLoginPage && <SiteFooter />}
+      {!isFocusedPage && <SiteFooter />}
     </>
   );
 }
