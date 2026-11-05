@@ -78,7 +78,7 @@ The Auth.js route remains on the Node.js runtime. Dashboard layout validation re
 
 ## Frontend framework
 
-The frontend targets Next.js 16.x and requires Node.js 20.9 or later. The Next.js 16 `proxy.ts` convention replaces the deprecated `middleware.ts` convention. Linting runs through the ESLint CLI because `next lint` is no longer available.
+The frontend targets Next.js 16.x and requires Node.js 20.19 or later. The Next.js 16 `proxy.ts` convention replaces the deprecated `middleware.ts` convention. Linting runs through the ESLint CLI because `next lint` is no longer available.
 
 ## Local checks
 
