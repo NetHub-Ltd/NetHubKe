@@ -3,6 +3,7 @@ import { DM_Sans, Poppins } from "next/font/google";
 import { SiteChrome } from "@/components/site/SiteChrome";
 import "./globals.css";
 
+// Keep the site-wide font variables at the root so every public route shares one typography system.
 const sans = DM_Sans({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
