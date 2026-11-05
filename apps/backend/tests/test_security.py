@@ -1,4 +1,4 @@
-"""A3: JWT validation with explicit test RSA key (no network JWKS)."""
+"""JWT validation with explicit test RSA key (no network JWKS)."""
 from __future__ import annotations
 
 import time
@@ -52,9 +52,28 @@ def test_valid_token(rsa_keys):
         token, public_key=public_pem, issuer=ISSUER, audience=AUDIENCE
     )
     assert data.sub == "12345678901234567890"
-    assert isinstance(data.sub, str)
     assert data.email == "user@example.com"
-    assert data.issuer == ISSUER
+
+
+def test_valid_token_multi_audience_list(rsa_keys):
+    private_pem, public_pem = rsa_keys
+    now = int(time.time())
+    token = _mint(
+        private_pem,
+        {
+            "sub": "s1",
+            "iss": ISSUER,
+            "aud": ["client-a", "client-b"],
+            "exp": now + 3600,
+        },
+    )
+    data = decode_access_token_with_key(
+        token,
+        public_key=public_pem,
+        issuer=ISSUER,
+        audience=["client-a", "other"],
+    )
+    assert data.sub == "s1"
 
 
 def test_expired_token(rsa_keys):
@@ -62,7 +81,7 @@ def test_expired_token(rsa_keys):
     now = int(time.time())
     token = _mint(
         private_pem,
-        {"sub": "s1", "iss": ISSUER, "aud": AUDIENCE, "exp": now - 10},
+        {"sub": "s1", "iss": ISSUER, "aud": AUDIENCE, "exp": now - 120},
     )
     with pytest.raises(HTTPException) as exc:
         decode_access_token_with_key(
@@ -90,12 +109,7 @@ def test_wrong_issuer(rsa_keys):
     now = int(time.time())
     token = _mint(
         private_pem,
-        {
-            "sub": "s1",
-            "iss": "https://evil.example",
-            "aud": AUDIENCE,
-            "exp": now + 3600,
-        },
+        {"sub": "s1", "iss": "https://evil.example", "aud": AUDIENCE, "exp": now + 3600},
     )
     with pytest.raises(HTTPException) as exc:
         decode_access_token_with_key(

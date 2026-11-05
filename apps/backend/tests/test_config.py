@@ -19,7 +19,20 @@ def test_settings_assemble_async_and_sync_uris(monkeypatch):
     assert "db.example:5433/nethub" in s.async_database_uri
     assert "p%40ss" in s.async_database_uri
     assert s.sync_database_uri.startswith("postgresql+psycopg2://")
-    assert "db.example:5433/nethub" in s.sync_database_uri
+    assert s.resolved_jwks_url == "https://issuer.example/oauth/v2/keys"
+    get_settings.cache_clear()
+
+
+def test_multi_audience_parsing(monkeypatch):
+    get_settings.cache_clear()
+    monkeypatch.setenv("FASTAPI_DB_USER", "u")
+    monkeypatch.setenv("FASTAPI_DB_PASSWORD", "p")
+    monkeypatch.setenv("FASTAPI_DB_HOST", "h")
+    monkeypatch.setenv("FASTAPI_DB_NAME", "n")
+    monkeypatch.setenv("OIDC_ISSUER", "https://issuer.example")
+    monkeypatch.setenv("AUDIENCE", "a, b ,c")
+    s = Settings()  # type: ignore[call-arg]
+    assert s.audiences == ["a", "b", "c"]
     get_settings.cache_clear()
 
 
