@@ -8,12 +8,19 @@ from sqlalchemy.exc import IntegrityError
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+from app.core.config import get_settings
 from app.db.models.models import User, UserIdentity
 from app.db.schemas.schemas import TokenData, UserUpdate
 
 
 def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
+
+
+def _maybe_bootstrap_admin(user: User) -> None:
+    emails = get_settings().admin_bootstrap_emails
+    if emails and user.email.lower() in emails:
+        user.is_admin = True
 
 
 async def get_identity(
@@ -65,13 +72,14 @@ async def sync_user_from_token(session: AsyncSession, token: TokenData) -> User:
             user.full_name = token.name
         if token.preferred_username:
             user.username = token.preferred_username
+        _maybe_bootstrap_admin(user)
         user.updated_at = _utcnow()
         session.add(user)
         await session.commit()
         await session.refresh(user)
         return user
 
-    email = token.email
+    email = (token.email or "").strip().lower()
     if not email:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -80,10 +88,17 @@ async def sync_user_from_token(session: AsyncSession, token: TokenData) -> User:
 
     existing = await get_user_by_email(session, email)
     if existing is not None:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Email already linked to a different identity",
+        other = await session.exec(
+            select(UserIdentity).where(
+                UserIdentity.user_id == existing.id,
+                UserIdentity.issuer == issuer,
+            )
         )
+        if other.first() is None:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Email already linked to a different identity",
+            )
 
     user = User(
         email=email,
@@ -91,17 +106,19 @@ async def sync_user_from_token(session: AsyncSession, token: TokenData) -> User:
         full_name=token.name or "",
         is_active=True,
     )
+    _maybe_bootstrap_admin(user)
     session.add(user)
     try:
         await session.flush()
-        identity = UserIdentity(issuer=issuer, subject=subject, user_id=user.id)
-        session.add(identity)
+        session.add(
+            UserIdentity(issuer=issuer, subject=subject, user_id=user.id)
+        )
         await session.commit()
     except IntegrityError as exc:
         await session.rollback()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="Identity or email conflict",
+            detail="Could not provision user (conflict)",
         ) from exc
     await session.refresh(user)
     return user
@@ -113,18 +130,13 @@ async def resolve_user_from_token(session: AsyncSession, token: TokenData) -> Us
     if identity is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not synced; call POST /api/v1/users/sync first",
+            detail="User not provisioned; call POST /users/sync first",
         )
     user = await get_user_by_id(session, identity.user_id)
-    if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
-        )
-    if not user.is_active:
+    if user is None or not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="User is inactive",
+            detail="User unavailable",
         )
     return user
 

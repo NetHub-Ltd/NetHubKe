@@ -1,41 +1,64 @@
-import Link from "next/link";
+"use client";
 
-const navigationItems = [
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+
+const items = [
+  {
+    href: "/dashboard",
+    label: "Overview",
+    description: "Your home",
+  },
+  {
+    href: "/dashboard/requests",
+    label: "My requests",
+    description: "Quotes & updates",
+  },
+  {
+    href: "/dashboard/requests/new",
+    label: "New request",
+    description: "Ask for a quote",
+  },
   {
     href: "/dashboard/me",
-    label: "My profile",
-    description: "Your personal account details",
+    label: "Profile",
+    description: "Your details",
   },
-] as const;
+  {
+    href: "/dashboard/admin",
+    label: "Admin inbox",
+    description: "Team only",
+  },
+];
 
-/** Keep the navigation limited to destinations that are implemented and usable. */
 export function DashboardNavigation() {
+  const pathname = usePathname();
+
   return (
-    <nav aria-label="Dashboard navigation" className="space-y-1">
-      {navigationItems.map((item) => (
-        <Link
-          key={item.href}
-          href={item.href}
-          aria-current="page"
-          className="group flex items-center gap-3 rounded-xl bg-brand/8 px-3 py-3 text-sm font-semibold text-brand transition-colors"
-        >
-          <span
-            aria-hidden="true"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-brand shadow-sm ring-1 ring-brand/10"
+    <nav className="flex flex-col gap-1" aria-label="Dashboard">
+      {items.map((item) => {
+        const active =
+          item.href === "/dashboard"
+            ? pathname === "/dashboard"
+            : pathname === item.href || pathname.startsWith(item.href + "/");
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={`rounded-nh px-3 py-2.5 transition ${
+              active
+                ? "bg-surface text-ink ring-1 ring-line"
+                : "text-ink-muted hover:bg-surface/60 hover:text-ink"
+            }`}
+            aria-current={active ? "page" : undefined}
           >
-            <svg viewBox="0 0 24 24" fill="none" className="h-[18px] w-[18px]" stroke="currentColor" strokeWidth="1.7">
-              <circle cx="12" cy="8" r="3.5" />
-              <path d="M5 20c.7-3.2 3.2-5 7-5s6.3 1.8 7 5" strokeLinecap="round" />
-            </svg>
-          </span>
-          <span className="min-w-0">
-            <span className="block">{item.label}</span>
+            <span className="block text-sm font-semibold">{item.label}</span>
             <span className="mt-0.5 block text-xs font-normal text-ink-muted">
               {item.description}
             </span>
-          </span>
-        </Link>
-      ))}
+          </Link>
+        );
+      })}
     </nav>
   );
 }
