@@ -1,5 +1,3 @@
-"use server";
-
 import Link from "next/link";
 import { signOut } from "@/auth";
 import { DashboardNavigation } from "@/components/dashboard/DashboardNavigation";
@@ -101,7 +99,7 @@ export function DashboardShell({
                 <p className="text-xs text-ink-subtle">NetHub account</p>
               </div>
               <span
-                aria-label={`Signed in as ${accountLabel}`}
+                aria-hidden="true"
                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand/10 text-xs font-bold text-brand ring-1 ring-inset ring-brand/15"
               >
                 {initials}
