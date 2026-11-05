@@ -7,9 +7,9 @@
 - **Corporate-site discovery and conversion:** completed and merged through PR #213 (to `dev`) and PR #214 (to `master`).
 - **Typography, surface and login polish:** completed and merged through PR #211/#214.
 - **Latest production redeploy trigger:** PR #215 merged to `master`.
-- **Current follow-up:** authenticated `/me` account dashboard on `feat/me-account-dashboard`, targeting `master`.
-- **Current branch base:** `master` at `9d061024f7a2809934c9619301c81afad45c4608`.
-- Do not merge PR #216 without user approval.
+- **Current follow-up:** move the merged account profile into `/dashboard/me`, introduce a reusable dashboard shell, and upgrade the frontend to Next.js 16 on `feat/dashboard-shell-next16`, targeting `master`.
+- **Current branch base:** `master` at `ee768708b65c114413fc1f65aed1c99048af8bc6`.
+- PR #216 was merged; do not merge the current follow-up PR without user approval.
 
 ## Approved direction
 
@@ -90,11 +90,11 @@ Search-indexed results for `nethub.co.ke` returned a different enterprise/fintec
 5. Keep PR #213 in draft until CI and preview review are complete.
 
 
-## Follow-up — authenticated account dashboard
+## Completed — authenticated account profile (PR #216)
 
 ### Scope
 
-Replace the original `/me` authentication diagnostics page with a user-facing account dashboard based on the NetHubKe profile returned by `GET /api/v1/users/me` (and existing first-login sync behavior).
+Replace the original `/me` authentication diagnostics page with a user-facing account profile based on the NetHubKe profile returned by `GET /api/v1/users/me` (and existing first-login sync behavior).
 
 ### Implementation
 
@@ -111,3 +111,28 @@ Replace the original `/me` authentication diagnostics page with a user-facing ac
 - Source inspected on `master` after PR #215 merged at `9d061024f7a2809934c9619301c81afad45c4608`.
 - TypeScript profile type extended with optional `created_at` and `updated_at` fields from the supplied API response shape.
 - CI and rendered desktop/mobile review are pending PR checks; no local build or browser visual test has been run in this environment.
+
+
+## Current task — dashboard shell and Next.js 16 (issue #217)
+
+### Plan / boundaries
+
+- Move the profile page to `/dashboard/me`; retain `/me` as a compatibility redirect.
+- Make `/dashboard` redirect to `/dashboard/me` initially.
+- Add a reusable light dashboard shell with persistent desktop sidebar, mobile navigation, shared header and main content region.
+- Show only working navigation: **My profile**. Do not add inert placeholders for future features.
+- Upgrade Next.js and `eslint-config-next` to the current stable 16.x line; use ESLint CLI because `next lint` is removed in Next.js 16.
+- Add `src/proxy.ts` as an optimistic cookie-presence gate for dashboard requests only. Keep `auth()` in the dashboard layout as the authoritative session check.
+- Preserve the existing OIDC provider, PKCE/state cookies, server-side token retrieval, NetHubKe profile call/first-login sync and sign-out action.
+- Update crawler directives, documentation and trackers. Do not add backend work or new dependencies unless the upgrade proves one necessary.
+
+### Implementation / verification status
+
+- [x] Issue #217 created.
+- [x] Topic branch created from master commit `ee768708b65c114413fc1f65aed1c99048af8bc6`.
+- [x] Stale tracker baseline corrected before implementation.
+- [ ] Dashboard shell and route migration.
+- [ ] Next.js 16 and lockfile migration.
+- [ ] Proxy setup and authentication boundary verification.
+- [ ] Lint, typecheck and production build.
+- [ ] PR opened against master; do not merge without explicit user approval.
