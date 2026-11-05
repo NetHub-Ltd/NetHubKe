@@ -36,7 +36,7 @@ export default function LoginPage() {
         <form
           action={async () => {
             "use server";
-            await signIn("oidc", { redirectTo: "/me" });
+            await signIn("oidc", { redirectTo: "/dashboard/me" });
           }}
         >
           <button type="submit" className="nh-btn-primary mt-8 min-h-12 w-full">
