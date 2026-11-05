@@ -27,3 +27,21 @@ No database schema, backend API, Auth.js/OIDC callback, token flow, BFF contract
 - The direct-email fallback appears only when `NEXT_PUBLIC_CONTACT_EMAIL` is configured.
 - Search results may continue to show stale or unrelated content until the production deployment and search index reflect the approved site.
 - Visual review remains required on mobile and desktop; screenshot-based visual audit was not available during this chat.
+
+
+## Follow-up — `/me` account dashboard
+
+### Change boundary
+
+- Replaces the old `/me` diagnostics UI with a responsive authenticated profile dashboard.
+- Updates the `NetHubUser` frontend type to include optional profile timestamps.
+- Gives `/me` its own focused header by excluding it from the public marketing header/footer.
+- Preserves the existing session guard, profile API call, first-login sync and server-side sign-out.
+
+### Rollback
+
+Revert the account-dashboard PR through a reviewed PR targeting `master`. This restores the previous `/me` page and shared chrome behavior. No database or backend rollback is required.
+
+### Risk
+
+Profile display depends on the existing `NETHUB_API_URL` and IdP access-token forwarding. If profile retrieval fails, the page shows a generic retry state and does not expose diagnostic details or credentials.

@@ -4,9 +4,12 @@
 
 - **Corporate website foundation:** completed and merged in PR #206.
 - **Typography, surface and login polish:** merged into `dev` through PR #209.
-- **Current work:** draft PR #213 on `feat/site-discovery-conversion-review`, linked to issue #212.
-- **Current branch base:** latest `dev` at `f52896f655c1d1ce0e2994d7c30dd426e117c2bd`; this branch was synchronized with a normal merge commit, not rebased.
-- Do not merge PR #213 without user approval.
+- **Corporate-site discovery and conversion:** completed and merged through PR #213 (to `dev`) and PR #214 (to `master`).
+- **Typography, surface and login polish:** completed and merged through PR #211/#214.
+- **Latest production redeploy trigger:** PR #215 merged to `master`.
+- **Current follow-up:** authenticated `/me` account dashboard on `feat/me-account-dashboard`, targeting `master`.
+- **Current branch base:** `master` at `9d061024f7a2809934c9619301c81afad45c4608`.
+- Do not merge PR #216 without user approval.
 
 ## Approved direction
 
@@ -66,6 +69,7 @@ Search-indexed results for `nethub.co.ke` returned a different enterprise/fintec
 - Kept Tawala and NetPay marked Coming soon; product enquiries are not represented as general availability.
 - Preserved the typography/login polish and selected surface-elevation tokens already merged into `dev`.
 - No authentication, OIDC, token, BFF, backend, database or infrastructure changes.
+- Extended the frontend CI pull-request target branches to include `master`, so the required lint, TypeScript and production-build checks run for this PR and future master-targeted frontend PRs.
 
 ## Verification
 
@@ -84,3 +88,26 @@ Search-indexed results for `nethub.co.ke` returned a different enterprise/fintec
 3. Review the generated service routes and metadata in a deployed preview if one is available.
 4. Confirm `NEXT_PUBLIC_CONTACT_EMAIL=hello@nethub.co.ke` and `NEXT_PUBLIC_SITE_URL=https://nethub.co.ke` in the deployment environment.
 5. Keep PR #213 in draft until CI and preview review are complete.
+
+
+## Follow-up — authenticated account dashboard
+
+### Scope
+
+Replace the original `/me` authentication diagnostics page with a user-facing account dashboard based on the NetHubKe profile returned by `GET /api/v1/users/me` (and existing first-login sync behavior).
+
+### Implementation
+
+- Show full name, email, username, active/inactive status, business-workspace linkage, member-since date and last-updated date.
+- Use a focused account header and hide marketing navigation/footer on `/me` only.
+- Keep `/me` protected by the existing Auth.js session and redirect unauthenticated visitors to `/login`.
+- Preserve the existing server-side sign-out action.
+- Remove token, cookie, JWT claim and backend reachability diagnostics from the user-facing page.
+- Do not change OIDC, token forwarding, backend endpoints, database schema or product authorization.
+- Handle profile-fetch failures with a safe, non-technical retry state.
+
+### Verification
+
+- Source inspected on `master` after PR #215 merged at `9d061024f7a2809934c9619301c81afad45c4608`.
+- TypeScript profile type extended with optional `created_at` and `updated_at` fields from the supplied API response shape.
+- CI and rendered desktop/mobile review are pending PR checks; no local build or browser visual test has been run in this environment.
