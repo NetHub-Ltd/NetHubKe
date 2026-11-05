@@ -2,11 +2,6 @@ import Link from "next/link";
 import { signOut } from "@/auth";
 import { DashboardNavigation } from "@/components/dashboard/DashboardNavigation";
 
-async function signOutAction() {
-  "use server";
-  await signOut({ redirectTo: "/" });
-}
-
 function getInitials(value: string): string {
   const parts = value.trim().split(/[\s@._-]+/).filter(Boolean);
   if (parts.length > 1) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
@@ -34,6 +29,11 @@ export function DashboardShell({
   accountLabel: string;
 }) {
   const initials = getInitials(accountLabel);
+
+  async function handleSignOut() {
+    "use server";
+    await signOut({ redirectTo: "/" });
+  }
 
   return (
     <div className="flex min-h-[100svh] w-full bg-canvas/80">
@@ -104,7 +104,7 @@ export function DashboardShell({
               >
                 {initials}
               </span>
-              <form action={signOutAction}>
+              <form action={handleSignOut}>
                 <button type="submit" className="nh-btn-secondary min-h-10 px-3 sm:px-4">
                   <span className="hidden sm:inline">Sign out</span>
                   <span className="sm:hidden">Exit</span>
