@@ -45,3 +45,27 @@ Revert the account-dashboard PR through a reviewed PR targeting `master`. This r
 ### Risk
 
 Profile display depends on the existing `NETHUB_API_URL` and IdP access-token forwarding. If profile retrieval fails, the page shows a generic retry state and does not expose diagnostic details or credentials.
+
+
+## Follow-up — dashboard route migration and Next.js 16
+
+### Change boundary
+
+- Moves the existing profile UI from `/me` to `/dashboard/me` and retains `/me` as a redirect.
+- Adds a shared responsive dashboard shell and dashboard route protection.
+- Adds Next.js 16 `src/proxy.ts` with an optimistic session-cookie-presence check; the dashboard layout remains responsible for the real Auth.js session validation.
+- Upgrades frontend framework and lint configuration, migrates the lint command and regenerates the npm lockfile.
+- Updates marketing chrome exclusions, robots directives, documentation and trackers.
+- Does not change OIDC provider configuration, PKCE/state handling, token storage/forwarding, NetHubKe API contracts, backend or database.
+
+### Rollback
+
+Revert the dashboard/Next.js upgrade PR through a new reviewed PR targeting `master`. This restores the prior `/me` route and frontend dependency versions. No backend, database or IdP rollback is required.
+
+### Risks and safeguards
+
+- A present session cookie is only an optimistic signal; it is not proof of a valid session. The dashboard layout must call Auth.js `auth()` and redirect invalid/expired sessions to `/login`.
+- Both secure and non-secure Auth.js cookie names must be recognized by Proxy because the existing configuration chooses based on the public URL.
+- Preserve the current server-only access-token retrieval and generic profile-unavailable state.
+- Validate npm lockfile consistency with `npm ci` after the Next.js 16 dependency upgrade.
+- Do not claim production deployment or visual browser verification without evidence.
