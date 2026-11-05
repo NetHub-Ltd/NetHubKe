@@ -40,7 +40,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: next16-package-lock
-          path: package-lock.json
+          path: apps/frontend/package-lock.json
           if-no-files-found: error
       - name: Lint
         run: npm run lint
