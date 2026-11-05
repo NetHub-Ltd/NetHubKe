@@ -17,7 +17,21 @@ The site should communicate business outcomes in customer language. Internal ide
 | `/about` | NetHub purpose and working principles |
 | `/contact` | Business enquiry context and contact handoff |
 
-The `/login` route is the OIDC entry point. The authenticated `/me` route is a focused account dashboard that displays the profile returned by NetHubKe. The `/api/*` routes remain application/authentication surfaces. The dashboard does not expose tokens or backend diagnostics.
+## Authenticated application routes
+
+| Route | Purpose |
+|---|---|
+| `/login` | Auth.js OIDC sign-in entry point |
+| `/dashboard` | Redirects to the default dashboard destination |
+| `/dashboard/me` | Authenticated profile and account details from NetHubKe |
+| `/me` | Compatibility redirect to `/dashboard/me` |
+| `/api/*` | Application and Auth.js API routes |
+
+The dashboard is a separate authenticated application area, not part of the public marketing navigation. Its shared layout owns the sidebar, header and main content region. The initial navigation exposes only **My profile**, the first implemented destination; add future destinations only when their routes and operations exist.
+
+The dashboard layout performs the authoritative Auth.js session check. Next.js 16 `src/proxy.ts` performs only a lightweight optimistic check for the presence of either configured Auth.js session-cookie name (including chunked cookies) before dashboard requests. A cookie's presence is not proof of a valid session. Server-side profile retrieval continues to use the existing IdP access token and NetHubKe resource API.
+
+Dashboard pages and login are marked `noindex,nofollow`. The sitemap contains only public marketing routes, and robots disallows dashboard, login, legacy account and API paths.
 
 ## Visual direction
 
@@ -29,6 +43,8 @@ Approved direction: **Growth Partner + Hybrid**.
 - Cyan is a restrained supporting accent.
 - Poppins is used for headings and DM Sans for body/interface text.
 - Shared semantic tokens live in `src/app/globals.css`; Tailwind maps them in `tailwind.config.js`. Primary text uses a deep navy ink rather than black. Selected content panels use restrained ambient elevation; avoid applying card shadows to every section.
+
+The authenticated dashboard uses the same light surfaces, blue accents and typography, with a dedicated responsive navigation shell. It must remain visually distinct from the public marketing header/footer.
 
 Do not introduce one-off page palettes or add a design dependency without a concrete need.
 
@@ -56,7 +72,13 @@ A server-side delivery mechanism is not currently configured. Introduce one only
 
 ## Authentication boundary
 
-The existing Auth.js generic OIDC provider, PKCE/state cookies, server-side token handling, BFF routes and NetHubKe integration are not part of this website redesign. Preserve these contracts and keep the Node runtime on the Auth.js route.
+The existing Auth.js generic OIDC provider, PKCE/state cookies, server-side token handling, BFF routes and NetHubKe integration are preserved. Do not add another IdP, product-token exchange or browser-side token handling.
+
+The Auth.js route remains on the Node.js runtime. Dashboard layout validation remains authoritative even when Proxy redirects requests with no session cookie.
+
+## Frontend framework
+
+The frontend targets Next.js 16.x and requires Node.js 20.19 or later. The Next.js 16 `proxy.ts` convention replaces the deprecated `middleware.ts` convention. Linting runs through the ESLint CLI because `next lint` is no longer available.
 
 ## Local checks
 
@@ -69,4 +91,4 @@ npx tsc --noEmit
 npm run build
 ```
 
-The frontend CI workflow runs these gates on pull requests targeting `dev`.
+The frontend CI workflow runs these gates on pull requests targeting `master`.

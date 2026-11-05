@@ -3,7 +3,7 @@
 The Next.js App Router application serves two roles:
 
 1. The public NetHub corporate website.
-2. A small authenticated client that demonstrates the existing Auth.js/OIDC and NetHubKe integration.
+2. An authenticated client of NetHubKe, using the existing Auth.js/OIDC flow.
 
 ## Public website
 
@@ -37,10 +37,21 @@ There is no product-token exchange. The website remains a client of NetHubKe.
 | Path | Role |
 |---|---|
 | `/login` | OIDC sign-in |
-| `/me` | Profile from NetHubKe (server-side BFF call) |
+| `/dashboard` | Redirects to `/dashboard/me` |
+| `/dashboard/me` | Authenticated profile from NetHubKe (server-side BFF call) |
+| `/me` | Compatibility redirect to `/dashboard/me` |
 | `/api/bff/me` | JSON BFF |
 | `/api/bff/sync` | JSON BFF |
 | `/api/auth/*` | Auth.js |
+
+The dashboard layout verifies the Auth.js session before rendering. The Next.js 16 `src/proxy.ts` performs an optimistic cookie-presence redirect only; it does not validate sessions or replace the layout guard.
+
+## Framework and runtime
+
+- Next.js 16.x
+- React 19
+- Node.js 20.19 or later
+- ESLint 10 flat configuration, run through the ESLint CLI (`npm run lint`)
 
 ## Configure
 

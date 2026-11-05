@@ -7,9 +7,9 @@
 - **Corporate-site discovery and conversion:** completed and merged through PR #213 (to `dev`) and PR #214 (to `master`).
 - **Typography, surface and login polish:** completed and merged through PR #211/#214.
 - **Latest production redeploy trigger:** PR #215 merged to `master`.
-- **Current follow-up:** authenticated `/me` account dashboard on `feat/me-account-dashboard`, targeting `master`.
-- **Current branch base:** `master` at `9d061024f7a2809934c9619301c81afad45c4608`.
-- Do not merge PR #216 without user approval.
+- **Current follow-up:** move the merged account profile into `/dashboard/me`, introduce a reusable dashboard shell, and upgrade the frontend to Next.js 16 on `feat/dashboard-shell-next16`, targeting `master`.
+- **Current branch base:** `master` at `ee768708b65c114413fc1f65aed1c99048af8bc6`.
+- PR #216 was merged; do not merge the current follow-up PR without user approval.
 
 ## Approved direction
 
@@ -81,20 +81,18 @@ Search-indexed results for `nethub.co.ke` returned a different enterprise/fintec
 - Final accessibility/hierarchy refinement triggered a fresh CI run `41929501892`, currently in progress; wait for that run before marking the branch fully verified.
 - Responsive visual review and keyboard interaction checks remain pending.
 
-## Next steps
+## Completion record
 
-1. Confirm the merge commit contains both the latest `dev` changes and this branch's service discovery work.
-2. Run CI and fix any observed lint, type or build failures.
-3. Review the generated service routes and metadata in a deployed preview if one is available.
-4. Confirm `NEXT_PUBLIC_CONTACT_EMAIL=hello@nethub.co.ke` and `NEXT_PUBLIC_SITE_URL=https://nethub.co.ke` in the deployment environment.
-5. Keep PR #213 in draft until CI and preview review are complete.
+- The corporate-site discovery and conversion work was merged through PR #213/#214 into `master`.
+- Public routes, service catalogue, metadata and sitemap remain the baseline for the current dashboard work.
+- No live browser visual review is recorded here; verify a deployed preview separately if one becomes available.
 
 
-## Follow-up — authenticated account dashboard
+## Completed — authenticated account profile (PR #216)
 
 ### Scope
 
-Replace the original `/me` authentication diagnostics page with a user-facing account dashboard based on the NetHubKe profile returned by `GET /api/v1/users/me` (and existing first-login sync behavior).
+Replace the original `/me` authentication diagnostics page with a user-facing account profile based on the NetHubKe profile returned by `GET /api/v1/users/me` (and existing first-login sync behavior).
 
 ### Implementation
 
@@ -110,4 +108,36 @@ Replace the original `/me` authentication diagnostics page with a user-facing ac
 
 - Source inspected on `master` after PR #215 merged at `9d061024f7a2809934c9619301c81afad45c4608`.
 - TypeScript profile type extended with optional `created_at` and `updated_at` fields from the supplied API response shape.
-- CI and rendered desktop/mobile review are pending PR checks; no local build or browser visual test has been run in this environment.
+- PR #216 CI run #42026978290 passed install, lint, TypeScript typecheck and production build. No rendered desktop/mobile browser review was performed.
+
+
+## Current task — dashboard shell and Next.js 16 (issue #217)
+
+### Plan / boundaries
+
+- Move the profile page to `/dashboard/me`; retain `/me` as a compatibility redirect.
+- Make `/dashboard` redirect to `/dashboard/me` initially.
+- Add a reusable light dashboard shell with persistent desktop sidebar, mobile navigation, shared header and main content region.
+- Show only working navigation: **My profile**. Do not add inert placeholders for future features.
+- Upgrade to Next.js 16.4.5 and `eslint-config-next` 16.4.5; use ESLint 10.14.0 with the native flat config and ESLint CLI because `next lint` is removed in Next.js 16.
+- Add `src/proxy.ts` as an optimistic cookie-presence gate for dashboard requests only. Keep `auth()` in the dashboard layout as the authoritative session check.
+- Preserve the existing OIDC provider, PKCE/state cookies, server-side token retrieval, NetHubKe profile call/first-login sync and sign-out action.
+- Update crawler directives, documentation, trackers and Next.js 16 TypeScript settings. No backend work or new runtime dependencies.
+
+### Implementation / verification status
+
+- [x] Issue #217 created.
+- [x] Topic branch created from master commit `ee768708b65c114413fc1f65aed1c99048af8bc6`.
+- [x] Stale tracker baseline corrected before implementation.
+- [x] Dashboard shell and route migration.
+- [x] Next.js 16.4.5, `eslint-config-next` 16.4.5, ESLint 10.14.0 and regenerated lockfile.
+- [x] Proxy setup implemented; authoritative Auth.js session check remains in the dashboard layout.
+- [x] `npm ci`, lint, typecheck and production build passed in frontend CI run #228.
+- [x] PR #218 opened against master and prepared for review; do not merge without explicit user approval.
+
+
+### Final review notes
+
+- Final frontend CI run: #228 — all four gates passed on application head `d21a4b6d127587c2b5241e9b30ec36cc5708ed59`.
+- CodeQL run #99 completed successfully for both Python and JavaScript/TypeScript on the latest tracker head before this update.
+- Browser visual review and a live deployment check were not performed. The PR is ready for source/CI review, not a claim of production readiness.
