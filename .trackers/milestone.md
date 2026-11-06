@@ -1,3 +1,5 @@
+> **Historical:** A0–A6 described the original Architecture A bare minimum. That foundation is implemented. For current integration contracts see `docs/INTEGRATIONS.md` and `docs/API.md`. Do not treat the checklist below as the only roadmap.
+
 # NetHubKe Backend — Architecture A Milestones
 
 **Contract:** Root `README.md` (Architecture A — resource server only).  
