@@ -1,38 +1,31 @@
 # Backend stack (Architecture A)
 
-Locked for NetHubKe resource-server rebuild.
+Locked stack for the NetHubKe resource server.
 
 | Concern | Choice |
 |---------|--------|
 | API | FastAPI |
 | Settings | **pydantic_settings** (`BaseSettings`) — env validated at load |
 | ORM / models | SQLModel |
-| Database | PostgreSQL only |
-| Runtime DB access | `sqlmodel.ext.asyncio.session.AsyncSession` (or SQLAlchemy `AsyncSession`) |
-| Migrations | Alembic **sync** (separate sync engine/URL) |
-| DB configuration | Discrete credentials; URLs **assembled in `config.py`** |
+| Database | PostgreSQL |
+| Runtime DB access | AsyncSession |
+| Migrations | Alembic **sync** |
+| DB configuration | Discrete `FASTAPI_DB_*` credentials; URLs assembled in config |
 | Async driver | asyncpg |
-| Authn of callers | Validate upstream OIDC JWT (resource server); no product JWT issuance |
-| Tests | pytest, real Postgres in CI |
+| Sync driver (Alembic) | psycopg2 (`postgresql+psycopg2://…`) |
+| Authn of callers | Upstream OIDC JWT validation + **trusted_clients** allowlist |
+| Rate limiting | SlowAPI (configurable) |
+| Optional cache | Redis (`REDIS_URL`) for trusted-client set |
+| Logging | Loguru |
+| Tests | pytest; Postgres in CI |
 
 ## URL assembly
 
-Example pattern (illustrative):
+Application builds URLs internally (do not commit real hosts or passwords):
 
-```python
-@property
-def async_database_uri(self) -> str:
-    return (
-        f"postgresql+asyncpg://{self.FASTAPI_DB_USER}:{self.FASTAPI_DB_PASSWORD}"
-        f"@{self.FASTAPI_DB_HOST}:{self.FASTAPI_DB_PORT}/{self.FASTAPI_DB_NAME}"
-    )
+- Async: `postgresql+asyncpg://…`
+- Sync: `postgresql+psycopg2://…`
 
-@property
-def sync_database_uri(self) -> str:
-    return (
-        f"postgresql://{self.FASTAPI_DB_USER}:{self.FASTAPI_DB_PASSWORD}"
-        f"@{self.FASTAPI_DB_HOST}:{self.FASTAPI_DB_PORT}/{self.FASTAPI_DB_NAME}"
-    )
-```
+## Environment
 
-Alembic `env.py` uses `sync_database_uri`. Application session factory uses `async_database_uri`.
+See `apps/backend/.env.example` for **placeholder** names. Inject real values only via a secret manager or sealed secrets — never via public git content.

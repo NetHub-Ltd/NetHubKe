@@ -58,7 +58,7 @@ The dashboard layout verifies the Auth.js session before rendering. The Next.js 
 Copy `.env.example` to `.env.local` and configure the OIDC and NetHubKe values.
 
 - `NEXT_PUBLIC_SITE_URL`: public canonical website origin.
-- `NEXT_PUBLIC_CONTACT_EMAIL`: enquiry inbox; configured as `hello@nethub.co.ke` in the example environment.
+- `NEXT_PUBLIC_CONTACT_EMAIL`: enquiry inbox; configured as `hello@example.com` in the example environment.
 - `AUTH_URL`, `AUTH_SECRET`, `AUTH_OIDC_*`: existing Auth.js configuration.
 - `NETHUB_API_URL`: NetHubKe resource server URL.
 
