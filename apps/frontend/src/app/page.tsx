@@ -31,15 +31,16 @@ export default function HomePage() {
   return (
     <main>
       <section className="relative isolate overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_75%_10%,rgba(79,70,229,0.18),transparent_45%),radial-gradient(ellipse_at_10%_20%,rgba(6,182,212,0.12),transparent_50%)]" aria-hidden />
-        <div className="nh-container grid min-h-[720px] items-center gap-14 py-20 lg:grid-cols-[1.05fr_0.95fr] lg:py-24">
+        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_75%_10%,rgba(79,70,229,0.20),transparent_45%),radial-gradient(ellipse_at_10%_20%,rgba(6,182,212,0.14),transparent_50%)]" aria-hidden />
+        <div className="nh-container grid min-h-[780px] items-center gap-14 py-24 lg:grid-cols-[1.05fr_0.95fr] lg:py-28">
           <div>
             <p className="nh-badge">Business growth partner · Kenya</p>
-            <h1 className="nh-title mt-6">Make technology work harder for your <span className="nh-gradient-text">business.</span></h1>
-            <p className="nh-lead mt-6">NetHub helps growing businesses turn digital friction into clearer customer journeys, better-operating systems and useful digital products. We start with the business outcome—not a technology looking for a problem.</p>
-            <div className="mt-9 flex flex-wrap gap-3">
-              <Link href="/contact" className="nh-btn-primary">Request a practical recommendation <span aria-hidden>↗</span></Link>
-              <Link href="/services" className="nh-btn-secondary">Explore services</Link>
+            <h1 className="nh-title mt-7 text-5xl sm:text-6xl lg:text-7xl">Make technology work harder for your <span className="nh-gradient-text">business.</span></h1>
+            <p className="nh-lead mt-7 text-lg sm:text-xl">NetHub helps growing businesses turn digital friction into clearer customer journeys, better-operating systems and useful digital products.</p>
+            <p className="mt-4 text-base font-medium text-ink">Start with the outcome you need. We’ll help you find the practical next step.</p>
+            <div className="mt-10 flex flex-wrap gap-4">
+              <Link href="/contact" className="nh-btn-primary text-base">Request a practical recommendation <span aria-hidden>↗</span></Link>
+              <Link href="/services" className="nh-btn-secondary text-base">Explore services</Link>
             </div>
             <div className="mt-10 flex flex-wrap gap-3 text-sm text-ink-muted">
               {["Websites", "Web & mobile apps", "SEO", "Business systems"].map((item) => (
