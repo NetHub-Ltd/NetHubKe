@@ -2,139 +2,68 @@
 @tailwind components;
 @tailwind utilities;
 
-/*
- * NetHub corporate design tokens.
- * The gradient is part of the global canvas; content surfaces sit gently above it.
- */
 :root {
   color-scheme: light;
-  --nh-canvas: 249 249 247;
-  --nh-canvas-soft: 243 245 247;
+  --nh-canvas: 250 250 248;
+  --nh-canvas-soft: 241 245 249;
   --nh-surface: 255 255 255;
-  --nh-surface-raised: 252 252 251;
-  /* Deep navy with a touch of warmth: deliberately softer than pure black. */
-  --nh-ink: 34 43 59;
-  --nh-ink-muted: 79 91 108;
-  --nh-ink-subtle: 110 122 137;
-  --nh-ink-invert: 250 250 248;
-  --nh-line: 225 229 234;
-  --nh-line-strong: 202 211 221;
-  --nh-brand: 37 99 235;
-  --nh-brand-hover: 29 78 216;
-  --nh-brand-soft: 219 234 254;
+  --nh-surface-raised: 248 250 252;
+  --nh-ink: 15 23 42;
+  --nh-ink-muted: 71 85 105;
+  --nh-ink-subtle: 100 116 139;
+  --nh-ink-invert: 248 250 252;
+  --nh-line: 226 232 240;
+  --nh-line-strong: 203 213 225;
+  --nh-brand: 79 70 229;
+  --nh-brand-hover: 67 56 202;
+  --nh-brand-soft: 224 231 255;
   --nh-brand-fg: 255 255 255;
-  --nh-accent: 8 145 178;
+  --nh-accent: 6 182 212;
   --nh-accent-soft: 207 250 254;
   --nh-success: 22 101 52;
   --nh-warning: 180 83 9;
   --nh-danger: 185 28 28;
-  --nh-shadow-soft: 0 10px 28px rgb(34 43 59 / 0.055), 0 1px 3px rgb(34 43 59 / 0.045);
+  --nh-shadow-soft: 0 18px 40px rgb(15 23 42 / 0.08), 0 2px 6px rgb(15 23 42 / 0.05);
 }
 
 @layer base {
-  html {
-    @apply scroll-smooth antialiased;
-    background-color: rgb(var(--nh-canvas));
-  }
-
+  html { @apply scroll-smooth antialiased; background-color: rgb(var(--nh-canvas)); }
   body {
     @apply min-h-screen bg-canvas text-ink font-sans;
-    /* Keep the familiar blue/cyan atmosphere visible across the whole site. */
     background-image:
-      radial-gradient(ellipse 78% 46% at 8% 0%, rgb(var(--nh-brand) / 0.105), transparent 70%),
-      radial-gradient(ellipse 62% 42% at 100% 16%, rgb(var(--nh-accent) / 0.075), transparent 72%);
+      radial-gradient(ellipse 70% 45% at 10% 0%, rgb(var(--nh-brand) / 0.14), transparent 70%),
+      radial-gradient(ellipse 55% 40% at 100% 12%, rgb(var(--nh-accent) / 0.10), transparent 72%);
     background-attachment: fixed;
   }
-
-  :focus-visible {
-    @apply outline-none ring-2 ring-brand ring-offset-2 ring-offset-canvas;
-  }
-
-  ::selection {
-    @apply bg-brand/20 text-ink;
-  }
-
-  a, button, input, textarea, select {
-    -webkit-tap-highlight-color: transparent;
-  }
+  :focus-visible { @apply outline-none ring-2 ring-brand ring-offset-2 ring-offset-canvas; }
+  ::selection { @apply bg-brand/20 text-ink; }
+  a, button, input, textarea, select { -webkit-tap-highlight-color: transparent; }
 }
 
 @layer components {
-  .nh-container {
-    @apply mx-auto w-full max-w-content px-5 sm:px-7 lg:px-8;
-  }
-
-  .nh-section {
-    @apply py-16 sm:py-20 lg:py-24;
-  }
-
-  .nh-eyebrow {
-    @apply text-xs font-semibold uppercase tracking-[0.16em] text-brand;
-  }
-
-  .nh-title {
-    @apply font-display text-4xl font-semibold leading-[1.08] tracking-[-0.04em] text-ink sm:text-5xl lg:text-6xl;
-  }
-
-  .nh-lead {
-    @apply max-w-2xl text-base leading-relaxed text-ink-muted sm:text-lg;
-  }
-
-  .nh-card {
-    @apply rounded-nh-lg border border-line bg-surface p-6 shadow-nh-soft;
-  }
-
-  .nh-btn {
-    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-nh px-5 py-3 text-sm font-semibold transition-colors
-      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-canvas
-      disabled:pointer-events-none disabled:opacity-50;
-  }
-
-  .nh-btn-primary {
-    @apply nh-btn bg-brand text-brand-fg hover:bg-brand-hover;
-  }
-
-  .nh-btn-secondary {
-    @apply nh-btn border border-line-strong bg-surface text-ink hover:border-brand/50 hover:bg-canvas-soft;
-  }
-
-  .nh-btn-ghost {
-    @apply nh-btn text-ink-muted hover:bg-canvas-soft hover:text-ink;
-  }
-
-  .nh-input {
-    @apply w-full rounded-nh border border-line-strong bg-surface px-3.5 py-3 text-sm text-ink placeholder:text-ink-subtle
-      focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20;
-  }
-
-  .nh-label {
-    @apply mb-1.5 block text-sm font-medium text-ink;
-  }
-
-  .nh-error {
-    @apply mt-1.5 text-sm text-danger;
-  }
-
-  .nh-link {
-    @apply font-semibold text-brand underline-offset-4 hover:underline;
-  }
-
-  .nh-dark-section {
-    @apply bg-slate-950 text-white;
-  }
-
-  /* Selected light content cards lift slightly from the gradient canvas. */
-  main article.bg-surface {
-    box-shadow: var(--nh-shadow-soft);
-  }
+  .nh-container { @apply mx-auto w-full max-w-content px-5 sm:px-7 lg:px-8; }
+  .nh-section { @apply py-16 sm:py-20 lg:py-24; }
+  .nh-eyebrow { @apply text-xs font-semibold uppercase tracking-[0.18em] text-brand; }
+  .nh-title { @apply font-display text-4xl font-bold leading-[1.05] tracking-[-0.045em] text-ink sm:text-5xl lg:text-6xl; }
+  .nh-lead { @apply max-w-2xl text-base leading-relaxed text-ink-muted sm:text-lg; }
+  .nh-card { @apply rounded-3xl border border-line bg-surface p-6 shadow-nh-soft transition-all duration-300 hover:-translate-y-1 hover:shadow-nh-hover; }
+  .nh-btn { @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:pointer-events-none disabled:opacity-50; }
+  .nh-btn-primary { @apply nh-btn bg-brand text-brand-fg shadow-nh-glow hover:bg-brand-hover hover:shadow-nh-glow-strong; }
+  .nh-btn-secondary { @apply nh-btn border border-line-strong bg-surface text-ink hover:border-brand/40 hover:bg-canvas-soft; }
+  .nh-btn-ghost { @apply nh-btn text-ink-muted hover:bg-canvas-soft hover:text-ink; }
+  .nh-input { @apply w-full rounded-2xl border border-line-strong bg-surface px-4 py-3 text-sm text-ink placeholder:text-ink-subtle focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20; }
+  .nh-label { @apply mb-1.5 block text-sm font-medium text-ink; }
+  .nh-error { @apply mt-1.5 text-sm text-danger; }
+  .nh-link { @apply font-semibold text-brand underline-offset-4 hover:underline; }
+  .nh-dark-section { @apply bg-slate-950 text-white; }
+  .nh-gradient-text { @apply bg-gradient-to-r from-brand via-indigo-500 to-accent bg-clip-text text-transparent; }
+  .nh-glass { @apply rounded-3xl border border-white/15 bg-white/10 backdrop-blur-xl; }
+  .nh-badge { @apply inline-flex items-center gap-2 rounded-full border border-brand/20 bg-brand-soft/70 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-brand; }
+  .nh-icon-chip { @apply flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-brand to-accent text-white shadow-nh-glow; }
+  .nh-cta-band { @apply relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-brand via-indigo-600 to-accent px-7 py-12 text-white sm:px-12 sm:py-16; }
+  .nh-cta-band::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 85% 15%, rgb(255 255 255 / 0.18), transparent 45%); pointer-events: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    scroll-behavior: auto !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    transform: none !important;
-  }
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; transform: none !important; }
 }
