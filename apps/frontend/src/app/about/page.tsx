@@ -5,7 +5,16 @@ export const metadata: Metadata = {
   title: "Business Growth Partner in Kenya",
   description: "Learn how NetHub helps Kenyan businesses solve practical challenges through digital experiences, software, SEO and business technology.",
   alternates: { canonical: "/about" },
-  openGraph: { url: "/about" },
+  openGraph: {
+    title: "NetHub | Business growth through technology",
+    description: "NetHub helps Kenyan businesses solve practical challenges through digital experiences, software, SEO and business technology.",
+    url: "/about",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "NetHub | Business growth through technology",
+    description: "NetHub helps Kenyan businesses solve practical challenges through digital experiences, software, SEO and business technology.",
+  },
 };
 
 const principles = [
@@ -14,17 +23,127 @@ const principles = [
   { title: "Build for the real world", body: "Solutions need to work beyond a presentation. We care about reliability, maintainability and what happens after launch." },
 ];
 
+const expectations = [
+  { title: "Clarify the need", body: "We start by understanding the business goal, the people involved and what is getting in the way." },
+  { title: "Agree on scope", body: "We identify a practical scope, priorities and the outcome that should define success." },
+  { title: "Deliver and improve", body: "We deliver a working solution and identify a sensible next step for maintenance or improvement." },
+];
+
+const aboutSchema = {
+  "@context": "https://schema.org",
+  "@type": "AboutPage",
+  name: "About NetHub",
+  url: "https://nethub.co.ke/about",
+  description: "NetHub helps Kenyan businesses solve practical challenges through digital experiences, software, SEO and business technology.",
+  mainEntity: {
+    "@type": "Organization",
+    name: "NetHub",
+    url: "https://nethub.co.ke",
+    areaServed: "Kenya",
+  },
+};
+
 export default function AboutPage() {
   return (
     <main>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(aboutSchema).replace(/</g, "\\u003c") }} />
+
       <section className="border-b border-line bg-[radial-gradient(ellipse_at_70%_0%,rgba(8,145,178,0.10),transparent_45%)]">
-        <div className="nh-container nh-section"><p className="nh-eyebrow">About NetHub</p><h1 className="nh-title mt-4 max-w-4xl">We’re here to help businesses make more of what technology can do.</h1><p className="nh-lead mt-6">NetHub is a business growth partner powered by technology. We help organisations solve practical problems, create better customer experiences and build the digital capabilities they need to move forward.</p></div>
+        <div className="nh-container nh-section">
+          <p className="nh-eyebrow">About NetHub</p>
+          <h1 className="nh-title mt-4 max-w-4xl">We’re here to help businesses make more of what technology can do.</h1>
+          <p className="nh-lead mt-6">NetHub is a business growth partner powered by technology. We help organisations solve practical problems, create better customer experiences and build the digital capabilities they need to move forward.</p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link href="/contact" className="nh-btn-primary">Request a practical recommendation <span aria-hidden>↗</span></Link>
+            <Link href="/services" className="nh-btn-secondary">Explore our services</Link>
+          </div>
+        </div>
       </section>
+
       <section className="nh-section">
-        <div className="nh-container grid gap-12 lg:grid-cols-[0.8fr_1.2fr]"><div><p className="nh-eyebrow">Why we exist</p><h2 className="mt-3 font-display text-3xl font-semibold tracking-tight text-ink">Good technology should make business better.</h2></div><div className="space-y-5 text-base leading-relaxed text-ink-muted"><p>Businesses invest time and money in websites, software and digital tools because they expect something to improve: more customers, smoother operations, better decisions or new ways to serve people.</p><p>But technology can become another expense when it is disconnected from the actual problem. We believe the work should begin with the outcome, not with a tool looking for a reason to exist.</p><p>That’s how we approach our services and the products we’re building: understand the need, solve the right problem and make the result useful in everyday business.</p></div></div>
+        <div className="nh-container grid gap-12 lg:grid-cols-[0.8fr_1.2fr]">
+          <div>
+            <p className="nh-eyebrow">Why we exist</p>
+            <h2 className="mt-3 font-display text-3xl font-semibold tracking-tight text-ink">Good technology should make business better.</h2>
+          </div>
+          <div className="space-y-5 text-base leading-relaxed text-ink-muted">
+            <p>Businesses invest time and money in websites, software and digital tools because they expect something to improve: more customers, smoother operations, better decisions or new ways to serve people.</p>
+            <p>But technology can become another expense when it is disconnected from the actual problem. We believe the work should begin with the outcome, not with a tool looking for a reason to exist.</p>
+            <p>That’s how we approach our services and the products we’re building: understand the need, solve the right problem and make the result useful in everyday business.</p>
+          </div>
+        </div>
       </section>
-      <section className="border-y border-line bg-canvas-soft"><div className="nh-container nh-section"><p className="nh-eyebrow">How we approach the work</p><h2 className="mt-3 max-w-2xl font-display text-3xl font-semibold tracking-tight text-ink sm:text-4xl">Practical thinking. Useful technology. Clear outcomes.</h2><div className="mt-10 grid gap-4 md:grid-cols-3">{principles.map((principle, index) => <article key={principle.title} className="nh-surface-lift rounded-2xl p-7"><p className="font-display text-sm font-semibold text-brand">0{index + 1}</p><h3 className="mt-5 font-display text-xl font-semibold text-ink">{principle.title}</h3><p className="mt-3 text-sm leading-relaxed text-ink-muted">{principle.body}</p></article>)}</div></div></section>
-      <section className="nh-section"><div className="nh-container rounded-[2rem] bg-slate-950 px-7 py-12 text-white sm:px-12 sm:py-14"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-cyan-300">Let’s work on what’s next</p><div className="mt-4 flex flex-col justify-between gap-7 md:flex-row md:items-end"><div className="max-w-2xl"><h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">Every good solution starts with a conversation.</h2><p className="mt-4 text-sm leading-relaxed text-slate-300">Tell us what you’re trying to achieve. We’ll help you think through the problem and the possibilities.</p></div><Link href="/contact" className="nh-btn min-h-12 shrink-0 bg-white text-slate-950 hover:bg-slate-100">Talk to NetHub <span aria-hidden>↗</span></Link></div></div></section>
+
+      <section className="border-y border-line bg-canvas-soft">
+        <div className="nh-container nh-section">
+          <div className="max-w-2xl">
+            <p className="nh-eyebrow">Who we work with</p>
+            <h2 className="mt-3 font-display text-3xl font-semibold tracking-tight text-ink sm:text-4xl">For businesses that need practical digital progress.</h2>
+            <p className="mt-4 text-base leading-relaxed text-ink-muted">We work with businesses that need a clearer online presence, more effective customer journeys, connected operational tools or a practical path from idea to usable product.</p>
+          </div>
+          <div className="mt-10 grid gap-4 md:grid-cols-3">
+            {["Businesses seeking visibility|Businesses that need a clearer online presence and a more discoverable route to enquiries.", "Teams improving operations|Teams that need connected tools, better workflows or a practical alternative to manual work.", "Founders building products|Founders and organisations that need help turning an idea into a focused, usable digital product."].map((item) => {
+              const [title, body] = item.split("|");
+              return (
+                <article key={title} className="nh-card">
+                  <h3 className="font-display text-lg font-semibold text-ink">{title}</h3>
+                  <p className="mt-3 text-sm leading-relaxed text-ink-muted">{body}</p>
+                </article>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      <section className="nh-section">
+        <div className="nh-container">
+          <div className="max-w-2xl">
+            <p className="nh-eyebrow">How we approach the work</p>
+            <h2 className="mt-3 font-display text-3xl font-semibold tracking-tight text-ink sm:text-4xl">Practical thinking. Useful technology. Clear outcomes.</h2>
+            <p className="mt-4 text-base leading-relaxed text-ink-muted">You do not need to arrive with a technical brief. We help clarify the problem, explore what is practical and agree on a useful way forward.</p>
+          </div>
+          <div className="mt-10 grid gap-4 md:grid-cols-3">
+            {principles.map((principle, index) => (
+              <article key={principle.title} className="nh-card">
+                <p className="font-display text-sm font-semibold text-brand">0{index + 1}</p>
+                <h3 className="mt-5 font-display text-xl font-semibold text-ink">{principle.title}</h3>
+                <p className="mt-3 text-sm leading-relaxed text-ink-muted">{principle.body}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="border-y border-line bg-canvas-soft">
+        <div className="nh-container nh-section">
+          <div className="max-w-2xl">
+            <p className="nh-eyebrow">What to expect</p>
+            <h2 className="mt-3 font-display text-3xl font-semibold tracking-tight text-ink sm:text-4xl">A clear path from challenge to next step.</h2>
+          </div>
+          <ol className="mt-10 grid gap-4 md:grid-cols-3">
+            {expectations.map((item, index) => (
+              <li key={item.title} className="rounded-2xl border border-line bg-surface p-7">
+                <p className="font-display text-sm font-semibold text-brand">0{index + 1}</p>
+                <h3 className="mt-4 font-display text-xl font-semibold text-ink">{item.title}</h3>
+                <p className="mt-3 text-sm leading-relaxed text-ink-muted">{item.body}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      <section className="nh-section">
+        <div className="nh-container rounded-[2rem] bg-slate-950 px-7 py-12 text-white sm:px-12 sm:py-14">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-cyan-300">Let’s work on what’s next</p>
+          <div className="mt-4 flex flex-col justify-between gap-7 md:flex-row md:items-end">
+            <div className="max-w-2xl">
+              <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">Every good solution starts with a conversation.</h2>
+              <p className="mt-4 text-sm leading-relaxed text-slate-300">Tell us what you’re trying to achieve. We’ll help you think through the problem and the possibilities.</p>
+            </div>
+            <Link href="/contact" className="nh-btn min-h-12 shrink-0 bg-white text-slate-950 hover:bg-slate-100">Talk to NetHub <span aria-hidden>↗</span></Link>
+          </div>
+        </div>
+      </section>
     </main>
   );
 }
