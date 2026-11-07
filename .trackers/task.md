@@ -2,51 +2,37 @@
 
 ## Status
 
-- **Current workstream:** Corporate-site UI/UX, positioning, trust, conversion, design system, SEO, and accessibility.
-- **Status:** Documentation and planning phase; implementation not started.
-- **Approved scope:** NetHubKe corporate website only.
-- **Explicitly excluded:** Tawala and NetPay product development, backend APIs, authentication, OIDC, database changes, and infrastructure.
-- **Topic branch:** `feat/corporate-uiux-marketing-audit`
-- **Base branch:** `dev`
-- **Pull-request target:** `dev`
-- **Implementation proposal:** `docs/UIUX-MARKETING-IMPLEMENTATION-PROPOSAL.md`
+- Current workstream: corporate-site UI/UX, positioning, trust, conversion, design system, SEO, and accessibility.
+- Status: Phase 1–4 implementation committed; remaining design-system, SEO, and accessibility work pending.
+- Implementation issue: #223.
+- Topic branch: `feat/corporate-uiux-marketing-audit`
+- Base branch: `dev`
+- Pull-request target: `dev`
+- Implementation proposal: `docs/UIUX-MARKETING-IMPLEMENTATION-PROPOSAL.md`
 
-## Branch baseline
+## Delivered
 
-- `dev` was created from `master` at commit `01969ef693b1acc2c25d07e12b19d03d93e7b0bb`.
-- `feat/corporate-uiux-marketing-audit` was created from `dev` at the same commit.
-- The eventual PR must target `dev`.
+- Removed the Tawala/NetPay homepage section.
+- Added audience clarity, tangible service framing, delivery principles, and a mid-page conversion prompt.
+- Made the primary homepage CTA more specific.
+- Added Organization and WebSite structured data.
+- Strengthened service summaries, deliverables, outcomes, and FAQs.
+- Removed Tawala and NetPay from contact-form service options.
+- Improved contact-form reassurance, validation, accessible error association, and direct-email fallback.
 
-## Approved direction
+## Remaining work
 
-Strengthen the NetHubKe corporate website as a business acquisition and search-discovery experience. Prioritize clear positioning, tangible services, credible trust signals, accessible conversion, consistent UI, and discoverability.
-
-## Implementation phases
-
-1. Positioning and homepage narrative.
-2. Service content architecture.
-3. Trust and credibility.
-4. Conversion journey.
-5. Design-system refinement.
-6. SEO and discoverability.
-7. Accessibility and quality gates.
-
-## Current next steps
-
-- [x] Create `dev` from `master`.
-- [x] Create `feat/corporate-uiux-marketing-audit` from `dev`.
-- [x] Add comprehensive implementation proposal.
-- [x] Update trackers.
-- [ ] Create implementation issue.
-- [ ] Obtain final user approval for implementation.
-- [ ] Implement approved phases in one coherent PR targeting `dev`.
-- [ ] Run applicable frontend quality gates.
-- [ ] Open PR and report actual verification results.
+- Review and improve service detail pages and About page.
+- Add reusable section, card, process, FAQ, and CTA components where justified.
+- Complete SEO metadata, canonical URLs, social previews, and structured data across public pages.
+- Complete accessibility, keyboard, focus, contrast, and responsive review.
+- Run frontend lint, TypeScript typecheck, and production build.
+- Open one PR targeting `dev`.
 
 ## Boundaries
 
-- Do not implement Tawala or NetPay product work.
-- Do not change backend, authentication, OIDC, database, or infrastructure.
-- Do not invent testimonials, metrics, client names, certifications, or outcomes.
+- No Tawala or NetPay product work.
+- No backend, authentication, OIDC, database, or infrastructure changes.
+- No invented testimonials, metrics, client names, certifications, or outcomes.
 - Do not push directly to `dev` or `master`.
 - Do not merge without explicit user approval.
