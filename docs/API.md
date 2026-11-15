@@ -26,7 +26,8 @@ This file is a **sanitized overview** for humans. It does not replace OpenAPI an
 2. **Users** — `/api/v1/users/*`  
 3. **Services** — `/api/v1/services`  
 4. **Applications** — `/api/v1/applications/*`  
-5. **Admin** — `/api/v1/admin/*`  
+5. **Organizations** — `/api/v1/organizations/*`  
+6. **Admin** — `/api/v1/admin/*`  
 
 See [INTEGRATIONS.md](./INTEGRATIONS.md) for client flow and audience rules.
 

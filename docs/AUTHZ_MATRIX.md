@@ -16,6 +16,8 @@
 | **authenticated** | Valid IdP access token → local user (via `get_token_data` / `get_current_user`) |
 | **owner** | Authenticated + object-level check (resource belongs to caller) |
 | **admin** | Authenticated + `User.is_admin` (`get_current_admin`) |
+| **org-member** | Authenticated + active `OrganizationMembership` |
+| **org-admin** | Org-member with role `owner` or `admin` |
 | **operator** | Gated by environment / feature flag (not end-user auth) |
 
 There is **no organization-scoped** class yet (membership model is future work; see readiness P1).
@@ -61,6 +63,20 @@ There is **no organization-scoped** class yet (membership model is future work; 
 
 ---
 
+
+## API v1 — organizations
+
+| Method | Path | Class | Dependency / policy | Notes |
+|--------|------|-------|---------------------|-------|
+| POST | `/api/v1/organizations` | authenticated | `get_current_user` | Caller becomes **owner** |
+| GET | `/api/v1/organizations` | authenticated | `get_current_user` | Active memberships only |
+| GET | `/api/v1/organizations/{id}` | org-member | Active membership required | Non-member → **404** |
+| GET | `/api/v1/organizations/{id}/members` | org-member | Active membership | |
+| POST | `/api/v1/organizations/{id}/members` | org-admin | Role `owner` or `admin` | |
+| DELETE | `/api/v1/organizations/{id}/members/{user_id}` | org-admin | Role `owner` or `admin` | Cannot remove last owner |
+
+Organization-owned product resources (subscriptions, etc.) will use the same membership gate when introduced.
+
 ## API v1 — admin
 
 | Method | Path | Class | Dependency / policy | Notes |
@@ -72,6 +88,7 @@ There is **no organization-scoped** class yet (membership model is future work; 
 | GET | `/api/v1/admin/trusted-clients` | admin | `get_current_admin` | List clients |
 | POST | `/api/v1/admin/trusted-clients` | admin | `get_current_admin` | Register client id |
 | POST | `/api/v1/admin/trusted-clients/{client_id}/revoke` | admin | `get_current_admin` | Revoke client |
+| POST | `/api/v1/admin/users/{user_id}/platform-admin` | admin | `get_current_admin` | Explicit grant/revoke `is_admin` (audited) |
 
 Admin is currently a **global boolean** (`User.is_admin`), not org-scoped.
 
@@ -103,8 +120,9 @@ See [IDP_TOKEN_PROFILE.md](./IDP_TOKEN_PROFILE.md).
 
 | Gap | Tracked by |
 |-----|------------|
-| Organization-scoped authorization | Readiness P1 / issue #230 |
-| Replace binary `is_admin` with scoped roles | issue #231 |
+| Org membership model (foundation) | Implemented — product resources still user-scoped where noted |
+| Platform admin one-shot bootstrap + explicit grant API | Implemented |
+| Org-scoped product resources (subscriptions) | Future (P2) |
 | Enforce scopes per route when product scopes exist | readiness follow-up |
 | Sanitize `/ready` error detail in production | issue #237 |
 

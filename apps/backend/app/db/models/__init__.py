@@ -1,5 +1,8 @@
 from app.db.models.models import (
     ApplicationMessage,
+    AuditEvent,
+    Organization,
+    OrganizationMembership,
     Service,
     ServiceApplication,
     Tenant,
@@ -10,10 +13,13 @@ from app.db.models.models import (
 
 __all__ = [
     "Tenant",
+    "Organization",
+    "OrganizationMembership",
     "User",
     "UserIdentity",
     "TrustedClient",
     "Service",
     "ServiceApplication",
     "ApplicationMessage",
+    "AuditEvent",
 ]
