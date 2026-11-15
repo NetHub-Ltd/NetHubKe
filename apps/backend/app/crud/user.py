@@ -9,6 +9,7 @@ from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.config import get_settings
+from app.crud import audit as audit_crud
 from app.db.models.models import User, UserIdentity
 from app.db.schemas.schemas import TokenData, UserUpdate
 
@@ -17,10 +18,9 @@ def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
 
-def _maybe_bootstrap_admin(user: User) -> None:
+def _should_bootstrap_admin(email: str) -> bool:
     emails = get_settings().admin_bootstrap_emails
-    if emails and user.email.lower() in emails:
-        user.is_admin = True
+    return bool(emails and email.lower() in emails)
 
 
 async def get_identity(
@@ -72,7 +72,7 @@ async def sync_user_from_token(session: AsyncSession, token: TokenData) -> User:
             user.full_name = token.name
         if token.preferred_username:
             user.username = token.preferred_username
-        _maybe_bootstrap_admin(user)
+        # Platform admin is not re-elevated on every sync (one-shot on first provision only).
         user.updated_at = _utcnow()
         session.add(user)
         await session.commit()
@@ -100,19 +100,31 @@ async def sync_user_from_token(session: AsyncSession, token: TokenData) -> User:
                 detail="Email already linked to a different identity",
             )
 
+    bootstrap = _should_bootstrap_admin(email)
     user = User(
         email=email,
         username=token.preferred_username or email.split("@")[0],
         full_name=token.name or "",
         is_active=True,
+        is_admin=bootstrap,
     )
-    _maybe_bootstrap_admin(user)
     session.add(user)
     try:
         await session.flush()
         session.add(
             UserIdentity(issuer=issuer, subject=subject, user_id=user.id)
         )
+        if bootstrap:
+            await audit_crud.record_event(
+                session,
+                action="platform.admin.bootstrap",
+                actor_user_id=user.id,
+                actor_type="system",
+                target_type="user",
+                target_id=str(user.id),
+                detail={"email": email, "source": "BOOTSTRAP_ADMIN_EMAILS"},
+                commit=False,
+            )
         await session.commit()
     except IntegrityError as exc:
         await session.rollback()
@@ -150,3 +162,24 @@ async def update_user(session: AsyncSession, user: User, body: UserUpdate) -> Us
     await session.commit()
     await session.refresh(user)
     return user
+
+
+async def set_platform_admin(
+    session: AsyncSession, *, target: User, is_admin: bool, actor: User
+) -> User:
+    """Explicit, auditable platform-admin grant/revoke."""
+    target.is_admin = is_admin
+    target.updated_at = _utcnow()
+    session.add(target)
+    await audit_crud.record_event(
+        session,
+        action="platform.admin.grant" if is_admin else "platform.admin.revoke",
+        actor_user_id=actor.id,
+        target_type="user",
+        target_id=str(target.id),
+        detail={"is_admin": is_admin},
+        commit=False,
+    )
+    await session.commit()
+    await session.refresh(target)
+    return target

@@ -1,3 +1,5 @@
+Detailed product client how-to: [CLIENT_INTEGRATION_GUIDE.md](./CLIENT_INTEGRATION_GUIDE.md).
+
 # NetHubKe integrations
 
 How **any** client (website, Tawala, NetPay, future apps) talks to the NetHubKe **resource server**.
@@ -13,7 +15,7 @@ NetHubKe is an **IdP-agnostic resource server**.
 | Does | Does not |
 |------|----------|
 | Accept an **IdP** access token (`Authorization: Bearer …`) | Mint a second “product” JWT |
-| Validate signature, issuer, expiry against configured IdP JWKS | Act as the login UI / Authorization Server |
+| Validate signature, issuer, expiry, resource audience, trusted client | Act as the login UI / Authorization Server |
 | Resolve local user by `(issuer, subject)` | Require a vendor-specific SDK |
 | Return JSON (profile, services, applications, …) | Special-case Tawala vs NetPay vs website |
 
@@ -39,19 +41,30 @@ Switch IdP by **configuration** (`OIDC_ISSUER`, JWKS). All product clients use t
 
 Subsequent calls may use `GET /me` only; if `404`, call `sync` again.
 
-### Trusted clients (audience / client_id)
+### Resource audience and trusted clients
 
-After cryptographic validation, NetHubKe requires the token’s `aud`, `client_id`, or `azp` to match an **active** row in `trusted_clients`.
+Validation is **two-step** after signature and issuer checks. Full claim contract: [IDP_TOKEN_PROFILE.md](./IDP_TOKEN_PROFILE.md).
+
+**1. Resource audience (`RESOURCE_AUDIENCE`)**
+
+Token `aud` must intersect the configured NetHubKe API audience list. Required in staging/production (fail closed if unset). This answers: *was this token minted for this resource server?*
+
+**2. Trusted calling client**
+
+The token’s `azp` and/or `client_id` must match an **active** row in `trusted_clients`. This answers: *is the calling client registered?*
 
 | Situation | Behaviour |
 |-----------|-----------|
-| Table empty + `AUDIENCE` env set | Rows bootstrapped from env (comma-separated ids) |
-| Client active | Request proceeds |
-| Client missing or revoked | `401` with client-not-authorized semantics |
+| Wrong or missing resource audience | `401` (even if client is trusted) |
+| Correct audience, client missing or revoked | `401` client-not-authorized |
+| Table empty + `AUDIENCE` env set | Trusted-client rows bootstrapped from env (OIDC client ids only — not a substitute for `RESOURCE_AUDIENCE`) |
+| Client active + audience OK | Request proceeds |
 
-Register or revoke clients via **admin API** (admin user required). Prefer DB management over long-term reliance on env.
+Register or revoke clients via **admin API** (admin user required). Prefer DB management over long-term reliance on env bootstrap.
 
 **Do not** publish production client IDs in public docs or issues.
+
+Route protection inventory: [AUTHZ_MATRIX.md](./AUTHZ_MATRIX.md).
 
 ---
 
@@ -81,8 +94,12 @@ Token requirements:
 - Issued by configured `OIDC_ISSUER` (exact issuer string after normalization)
 - Valid signature against IdP JWKS
 - Not expired (`exp`), subject present (`sub`)
-- Client id / audience trusted (see above)
+- Resource audience: `aud` intersects `RESOURCE_AUDIENCE` (required in staging/production)
+- Calling client: `azp` / `client_id` trusted (see above)
 - Prefer tokens that include `email` on first `sync` (provisioning)
+- Use an **access token**, not an ID token
+
+See [IDP_TOKEN_PROFILE.md](./IDP_TOKEN_PROFILE.md).
 
 ---
 
@@ -105,12 +122,18 @@ Canonical detail: **OpenAPI**. Summary for integrators:
 | POST | `/api/v1/users/sync` | Provision / refresh user |
 | GET | `/api/v1/users/me` | Current user profile |
 | PATCH | `/api/v1/users/me` | Update profile fields |
+| POST | `/api/v1/organizations` | Create organization (caller = owner) |
+| GET | `/api/v1/organizations` | List organizations for current user |
+| GET | `/api/v1/organizations/{id}` | Organization detail (members only) |
+| GET/POST/DELETE | `/api/v1/organizations/{id}/members…` | Membership management |
 | POST | `/api/v1/applications` | Submit a quote / proposal request |
 | GET | `/api/v1/applications` | List current user’s requests |
 | GET | `/api/v1/applications/{id}` | Request detail + messages |
 | POST | `/api/v1/applications/{id}/messages` | User message on own request |
 
-### Admin (Bearer + `is_admin`)
+See [AUTHZ_MATRIX.md](./AUTHZ_MATRIX.md) for protection classes.
+
+### Admin (Bearer + platform `is_admin`)
 
 | Method | Path | Purpose |
 |--------|------|---------|
@@ -120,8 +143,9 @@ Canonical detail: **OpenAPI**. Summary for integrators:
 | PATCH | `/api/v1/admin/applications/{id}` | Status (`submitted` \| `in_review` \| `quoted` \| `closed`) |
 | GET/POST | `/api/v1/admin/trusted-clients` | List / register client ids |
 | POST | `/api/v1/admin/trusted-clients/{client_id}/revoke` | Revoke mid-lifecycle |
+| POST | `/api/v1/admin/users/{user_id}/platform-admin` | Explicit grant/revoke platform admin (audited) |
 
-Admin bootstrap: set `BOOTSTRAP_ADMIN_EMAILS` in the **secret store** (comma-separated). Matching users receive `is_admin` on `sync`. Do not commit real addresses.
+Platform admin bootstrap: `BOOTSTRAP_ADMIN_EMAILS` elevates matching users **only on first provision**, not on every sync. Prefer the explicit admin API afterward. Do not commit real addresses.
 
 ### Diagnostics
 

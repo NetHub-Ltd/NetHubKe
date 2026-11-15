@@ -9,8 +9,12 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from app.api.deps import SessionDep, get_current_admin
 from app.core.config import settings
 from app.core.rate_limit import limiter
+from app.crud import audit as audit_crud
 from app.crud import services as svc_crud
 from app.crud import trusted_clients as tc_crud
+from app.crud import subscriptions as sub_crud
+from app.crud import user as user_crud
+from app.domain.subscriptions import is_subscription_effective
 from app.db.models.models import User
 from app.db.schemas.schemas import (
     ApplicationMessageCreate,
@@ -18,8 +22,12 @@ from app.db.schemas.schemas import (
     ApplicationRead,
     ApplicationStatusUpdate,
     ServiceRead,
+    PlatformAdminUpdate,
+    SubscriptionRead,
+    TrialGrantRequest,
     TrustedClientCreate,
     TrustedClientRead,
+    UserRead,
 )
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -112,7 +120,17 @@ async def admin_set_status(
     app = await svc_crud.get_application(session, application_id)
     if app is None:
         raise HTTPException(status_code=404, detail="Application not found")
+    previous = app.status
     app = await svc_crud.set_status(session, app, body.status)
+    await audit_crud.record_event(
+        session,
+        action="application.status.update",
+        actor_user_id=admin.id,
+        target_type="application",
+        target_id=str(app.id),
+        detail={"from": previous, "to": body.status},
+        commit=True,
+    )
     return await _to_read(session, app)
 
 
@@ -142,6 +160,15 @@ async def admin_create_client(
         product=body.product,
         notes=body.notes,
     )
+    await audit_crud.record_event(
+        session,
+        action="trusted_client.create",
+        actor_user_id=admin.id,
+        target_type="trusted_client",
+        target_id=row.client_id,
+        detail={"product": body.product},
+        commit=True,
+    )
     return TrustedClientRead.model_validate(row)
 
 
@@ -156,4 +183,67 @@ async def admin_revoke_client(
     row = await tc_crud.revoke_client(session, client_id)
     if row is None:
         raise HTTPException(status_code=404, detail="Client not found")
+    await audit_crud.record_event(
+        session,
+        action="trusted_client.revoke",
+        actor_user_id=admin.id,
+        target_type="trusted_client",
+        target_id=client_id,
+        commit=True,
+    )
     return TrustedClientRead.model_validate(row)
+
+
+
+@router.post("/users/{user_id}/platform-admin", response_model=UserRead)
+@limiter.limit(_limit)
+async def admin_set_platform_admin(
+    request: Request,
+    user_id: uuid.UUID,
+    body: PlatformAdminUpdate,
+    session: SessionDep,
+    admin: Annotated[User, Depends(get_current_admin)],
+) -> UserRead:
+    """Explicit platform-admin grant/revoke (replaces continuous bootstrap re-elevation)."""
+    target = await user_crud.get_user_by_id(session, user_id)
+    if target is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    target = await user_crud.set_platform_admin(
+        session, target=target, is_admin=body.is_admin, actor=admin
+    )
+    return UserRead.model_validate(target)
+
+
+
+@router.post(
+    "/organizations/{organization_id}/subscriptions/trial",
+    response_model=SubscriptionRead,
+    status_code=201,
+)
+@limiter.limit(_limit)
+async def admin_grant_trial(
+    request: Request,
+    organization_id: uuid.UUID,
+    body: TrialGrantRequest,
+    session: SessionDep,
+    admin: Annotated[User, Depends(get_current_admin)],
+) -> SubscriptionRead:
+    """Authorized trial grant — not available to ordinary clients."""
+    await sub_crud.seed_default_plans(session)
+    plan = await sub_crud.get_plan_by_code(
+        session, product=body.product, code=body.plan_code
+    )
+    if plan is None or not plan.is_active:
+        raise HTTPException(status_code=404, detail="Plan not found")
+    sub = await sub_crud.grant_trial_subscription(
+        session,
+        org_id=organization_id,
+        product=body.product,
+        plan=plan,
+        actor_user_id=admin.id,
+    )
+    data = SubscriptionRead.model_validate(sub)
+    data.effective = is_subscription_effective(
+        status=sub.status, current_period_end=sub.current_period_end
+    )
+    return data

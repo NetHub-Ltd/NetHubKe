@@ -114,3 +114,137 @@ class ApplicationRead(BaseModel):
 
 class ApplicationStatusUpdate(BaseModel):
     status: str = Field(pattern="^(submitted|in_review|quoted|closed)$")
+
+
+class OrganizationCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=255)
+    slug: str | None = Field(default=None, max_length=128)
+
+
+class OrganizationRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    name: str
+    slug: str
+    status: str
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+
+class OrganizationMembershipRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    organization_id: uuid.UUID
+    user_id: uuid.UUID
+    role: str
+    status: str
+    invited_by_user_id: uuid.UUID | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+
+class OrganizationWithMembershipRead(BaseModel):
+    organization: OrganizationRead
+    membership: OrganizationMembershipRead
+
+
+class MembershipCreate(BaseModel):
+    user_id: uuid.UUID
+    role: str = Field(default="member", pattern="^(owner|admin|member)$")
+
+
+class PlatformAdminUpdate(BaseModel):
+    is_admin: bool
+
+
+class AuditEventRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    actor_user_id: uuid.UUID | None = None
+    actor_type: str
+    action: str
+    target_type: str
+    target_id: str
+    organization_id: uuid.UUID | None = None
+    outcome: str
+    detail: str = ""
+    correlation_id: str = ""
+    created_at: datetime | None = None
+
+
+class PlanRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    product: str
+    code: str
+    name: str
+    description: str
+    is_active: bool
+    trial_days: int
+
+
+class PlanEntitlementRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    capability: str
+    value_type: str
+    value: str
+
+
+class SubscriptionRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    organization_id: uuid.UUID
+    product: str
+    plan_id: uuid.UUID
+    status: str
+    current_period_start: datetime
+    current_period_end: datetime
+    trial_end: datetime | None = None
+    cancel_at_period_end: bool = False
+    canceled_at: datetime | None = None
+    effective: bool = False
+
+
+class CapabilityRead(BaseModel):
+    capability: str
+    value_type: str
+    value: str
+    source: str
+
+
+class EntitlementsRead(BaseModel):
+    organization_id: uuid.UUID
+    product: str
+    subscription_status: str | None = None
+    subscription_effective: bool = False
+    capabilities: list[CapabilityRead] = Field(default_factory=list)
+
+
+class TrialGrantRequest(BaseModel):
+    product: str = Field(min_length=1, max_length=64)
+    plan_code: str = Field(min_length=1, max_length=64)
+
+
+class PaymentEventRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    provider: str
+    provider_event_id: str
+    idempotency_key: str
+    event_type: str
+    organization_id: uuid.UUID | None = None
+    subscription_id: uuid.UUID | None = None
+    product: str
+    plan_code: str
+    amount_cents: int
+    currency: str
+    signature_valid: bool
+    processing_result: str
+    processed_at: datetime | None = None

@@ -75,3 +75,38 @@ async def test_rate_limit_trips_on_user_me(monkeypatch):
     # Without auth: 401s; rate limit may or may not apply depending on decorator binding
     assert all(s in (401, 429) for s in statuses)
     config_module.get_settings.cache_clear()
+
+
+@pytest.mark.asyncio
+async def test_ready_error_detail_sanitized_in_production(monkeypatch):
+    """Production readiness failures must not echo raw exception strings."""
+    monkeypatch.setenv("ENVIRONMENT", "production")
+    from app.core import config as config_module
+
+    config_module.get_settings.cache_clear()
+    from app.main import create_application
+    from unittest.mock import AsyncMock, patch
+
+    app = create_application()
+
+    async def _boom():
+        raise RuntimeError("postgresql connection to secret-host failed with password abc")
+
+    with patch("app.main.AsyncSessionLocal") as mock_session:
+        mock_cm = AsyncMock()
+        mock_cm.__aenter__.side_effect = RuntimeError(
+            "postgresql connection to secret-host failed with password abc"
+        )
+        mock_cm.__aexit__.return_value = False
+        mock_session.return_value = mock_cm
+
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as ac:
+            r = await ac.get("/ready")
+        assert r.status_code == 503
+        body = r.json()
+        assert body["status"] == "not_ready"
+        assert "secret-host" not in body.get("detail", "")
+        assert "password" not in body.get("detail", "").lower()
+        assert body["detail"] == "dependency check failed"
+    config_module.get_settings.cache_clear()
