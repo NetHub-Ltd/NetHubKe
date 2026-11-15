@@ -27,13 +27,17 @@ This file is a **sanitized overview** for humans. It does not replace OpenAPI an
 3. **Services** — `/api/v1/services`  
 4. **Applications** — `/api/v1/applications/*`  
 5. **Organizations** — `/api/v1/organizations/*`  
-6. **Admin** — `/api/v1/admin/*`  
+6. **Plans / subscriptions / entitlements** — see [SUBSCRIPTIONS.md](./SUBSCRIPTIONS.md)  
+7. **Webhooks** — `/api/v1/webhooks/payments/{provider}`  
+8. **Admin** — `/api/v1/admin/*`  
 
 See [INTEGRATIONS.md](./INTEGRATIONS.md) for client flow and audience rules.
 
 Authorization class per route: [AUTHZ_MATRIX.md](./AUTHZ_MATRIX.md).
 
 Token profile: [IDP_TOKEN_PROFILE.md](./IDP_TOKEN_PROFILE.md).
+
+Client how-to: [CLIENT_INTEGRATION_GUIDE.md](./CLIENT_INTEGRATION_GUIDE.md) · Subscriptions: [SUBSCRIPTIONS.md](./SUBSCRIPTIONS.md).
 
 ---
 

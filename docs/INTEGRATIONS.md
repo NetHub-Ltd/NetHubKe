@@ -1,3 +1,5 @@
+Detailed product client how-to: [CLIENT_INTEGRATION_GUIDE.md](./CLIENT_INTEGRATION_GUIDE.md).
+
 # NetHubKe integrations
 
 How **any** client (website, Tawala, NetPay, future apps) talks to the NetHubKe **resource server**.

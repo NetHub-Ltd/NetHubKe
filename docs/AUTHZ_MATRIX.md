@@ -77,6 +77,17 @@ There is **no organization-scoped** class yet (membership model is future work; 
 
 Organization-owned product resources (subscriptions, etc.) will use the same membership gate when introduced.
 
+
+## API v1 — plans, subscriptions, entitlements, webhooks
+
+| Method | Path | Class | Dependency / policy | Notes |
+|--------|------|-------|---------------------|-------|
+| GET | `/api/v1/plans` | public | — | Active plan catalog |
+| GET | `/api/v1/organizations/{id}/subscriptions` | org-member | Active membership | |
+| GET | `/api/v1/organizations/{id}/entitlements` | org-member | Active membership + `product` query | Request-time evaluation |
+| POST | `/api/v1/admin/organizations/{id}/subscriptions/trial` | admin | `get_current_admin` | Trial grant |
+| POST | `/api/v1/webhooks/payments/{provider}` | public + signature | HMAC `X-NetHub-Signature` | Idempotent; no bearer user |
+
 ## API v1 — admin
 
 | Method | Path | Class | Dependency / policy | Notes |
