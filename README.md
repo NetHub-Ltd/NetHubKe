@@ -24,7 +24,8 @@ It does **not** authenticate users, mint product JWTs, run login UI, or act as a
 | Plans, subscriptions, request-time evaluation | **Done** (P2) |
 | Entitlement catalogue + org query API | **Done** (P2) |
 | Payment webhooks (HMAC, idempotent) | **Done** (P2) |
-| Staging E2E evidence pack / G6 go-no-go | Open |
+| Probe error sanitization (ready/diagnostics) | **Done** (P3) |
+| Staging E2E evidence pack / G6 go-no-go | Open (ops — issue #189) |
 | Attaching quote applications to organizations | Open (optional) |
 
 Readiness checklist: [docs/RESOURCE_SERVER_READINESS.md](docs/RESOURCE_SERVER_READINESS.md)

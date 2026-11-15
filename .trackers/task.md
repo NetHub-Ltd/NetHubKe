@@ -1,15 +1,7 @@
-# Task — RS readiness P2 + documentation
+# Task — RS readiness P3 finalize
 
 ## Status
 
-- Branch: `feat/rs-p2-subscriptions-entitlements`
-- Base: `dev` (P0+P1 merged)
-- Issues: #234 #235 #236
-
-## Delivered
-
-- Plans, subscriptions, plan entitlements, overrides model
-- Request-time entitlement evaluation
-- Payment webhooks (HMAC + idempotency)
-- Admin trial grant
-- README progress + CLIENT_INTEGRATION_GUIDE + SUBSCRIPTIONS docs
+- Branch: `fix/rs-p3-probe-hygiene`
+- Closes remaining P3 hygiene (#237); one-shot admin already delivered in P1.
+- After merge: close tracker issues #227–#237 as implemented across P0–P3 PRs.
