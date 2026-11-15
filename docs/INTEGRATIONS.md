@@ -120,12 +120,18 @@ Canonical detail: **OpenAPI**. Summary for integrators:
 | POST | `/api/v1/users/sync` | Provision / refresh user |
 | GET | `/api/v1/users/me` | Current user profile |
 | PATCH | `/api/v1/users/me` | Update profile fields |
+| POST | `/api/v1/organizations` | Create organization (caller = owner) |
+| GET | `/api/v1/organizations` | List organizations for current user |
+| GET | `/api/v1/organizations/{id}` | Organization detail (members only) |
+| GET/POST/DELETE | `/api/v1/organizations/{id}/members…` | Membership management |
 | POST | `/api/v1/applications` | Submit a quote / proposal request |
 | GET | `/api/v1/applications` | List current user’s requests |
 | GET | `/api/v1/applications/{id}` | Request detail + messages |
 | POST | `/api/v1/applications/{id}/messages` | User message on own request |
 
-### Admin (Bearer + `is_admin`)
+See [AUTHZ_MATRIX.md](./AUTHZ_MATRIX.md) for protection classes.
+
+### Admin (Bearer + platform `is_admin`)
 
 | Method | Path | Purpose |
 |--------|------|---------|
@@ -135,8 +141,9 @@ Canonical detail: **OpenAPI**. Summary for integrators:
 | PATCH | `/api/v1/admin/applications/{id}` | Status (`submitted` \| `in_review` \| `quoted` \| `closed`) |
 | GET/POST | `/api/v1/admin/trusted-clients` | List / register client ids |
 | POST | `/api/v1/admin/trusted-clients/{client_id}/revoke` | Revoke mid-lifecycle |
+| POST | `/api/v1/admin/users/{user_id}/platform-admin` | Explicit grant/revoke platform admin (audited) |
 
-Admin bootstrap: set `BOOTSTRAP_ADMIN_EMAILS` in the **secret store** (comma-separated). Matching users receive `is_admin` on `sync`. Do not commit real addresses.
+Platform admin bootstrap: `BOOTSTRAP_ADMIN_EMAILS` elevates matching users **only on first provision**, not on every sync. Prefer the explicit admin API afterward. Do not commit real addresses.
 
 ### Diagnostics
 

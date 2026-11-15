@@ -1,26 +1,21 @@
-# Task — RS readiness P0 implementation
+# Task — RS readiness P1 implementation
 
 ## Status
 
-- Workstream: Implement P0 gaps from Resource Server readiness audit (#227, #228, #229).
-- Topic branch: `fix/rs-p0-audience-authz`
-- Base branch: `dev`
-- Pull-request target: `dev`
-- Issues: #227 #228 #229
+- Workstream: Organization membership, platform-admin provisioning, audit events, threat model.
+- Topic branch: `feat/rs-p1-orgs-roles-audit`
+- Base branch: `dev` (includes P0 merge #239)
+- Issues: #230 #231 #232 #233
 
-## Scope
+## Delivered in this branch
 
-1. **#227** Enforce resource audience validation (`RESOURCE_AUDIENCE`, production fail-closed).
-2. **#228** Document IdP access-token profile (`docs/IDP_TOKEN_PROFILE.md`).
-3. **#229** Route authorization inventory (`docs/AUTHZ_MATRIX.md`).
+- Organizations + memberships (multi-org, role owner/admin/member, 404 across orgs)
+- One-shot `BOOTSTRAP_ADMIN_EMAILS` + explicit `POST /admin/users/{id}/platform-admin`
+- Audit events for privileged actions with redaction helper
+- `docs/THREAT_MODEL.md` linked from readiness checklist
 
-## Explicit non-goals
+## Non-goals
 
-- Organization membership, subscription domain, audit event stream (P1/P2).
-- Changing Architecture A boundary (still no product JWT minting).
-- The audit branch `docs/rs-readiness-audit-2026-11` remains reference-only.
-
-## Verification
-
-- Unit tests extended in `apps/backend/tests/test_security.py` and `test_config.py`.
-- Local pytest may be unavailable in agent environment; CI backend-ci is the gate.
+- Subscriptions / entitlements (P2)
+- Moving service applications onto org ownership (still user-scoped)
+- Full RBAC permission matrix beyond org roles + platform admin

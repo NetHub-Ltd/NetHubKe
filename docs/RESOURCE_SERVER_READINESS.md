@@ -6,6 +6,8 @@
 >
 > **Architecture contract:** NetHubKe accepts access tokens issued by a separately operated Identity Provider. It validates those tokens, resolves principals, makes and enforces authorization decisions, protects NetHub-managed resources, and owns subscription and entitlement state. It does not authenticate users, operate an Authorization Server, or mint/exchange product access tokens.
 
+> **Threat model:** [THREAT_MODEL.md](./THREAT_MODEL.md)
+
 ---
 
 ## 1. How to use this checklist

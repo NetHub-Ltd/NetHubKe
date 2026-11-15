@@ -114,3 +114,62 @@ class ApplicationRead(BaseModel):
 
 class ApplicationStatusUpdate(BaseModel):
     status: str = Field(pattern="^(submitted|in_review|quoted|closed)$")
+
+
+class OrganizationCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=255)
+    slug: str | None = Field(default=None, max_length=128)
+
+
+class OrganizationRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    name: str
+    slug: str
+    status: str
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+
+class OrganizationMembershipRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    organization_id: uuid.UUID
+    user_id: uuid.UUID
+    role: str
+    status: str
+    invited_by_user_id: uuid.UUID | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+
+class OrganizationWithMembershipRead(BaseModel):
+    organization: OrganizationRead
+    membership: OrganizationMembershipRead
+
+
+class MembershipCreate(BaseModel):
+    user_id: uuid.UUID
+    role: str = Field(default="member", pattern="^(owner|admin|member)$")
+
+
+class PlatformAdminUpdate(BaseModel):
+    is_admin: bool
+
+
+class AuditEventRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    actor_user_id: uuid.UUID | None = None
+    actor_type: str
+    action: str
+    target_type: str
+    target_id: str
+    organization_id: uuid.UUID | None = None
+    outcome: str
+    detail: str = ""
+    correlation_id: str = ""
+    created_at: datetime | None = None

@@ -1,4 +1,4 @@
-"""Domain models — identity, trusted clients, services, applications."""
+"""Domain models — identity, orgs, trusted clients, services, applications, audit."""
 from __future__ import annotations
 
 import uuid
@@ -13,10 +13,51 @@ from app.db.models.base import BaseMixin
 
 
 class Tenant(BaseMixin, table=True):
+    """Legacy placeholder table. Prefer Organization + OrganizationMembership."""
+
     __tablename__ = "tenants"
 
     name: str = Field(index=True, max_length=255)
     email: Optional[str] = Field(default=None, max_length=320, index=True)
+
+
+class Organization(BaseMixin, table=True):
+    """Tenant boundary for multi-product NetHubKe resources."""
+
+    __tablename__ = "organizations"
+
+    name: str = Field(index=True, max_length=255)
+    slug: str = Field(unique=True, index=True, max_length=128)
+    status: str = Field(default="active", max_length=32, index=True)
+    # active | suspended | closed
+
+
+class OrganizationMembership(BaseMixin, table=True):
+    """User membership in an organization (multi-org supported)."""
+
+    __tablename__ = "organization_memberships"
+    __table_args__ = (
+        sa.UniqueConstraint(
+            "organization_id",
+            "user_id",
+            name="uq_org_memberships_org_user",
+        ),
+        sa.Index(
+            "ix_org_memberships_user_status",
+            "user_id",
+            "status",
+        ),
+    )
+
+    organization_id: uuid.UUID = Field(foreign_key="organizations.id", index=True)
+    user_id: uuid.UUID = Field(foreign_key="users.id", index=True)
+    role: str = Field(default="member", max_length=32, index=True)
+    # owner | admin | member
+    status: str = Field(default="active", max_length=32, index=True)
+    # active | invited | removed
+    invited_by_user_id: Optional[uuid.UUID] = Field(
+        default=None, foreign_key="users.id", index=True
+    )
 
 
 class User(BaseMixin, table=True):
@@ -27,6 +68,8 @@ class User(BaseMixin, table=True):
     full_name: str = Field(default="", max_length=255)
     is_active: bool = Field(default=True)
     is_admin: bool = Field(default=False, index=True)
+    # Platform admin (global). Org roles live on OrganizationMembership.
+    # tenant_id is legacy; do not use for authorization.
     tenant_id: Optional[uuid.UUID] = Field(default=None, foreign_key="tenants.id", index=True)
 
 
@@ -43,7 +86,7 @@ class UserIdentity(BaseMixin, table=True):
 
 
 class TrustedClient(BaseMixin, table=True):
-    """OIDC client_id / audience values allowed to call the resource server."""
+    """OIDC client_id values allowed to call the resource server."""
 
     __tablename__ = "trusted_clients"
 
@@ -80,7 +123,6 @@ class ServiceApplication(BaseMixin, table=True):
     user_id: uuid.UUID = Field(foreign_key="users.id", index=True)
     service_id: uuid.UUID = Field(foreign_key="services.id", index=True)
     status: str = Field(default="submitted", max_length=32, index=True)
-    # draft | submitted | in_review | quoted | closed
     title: str = Field(default="", max_length=255)
     body: str = Field(default="", sa_column=Column(Text, nullable=False, server_default=""))
     budget_band: str = Field(default="", max_length=64)
@@ -95,3 +137,28 @@ class ApplicationMessage(BaseMixin, table=True):
     author_user_id: uuid.UUID = Field(foreign_key="users.id", index=True)
     body: str = Field(sa_column=Column(Text, nullable=False))
     is_from_admin: bool = Field(default=False, index=True)
+
+
+class AuditEvent(BaseMixin, table=True):
+    """Append-oriented security / privileged-action audit trail."""
+
+    __tablename__ = "audit_events"
+    __table_args__ = (
+        sa.Index("ix_audit_events_action_created", "action", "created_at"),
+    )
+
+    actor_user_id: Optional[uuid.UUID] = Field(
+        default=None, foreign_key="users.id", index=True
+    )
+    actor_type: str = Field(default="user", max_length=32)
+    # user | system | service
+    action: str = Field(max_length=64, index=True)
+    target_type: str = Field(default="", max_length=64, index=True)
+    target_id: str = Field(default="", max_length=128, index=True)
+    organization_id: Optional[uuid.UUID] = Field(
+        default=None, foreign_key="organizations.id", index=True
+    )
+    outcome: str = Field(default="success", max_length=32)
+    # success | failure | denied
+    detail: str = Field(default="", sa_column=Column(Text, nullable=False, server_default=""))
+    correlation_id: str = Field(default="", max_length=128, index=True)
