@@ -1,4 +1,6 @@
 > **Historical:** A0–A6 described the original Architecture A bare minimum. That foundation is implemented. For current integration contracts see `docs/INTEGRATIONS.md` and `docs/API.md`. Do not treat the checklist below as the only roadmap.
+>
+> **Current scope update:** NetHubKe now explicitly owns central subscription management and entitlement evaluation for NetHub products. The old “Later” deferral below records the original milestone scope only; it is superseded by [the Resource Server Readiness Checklist](../docs/RESOURCE_SERVER_READINESS.md). Do not interpret it as a decision to exclude subscriptions or entitlements from the platform.
 
 # NetHubKe Backend — Architecture A Milestones
 
@@ -22,7 +24,7 @@
 | **A5** | Container image | **PR4** | Dockerfile/entrypoint; `build_and_push` can build |
 | **A6** | Staging soak | **PR5 runbook** | Real IdP token → sync/me on staging |
 
-**Later (not bare minimum — do not pull forward):** entitlements catalogue, billing, admin identity linking UI, frontend, product token exchange.
+**Historical deferral (original A0–A6 scope only):** entitlements catalogue, billing, admin identity linking UI, frontend, product token exchange. Subscription management and entitlements are now in scope as shared NetHubKe domains; product token exchange remains out of scope.
 
 ---
 
@@ -107,10 +109,6 @@ apps/backend/
 - Unique constraint on `(issuer, subject)` enforced
 - Unique constraint on `(user_id, issuer)` enforced
 - SQLModel round-trip create/read via AsyncSession
-
-**Exit**
-- [ ] Models + migration(s) merged
-- [ ] Tests green
 
 ---
 
@@ -224,12 +222,12 @@ apps/backend/
 
 Reject or request changes if the PR:
 
-1. Adds token **minting** / exchange / signing_keys for product APIs  
-2. Adds IdP vendor-specific columns or required Keycloak-only code paths  
-3. Uses email as the only identity key  
-4. Introduces a second auth mechanism for one client  
-5. Drops tests for a milestone without moving them to Not verified with cause  
-6. Uses SQLite as primary store  
+1. Adds token **minting** / exchange / signing_keys for product APIs
+2. Adds IdP vendor-specific columns or required Keycloak-only code paths
+3. Uses email as the only identity key
+4. Introduces a second auth mechanism for one client
+5. Drops tests for a milestone without moving them to Not verified with cause
+6. Uses SQLite as primary store
 
 ---
 
@@ -244,7 +242,6 @@ Reject or request changes if the PR:
 | Validate | A6 | Staging evidence |
 
 All implementation PRs target **`dev`**. No direct pushes to `dev`/`main`.
-
 
 ## A6 materials
 

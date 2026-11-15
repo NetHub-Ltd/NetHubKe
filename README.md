@@ -6,16 +6,24 @@ IdP-agnostic **resource server** and corporate website monorepo for NetHub.
 
 NetHubKe’s backend:
 
-- Accepts an **IdP** bearer access token  
-- Validates it (issuer + JWKS) and checks **trusted OIDC clients**  
-- Resolves the local user by `(issuer, subject)`  
-- Returns **JSON** (profile, services, applications, admin tools)  
+- Accepts an **IdP** bearer access token
+- Validates it (issuer, JWKS, intended API audience, and trusted client policy)
+- Resolves the local user by `(issuer, subject)`
+- Authorizes access to protected user, organization, application, subscription, and entitlement resources
+- Owns the central subscription lifecycle and entitlement authority for NetHub products
+- Returns controlled JSON resource representations
 
-It does **not** mint product JWTs or act as an Authorization Server.
+It does **not** authenticate users, mint product JWTs, exchange tokens, or act as an Authorization Server.
 
-All API clients (website, Tawala, NetPay, future apps) use the **same** integration mechanism. Details: [docs/INTEGRATIONS.md](docs/INTEGRATIONS.md).
+All API clients (website/BFF, Tawala, NetPay, future apps) use the **same** integration mechanism. Details: [docs/INTEGRATIONS.md](docs/INTEGRATIONS.md).
 
-API overview: [docs/API.md](docs/API.md) · Stack: [docs/BACKEND_STACK.md](docs/BACKEND_STACK.md) · OpenAPI on the deployed API at `/docs`.
+## Resource Server readiness
+
+The production readiness standard, including token security, authorization, tenant isolation, subscriptions, entitlements, payment integrity, operations, testing, and staging acceptance, is maintained in [docs/RESOURCE_SERVER_READINESS.md](docs/RESOURCE_SERVER_READINESS.md).
+
+## API and stack
+
+API overview: [docs/API.md](docs/API.md) · Integration contract: [docs/INTEGRATIONS.md](docs/INTEGRATIONS.md) · Stack: [docs/BACKEND_STACK.md](docs/BACKEND_STACK.md) · OpenAPI on the deployed API at `/docs`.
 
 ## Repository layout
 
@@ -44,9 +52,9 @@ See [apps/frontend/README.md](apps/frontend/README.md). Configure Auth.js and `N
 
 ## Documentation hygiene
 
-- No production client IDs, tokens, passwords, or private emails in git  
-- Use placeholders (`auth.example.com`, `user@example.com`, empty `AUDIENCE=`)  
-- Real values live in your secret manager / SOPS — not in markdown  
+- No production client IDs, tokens, passwords, or private emails in git
+- Use placeholders (`auth.example.com`, `user@example.com`, empty `AUDIENCE=`)
+- Real values live in your secret manager / SOPS — not in markdown
 
 ## Security reporting
 
