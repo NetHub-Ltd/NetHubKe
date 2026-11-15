@@ -65,20 +65,25 @@ def create_application() -> FastAPI:
 
     @application.get("/ready")
     async def readiness_check() -> JSONResponse:
+        cfg = get_settings()
         try:
             async with AsyncSessionLocal() as session:
                 result = await session.execute(text("SELECT 1"))
                 val = result.scalar_one()
                 if int(val) != 1:
                     return JSONResponse(
-                        content={"status": "not_ready", "detail": "unexpected SELECT 1 result"},
+                        content={"status": "not_ready", "detail": "dependency check failed"},
                         status_code=503,
                     )
             return JSONResponse(content={"status": "ready"}, status_code=200)
         except Exception as exc:  # noqa: BLE001
+            # Log full error server-side; never return infrastructure strings in production.
             log.warning("ready_failed error={}", str(exc))
+            detail = "dependency check failed"
+            if cfg.environment == "development":
+                detail = f"dependency check failed: {type(exc).__name__}"
             return JSONResponse(
-                content={"status": "not_ready", "detail": str(exc)},
+                content={"status": "not_ready", "detail": detail},
                 status_code=503,
             )
 
@@ -89,13 +94,18 @@ def create_application() -> FastAPI:
         if not cfg.diagnostics_enabled and cfg.environment == "production":
             return JSONResponse(content={"detail": "Not found"}, status_code=404)
         db_ok = False
-        db_detail = ""
+        db_detail = None
         try:
             async with AsyncSessionLocal() as session:
                 result = await session.execute(text("SELECT 1"))
                 db_ok = int(result.scalar_one()) == 1
         except Exception as exc:  # noqa: BLE001
-            db_detail = str(exc)
+            log.warning("diagnostics_db_check error={}", str(exc))
+            # Opaque in production/staging; short type name only in development.
+            if cfg.environment == "development":
+                db_detail = type(exc).__name__
+            else:
+                db_detail = "unavailable"
         return JSONResponse(
             content={
                 "app": cfg.app_name,
@@ -108,7 +118,7 @@ def create_application() -> FastAPI:
                 "diagnostics_enabled": cfg.diagnostics_enabled,
                 "rate_limit_enabled": cfg.rate_limit_enabled,
                 "db_ok": db_ok,
-                "db_detail": db_detail or None,
+                "db_detail": db_detail,
             },
             status_code=200,
         )
