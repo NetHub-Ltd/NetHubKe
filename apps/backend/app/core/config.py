@@ -32,8 +32,11 @@ class Settings(BaseSettings):
 
     oidc_issuer: str = Field(alias="OIDC_ISSUER")
     oidc_jwks_url: str | None = Field(default=None, alias="OIDC_JWKS_URL")
-    # Bootstrap only when trusted_clients table is empty
+    # Bootstrap only when trusted_clients table is empty (OIDC client ids)
     audience: str = Field(default="", alias="AUDIENCE")
+    # Resource Server audience(s) — token `aud` must intersect this list.
+    # Distinct from AUDIENCE (trusted client bootstrap). Required in production.
+    resource_audience: str = Field(default="", alias="RESOURCE_AUDIENCE")
     jwt_leeway_seconds: int = Field(default=60, alias="JWT_LEEWAY_SECONDS")
 
     diagnostics_enabled: bool = Field(default=False, alias="DIAGNOSTICS_ENABLED")
@@ -44,6 +47,8 @@ class Settings(BaseSettings):
     trusted_clients_cache_ttl: int = Field(default=45, alias="TRUSTED_CLIENTS_CACHE_TTL")
     # Comma-separated emails promoted to admin on sync
     bootstrap_admin_emails: str = Field(default="", alias="BOOTSTRAP_ADMIN_EMAILS")
+    # HMAC secret for payment webhooks (never commit real values)
+    payment_webhook_secret: str = Field(default="", alias="PAYMENT_WEBHOOK_SECRET")
 
     @field_validator("fastapi_db_port", "jwt_leeway_seconds", "trusted_clients_cache_ttl", mode="before")
     @classmethod
@@ -65,12 +70,17 @@ class Settings(BaseSettings):
 
     @property
     def audiences(self) -> list[str]:
-        """Comma-separated AUDIENCE values (bootstrap when DB empty)."""
+        """Comma-separated AUDIENCE values (bootstrap trusted clients when DB empty)."""
         return [a.strip() for a in self.audience.split(",") if a.strip()]
 
     @property
     def bootstrap_audiences(self) -> list[str]:
         return self.audiences
+
+    @property
+    def resource_audiences(self) -> list[str]:
+        """Configured NetHubKe API resource audience values (token `aud` must match)."""
+        return [a.strip() for a in self.resource_audience.split(",") if a.strip()]
 
     @property
     def admin_bootstrap_emails(self) -> set[str]:
