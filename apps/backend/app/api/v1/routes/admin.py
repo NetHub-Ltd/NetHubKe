@@ -12,7 +12,9 @@ from app.core.rate_limit import limiter
 from app.crud import audit as audit_crud
 from app.crud import services as svc_crud
 from app.crud import trusted_clients as tc_crud
+from app.crud import subscriptions as sub_crud
 from app.crud import user as user_crud
+from app.domain.subscriptions import is_subscription_effective
 from app.db.models.models import User
 from app.db.schemas.schemas import (
     ApplicationMessageCreate,
@@ -21,6 +23,8 @@ from app.db.schemas.schemas import (
     ApplicationStatusUpdate,
     ServiceRead,
     PlatformAdminUpdate,
+    SubscriptionRead,
+    TrialGrantRequest,
     TrustedClientCreate,
     TrustedClientRead,
     UserRead,
@@ -208,3 +212,38 @@ async def admin_set_platform_admin(
         session, target=target, is_admin=body.is_admin, actor=admin
     )
     return UserRead.model_validate(target)
+
+
+
+@router.post(
+    "/organizations/{organization_id}/subscriptions/trial",
+    response_model=SubscriptionRead,
+    status_code=201,
+)
+@limiter.limit(_limit)
+async def admin_grant_trial(
+    request: Request,
+    organization_id: uuid.UUID,
+    body: TrialGrantRequest,
+    session: SessionDep,
+    admin: Annotated[User, Depends(get_current_admin)],
+) -> SubscriptionRead:
+    """Authorized trial grant — not available to ordinary clients."""
+    await sub_crud.seed_default_plans(session)
+    plan = await sub_crud.get_plan_by_code(
+        session, product=body.product, code=body.plan_code
+    )
+    if plan is None or not plan.is_active:
+        raise HTTPException(status_code=404, detail="Plan not found")
+    sub = await sub_crud.grant_trial_subscription(
+        session,
+        org_id=organization_id,
+        product=body.product,
+        plan=plan,
+        actor_user_id=admin.id,
+    )
+    data = SubscriptionRead.model_validate(sub)
+    data.effective = is_subscription_effective(
+        status=sub.status, current_period_end=sub.current_period_end
+    )
+    return data

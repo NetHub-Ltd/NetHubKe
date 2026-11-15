@@ -162,3 +162,127 @@ class AuditEvent(BaseMixin, table=True):
     # success | failure | denied
     detail: str = Field(default="", sa_column=Column(Text, nullable=False, server_default=""))
     correlation_id: str = Field(default="", max_length=128, index=True)
+
+
+class Plan(BaseMixin, table=True):
+    """Sellable plan for a product (Tawala, NetPay, …)."""
+
+    __tablename__ = "plans"
+    __table_args__ = (
+        sa.UniqueConstraint("product", "code", name="uq_plans_product_code"),
+    )
+
+    product: str = Field(max_length=64, index=True)
+    code: str = Field(max_length=64, index=True)
+    name: str = Field(max_length=255)
+    description: str = Field(default="", max_length=512)
+    is_active: bool = Field(default=True, index=True)
+    trial_days: int = Field(default=0)
+
+
+class PlanEntitlement(BaseMixin, table=True):
+    """Capability granted by a plan."""
+
+    __tablename__ = "plan_entitlements"
+    __table_args__ = (
+        sa.UniqueConstraint(
+            "plan_id", "capability", name="uq_plan_entitlements_plan_capability"
+        ),
+    )
+
+    plan_id: uuid.UUID = Field(foreign_key="plans.id", index=True)
+    capability: str = Field(max_length=128, index=True)
+    # e.g. tawala.inventory.manage
+    value_type: str = Field(default="boolean", max_length=32)
+    # boolean | quota | enum
+    value: str = Field(default="true", max_length=255)
+
+
+class Subscription(BaseMixin, table=True):
+    """Organization subscription to a product plan — NetHubKe owns lifecycle."""
+
+    __tablename__ = "subscriptions"
+    __table_args__ = (
+        sa.UniqueConstraint(
+            "organization_id", "product", name="uq_subscriptions_org_product"
+        ),
+        sa.Index("ix_subscriptions_status_period_end", "status", "current_period_end"),
+    )
+
+    organization_id: uuid.UUID = Field(foreign_key="organizations.id", index=True)
+    product: str = Field(max_length=64, index=True)
+    plan_id: uuid.UUID = Field(foreign_key="plans.id", index=True)
+    status: str = Field(default="trial", max_length=32, index=True)
+    # trial | active | past_due | canceled | suspended
+    current_period_start: datetime = Field(sa_type=sa.DateTime(timezone=True))
+    current_period_end: datetime = Field(sa_type=sa.DateTime(timezone=True))
+    trial_end: Optional[datetime] = Field(
+        default=None, sa_type=sa.DateTime(timezone=True)
+    )
+    cancel_at_period_end: bool = Field(default=False)
+    canceled_at: Optional[datetime] = Field(
+        default=None, sa_type=sa.DateTime(timezone=True)
+    )
+
+
+class EntitlementOverride(BaseMixin, table=True):
+    """Explicit org/product capability override (grant or suspend)."""
+
+    __tablename__ = "entitlement_overrides"
+    __table_args__ = (
+        sa.Index(
+            "ix_entitlement_overrides_org_product",
+            "organization_id",
+            "product",
+        ),
+    )
+
+    organization_id: uuid.UUID = Field(foreign_key="organizations.id", index=True)
+    product: str = Field(max_length=64, index=True)
+    capability: str = Field(max_length=128, index=True)
+    value_type: str = Field(default="boolean", max_length=32)
+    value: str = Field(default="true", max_length=255)
+    reason: str = Field(default="", max_length=512)
+    actor_user_id: Optional[uuid.UUID] = Field(
+        default=None, foreign_key="users.id", index=True
+    )
+    effective_from: datetime = Field(sa_type=sa.DateTime(timezone=True))
+    effective_until: Optional[datetime] = Field(
+        default=None, sa_type=sa.DateTime(timezone=True)
+    )
+    is_active: bool = Field(default=True, index=True)
+
+
+class PaymentEvent(BaseMixin, table=True):
+    """Idempotent payment-provider webhook record (no cardholder data)."""
+
+    __tablename__ = "payment_events"
+    __table_args__ = (
+        sa.UniqueConstraint(
+            "provider", "provider_event_id", name="uq_payment_events_provider_event"
+        ),
+        sa.UniqueConstraint("idempotency_key", name="uq_payment_events_idempotency"),
+    )
+
+    provider: str = Field(max_length=64, index=True)
+    provider_event_id: str = Field(max_length=255, index=True)
+    idempotency_key: str = Field(max_length=255, index=True)
+    event_type: str = Field(default="", max_length=64)
+    organization_id: Optional[uuid.UUID] = Field(
+        default=None, foreign_key="organizations.id", index=True
+    )
+    subscription_id: Optional[uuid.UUID] = Field(
+        default=None, foreign_key="subscriptions.id", index=True
+    )
+    product: str = Field(default="", max_length=64)
+    plan_code: str = Field(default="", max_length=64)
+    amount_cents: int = Field(default=0)
+    currency: str = Field(default="KES", max_length=8)
+    payload_hash: str = Field(default="", max_length=128)
+    signature_valid: bool = Field(default=False)
+    processing_result: str = Field(default="pending", max_length=32)
+    # pending | activated | renewed | ignored | failed
+    processed_at: Optional[datetime] = Field(
+        default=None, sa_type=sa.DateTime(timezone=True)
+    )
+    detail: str = Field(default="", sa_column=Column(Text, nullable=False, server_default=""))

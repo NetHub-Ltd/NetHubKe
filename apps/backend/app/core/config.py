@@ -47,6 +47,8 @@ class Settings(BaseSettings):
     trusted_clients_cache_ttl: int = Field(default=45, alias="TRUSTED_CLIENTS_CACHE_TTL")
     # Comma-separated emails promoted to admin on sync
     bootstrap_admin_emails: str = Field(default="", alias="BOOTSTRAP_ADMIN_EMAILS")
+    # HMAC secret for payment webhooks (never commit real values)
+    payment_webhook_secret: str = Field(default="", alias="PAYMENT_WEBHOOK_SECRET")
 
     @field_validator("fastapi_db_port", "jwt_leeway_seconds", "trusted_clients_cache_ttl", mode="before")
     @classmethod

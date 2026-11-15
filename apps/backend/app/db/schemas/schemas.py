@@ -173,3 +173,78 @@ class AuditEventRead(BaseModel):
     detail: str = ""
     correlation_id: str = ""
     created_at: datetime | None = None
+
+
+class PlanRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    product: str
+    code: str
+    name: str
+    description: str
+    is_active: bool
+    trial_days: int
+
+
+class PlanEntitlementRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    capability: str
+    value_type: str
+    value: str
+
+
+class SubscriptionRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    organization_id: uuid.UUID
+    product: str
+    plan_id: uuid.UUID
+    status: str
+    current_period_start: datetime
+    current_period_end: datetime
+    trial_end: datetime | None = None
+    cancel_at_period_end: bool = False
+    canceled_at: datetime | None = None
+    effective: bool = False
+
+
+class CapabilityRead(BaseModel):
+    capability: str
+    value_type: str
+    value: str
+    source: str
+
+
+class EntitlementsRead(BaseModel):
+    organization_id: uuid.UUID
+    product: str
+    subscription_status: str | None = None
+    subscription_effective: bool = False
+    capabilities: list[CapabilityRead] = Field(default_factory=list)
+
+
+class TrialGrantRequest(BaseModel):
+    product: str = Field(min_length=1, max_length=64)
+    plan_code: str = Field(min_length=1, max_length=64)
+
+
+class PaymentEventRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    provider: str
+    provider_event_id: str
+    idempotency_key: str
+    event_type: str
+    organization_id: uuid.UUID | None = None
+    subscription_id: uuid.UUID | None = None
+    product: str
+    plan_code: str
+    amount_cents: int
+    currency: str
+    signature_valid: bool
+    processing_result: str
+    processed_at: datetime | None = None
