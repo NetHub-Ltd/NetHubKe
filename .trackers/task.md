@@ -1,51 +1,26 @@
-# Task — NetHub Corporate UI/UX & Marketing Strengthening
+# Task — RS readiness P0 implementation
 
 ## Status
 
-- Current workstream: corporate-site UI/UX, positioning, trust, conversion, design system, SEO, and accessibility.
-- Status: frontend implementation complete; backend contact endpoint and quality gates pending.
-- Implementation issue: #223.
-- Topic branch: `feat/corporate-uiux-marketing-audit`
+- Workstream: Implement P0 gaps from Resource Server readiness audit (#227, #228, #229).
+- Topic branch: `fix/rs-p0-audience-authz`
 - Base branch: `dev`
 - Pull-request target: `dev`
-- Implementation proposal: `docs/UIUX-MARKETING-IMPLEMENTATION-PROPOSAL.md`
+- Issues: #227 #228 #229
 
-## Delivered
+## Scope
 
-- Repositioned homepage around audience, business outcomes, tangible services, delivery principles, and conversion.
-- Removed Tawala/NetPay homepage section and contact-form options.
-- Strengthened centralized service catalogue.
-- Improved service-detail, About, and services-index journeys.
-- Added Organization, WebSite, Service, AboutPage, and ItemList structured data.
-- Replaced client-side `mailto:` contact handoff with BFF-based submission.
-- Removed `NEXT_PUBLIC_CONTACT_EMAIL` from the client form.
-- Added BFF validation, generic error responses, upstream timeout, and backend forwarding.
+1. **#227** Enforce resource audience validation (`RESOURCE_AUDIENCE`, production fail-closed).
+2. **#228** Document IdP access-token profile (`docs/IDP_TOKEN_PROFILE.md`).
+3. **#229** Route authorization inventory (`docs/AUTHZ_MATRIX.md`).
 
-## Backend dependency
+## Explicit non-goals
 
-The frontend expects:
+- Organization membership, subscription domain, audit event stream (P1/P2).
+- Changing Architecture A boundary (still no product JWT minting).
+- The audit branch `docs/rs-readiness-audit-2026-11` remains reference-only.
 
-```http
-POST /api/v1/contact-enquiries
-```
+## Verification
 
-with JSON fields: `name`, `email`, `company`, `service`, and `message`.
-
-The backend owner should implement persistence, spam protection, rate limiting, notification, and any required email delivery.
-
-## Remaining work
-
-- [ ] Implement backend contact-enquiries endpoint.
-- [ ] Run `npm ci`, `npm run lint`, TypeScript typecheck, and production build.
-- [ ] Review keyboard navigation, focus visibility, contrast, responsive behavior, and form states.
-- [ ] Validate structured data in a rendered preview.
-- [ ] Review PR #224; do not merge without explicit user approval.
-
-## Boundaries
-
-- No Tawala or NetPay product work.
-- No backend endpoint implementation in this frontend workstream.
-- No authentication, OIDC, database, or infrastructure changes.
-- No invented testimonials, metrics, client names, certifications, or outcomes.
-- Do not push directly to `dev` or `master`.
-- Do not merge without explicit user approval.
+- Unit tests extended in `apps/backend/tests/test_security.py` and `test_config.py`.
+- Local pytest may be unavailable in agent environment; CI backend-ci is the gate.

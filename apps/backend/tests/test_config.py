@@ -48,3 +48,16 @@ def test_missing_required_db_user_raises(monkeypatch):
             OIDC_ISSUER="https://issuer.example",
         )  # type: ignore[call-arg]
     get_settings.cache_clear()
+
+
+def test_resource_audience_parsing(monkeypatch):
+    get_settings.cache_clear()
+    monkeypatch.setenv("FASTAPI_DB_USER", "u")
+    monkeypatch.setenv("FASTAPI_DB_PASSWORD", "p")
+    monkeypatch.setenv("FASTAPI_DB_HOST", "h")
+    monkeypatch.setenv("FASTAPI_DB_NAME", "n")
+    monkeypatch.setenv("OIDC_ISSUER", "https://issuer.example")
+    monkeypatch.setenv("RESOURCE_AUDIENCE", "nethubke-api, nethub-api ")
+    s = Settings()  # type: ignore[call-arg]
+    assert s.resource_audiences == ["nethubke-api", "nethub-api"]
+    get_settings.cache_clear()
