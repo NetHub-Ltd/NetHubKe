@@ -1,51 +1,53 @@
-# Task — NetHub Corporate UI/UX & Marketing Strengthening
+# Task — Resource Server Readiness Audit & Gap Closure
 
 ## Status
 
-- Current workstream: corporate-site UI/UX, positioning, trust, conversion, design system, SEO, and accessibility.
-- Status: frontend implementation complete; backend contact endpoint and quality gates pending.
-- Implementation issue: #223.
-- Topic branch: `feat/corporate-uiux-marketing-audit`
-- Base branch: `dev`
+- Workstream: Audit NetHubKe against `docs/RESOURCE_SERVER_READINESS.md` (PR #226, merged) and open implementation issues.
+- Status: **Audit complete on topic branch**; implementation issues opened; code fixes not started.
+- Topic branch: `docs/rs-readiness-audit-2026-11`
+- Base branch: `dev` (includes merge of PR #226 at `f0f6011`)
 - Pull-request target: `dev`
-- Implementation proposal: `docs/UIUX-MARKETING-IMPLEMENTATION-PROPOSAL.md`
+- Audit report: `docs/RS_READINESS_AUDIT_REPORT.md`
 
-## Delivered
+## Completed this session
 
-- Repositioned homepage around audience, business outcomes, tangible services, delivery principles, and conversion.
-- Removed Tawala/NetPay homepage section and contact-form options.
-- Strengthened centralized service catalogue.
-- Improved service-detail, About, and services-index journeys.
-- Added Organization, WebSite, Service, AboutPage, and ItemList structured data.
-- Replaced client-side `mailto:` contact handoff with BFF-based submission.
-- Removed `NEXT_PUBLIC_CONTACT_EMAIL` from the client form.
-- Added BFF validation, generic error responses, upstream timeout, and backend forwarding.
+- [x] Merged PR #226 (Resource Server readiness checklist) into `dev`.
+- [x] Full codebase inspection against checklist gates G0–G6.
+- [x] Evidence-backed audit report with file/symbol anchors.
+- [x] Prioritized P0–P3 remediation roadmap.
+- [x] GitHub issues opened for critical and high-priority gaps.
+- [x] Trackers updated.
 
-## Backend dependency
+## Gate verdict (summary)
 
-The frontend expects:
+| Gate | Verdict |
+|------|---------|
+| G0 Architecture | Partial |
+| G1 Token security | Partial — **critical** (no resource `aud` validation) |
+| G2 Authorization & tenancy | Weak |
+| G3 Subscription & entitlements | Absent |
+| G4 Data & API security | Partial |
+| G5 Operations | Partial |
+| G6 Production acceptance | Not met |
 
-```http
-POST /api/v1/contact-enquiries
-```
+## Priority order for implementation (do not skip P0)
 
-with JSON fields: `name`, `email`, `company`, `service`, and `message`.
+1. **P0-1** Enforce resource audience validation (`verify_aud`)
+2. **P0-2** IdP access-token profile documentation + tests
+3. **P0-3** Route authorization inventory
+4. **P1-*** Organization membership, scoped admin, audit events, threat model
+5. **P2-*** Subscription domain + entitlements
+6. **P3-*** Hardening polish + staging evidence
 
-The backend owner should implement persistence, spam protection, rate limiting, notification, and any required email delivery.
+## Explicit non-goals this branch
 
-## Remaining work
+- No application code changes beyond documentation and trackers.
+- No subscription implementation in this PR.
+- No claim that production is ready.
 
-- [ ] Implement backend contact-enquiries endpoint.
-- [ ] Run `npm ci`, `npm run lint`, TypeScript typecheck, and production build.
-- [ ] Review keyboard navigation, focus visibility, contrast, responsive behavior, and form states.
-- [ ] Validate structured data in a rendered preview.
-- [ ] Review PR #224; do not merge without explicit user approval.
+## Related documents
 
-## Boundaries
-
-- No Tawala or NetPay product work.
-- No backend endpoint implementation in this frontend workstream.
-- No authentication, OIDC, database, or infrastructure changes.
-- No invented testimonials, metrics, client names, certifications, or outcomes.
-- Do not push directly to `dev` or `master`.
-- Do not merge without explicit user approval.
+- `docs/RESOURCE_SERVER_READINESS.md` — standard
+- `docs/RS_READINESS_AUDIT_REPORT.md` — this audit
+- `docs/INTEGRATIONS.md` — client contract
+- `.trackers/milestone.md` — historical A0–A6 (superseded for billing scope)
