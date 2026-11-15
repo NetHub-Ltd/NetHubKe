@@ -28,7 +28,11 @@ This file is a **sanitized overview** for humans. It does not replace OpenAPI an
 4. **Applications** — `/api/v1/applications/*`  
 5. **Admin** — `/api/v1/admin/*`  
 
-See [INTEGRATIONS.md](./INTEGRATIONS.md) for client flow and trusted-client rules.
+See [INTEGRATIONS.md](./INTEGRATIONS.md) for client flow and audience rules.
+
+Authorization class per route: [AUTHZ_MATRIX.md](./AUTHZ_MATRIX.md).
+
+Token profile: [IDP_TOKEN_PROFILE.md](./IDP_TOKEN_PROFILE.md).
 
 ---
 

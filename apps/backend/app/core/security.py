@@ -49,19 +49,78 @@ def _scopes_from_claims(payload: dict[str, Any]) -> list[str]:
     return []
 
 
-def _client_ids_from_payload(payload: dict[str, Any]) -> list[str]:
-    ids: list[str] = []
+def token_audience_values(payload: dict[str, Any]) -> list[str]:
+    """Extract audience values from token `aud` claim (string or list)."""
     aud = payload.get("aud")
     if isinstance(aud, str) and aud:
-        ids.append(aud)
-    elif isinstance(aud, list):
-        ids.extend(str(a) for a in aud if a)
-    for key in ("client_id", "azp"):
+        return [aud]
+    if isinstance(aud, list):
+        return [str(a) for a in aud if a]
+    return []
+
+
+def client_identities_from_payload(
+    payload: dict[str, Any], *, include_aud: bool = False
+) -> list[str]:
+    """
+    Calling-client identifiers used for trusted-client checks.
+
+    Prefer `azp` and `client_id`. Include `aud` only in legacy mode
+    (when resource audience is not configured), where older tokens may
+    place the client id in `aud`.
+    """
+    ids: list[str] = []
+    for key in ("azp", "client_id"):
         val = payload.get(key)
         if isinstance(val, str) and val:
             ids.append(val)
-    # preserve order, unique
+    if include_aud:
+        ids.extend(token_audience_values(payload))
     return list(dict.fromkeys(ids))
+
+
+def assert_resource_audience(
+    payload: dict[str, Any],
+    *,
+    allowed: list[str],
+    environment: str,
+) -> None:
+    """
+    Require token `aud` to intersect the configured resource audience list.
+
+    - When `allowed` is non-empty: fail closed if no intersection.
+    - When `allowed` is empty and environment is production/staging: fail closed
+      (misconfiguration must not open the API).
+    - When `allowed` is empty and environment is development: allow (legacy path).
+    """
+    token_auds = token_audience_values(payload)
+
+    if not allowed:
+        if environment in ("production", "staging"):
+            log.error(
+                "RESOURCE_AUDIENCE is not configured; rejecting token in env={}",
+                environment,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Resource audience not configured",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        # development: legacy mode — no resource-audience gate
+        return
+
+    allowed_set = set(allowed)
+    if not any(a in allowed_set for a in token_auds):
+        log.warning(
+            "JWT resource audience rejected token_aud={!r} allowed={!r}",
+            token_auds,
+            allowed,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
 
 def decode_access_token_unverified_claims(token: str) -> dict[str, Any]:
@@ -70,14 +129,23 @@ def decode_access_token_unverified_claims(token: str) -> dict[str, Any]:
 
 
 async def decode_and_authorize_token(session: AsyncSession, token: str) -> TokenData:
-    """Validate JWT cryptographically, then require a trusted client_id/aud."""
+    """
+    Validate JWT cryptographically, enforce resource audience, then require a
+    trusted calling client (`azp` / `client_id`).
+    """
     issuer = settings.oidc_issuer.rstrip("/")
     jwks_url = settings.resolved_jwks_url
     leeway = max(0, int(settings.jwt_leeway_seconds))
+    resource_audiences = settings.resource_audiences
+    resource_mode = bool(resource_audiences) or settings.environment in (
+        "production",
+        "staging",
+    )
 
     try:
         jwks_client = _get_jwks_client(jwks_url)
         signing_key = jwks_client.get_signing_key_from_jwt(token)
+        # Audience is enforced explicitly below (multi-value + config semantics).
         payload = jwt.decode(
             token,
             signing_key.key,
@@ -114,7 +182,14 @@ async def decode_and_authorize_token(session: AsyncSession, token: str) -> Token
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    client_ids = _client_ids_from_payload(payload)
+    assert_resource_audience(
+        payload,
+        allowed=resource_audiences,
+        environment=settings.environment,
+    )
+
+    # Trusted-client check uses client identity claims, not resource audience.
+    client_ids = client_identities_from_payload(payload, include_aud=not resource_mode)
     if not await tc_crud.is_client_trusted(session, client_ids):
         log.warning("JWT client not trusted client_ids={!r}", client_ids)
         raise HTTPException(
@@ -163,7 +238,7 @@ def decode_access_token_with_key(
             detail="Token missing subject",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    client_ids = _client_ids_from_payload(payload)
+    client_ids = client_identities_from_payload(payload, include_aud=True)
     return TokenData(
         sub=str(sub),
         email=payload.get("email"),
